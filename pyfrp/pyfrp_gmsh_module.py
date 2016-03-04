@@ -228,7 +228,7 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout='meshfiles/gmshLogs
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Gets gmsh executable from path configuration file
 
-def getGmshBin(fnPath="Configurations/paths",identifier="gmshBin"):
+def getGmshBin(fnPath="configurations/paths",identifier="gmshBin"):
 	
 	if not os.path.isfile(fnPath):
 		printWarning(fnPath + " does not exist. Check your paths definition file. Will return 'gmsh'.")

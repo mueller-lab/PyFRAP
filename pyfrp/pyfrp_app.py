@@ -783,7 +783,7 @@ class pyfrp(QtGui.QMainWindow):
 		reply = QtGui.QMessageBox.question(self, 'Message',"Are you sure you want to quit?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
 	
 		if reply == QtGui.QMessageBox.Yes:
-			fn=self.pyfrpDir+"/Configurations/lastConfiguration.conf"
+			fn=self.pyfrpDir+"/configurations/lastConfiguration.conf"
 			self.config.consoleHistory=self.console.history
 			self.config.save(fn=fn)
 			event.accept()
@@ -818,7 +818,7 @@ class pyfrp(QtGui.QMainWindow):
 	
 	def initConfiguration(self):
 		
-		fn=self.pyfrpDir+"/Configurations/lastConfiguration.conf"
+		fn=self.pyfrpDir+"/configurations/lastConfiguration.conf"
 		
 		if os.path.isfile(fn):
 			self.config=pyfrp_IO_module.loadFromPickle(fn)
