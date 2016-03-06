@@ -1,9 +1,9 @@
 //Parameters
-center_x=256;
-center_y=256;
-slice_height=-63.5353974065;
-radius=300.0;
-volSize_px=50.0;
+center_x=246.95;
+center_y=234.28;
+slice_height=-47.6515480548;
+radius=243.61;
+volSize_px=40.0;
 
 //formulas
 outer_radius=(radius^2+(slice_height)^2)/(-2*(slice_height));

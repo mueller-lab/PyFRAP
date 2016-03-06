@@ -1,5 +1,5 @@
 volSize_px=23.0;
-center_x=260.95483871;
+center_x=251.04516129;
 center_y=259.303225806;
 upper_radius=317.65;
 lower_radius=224.25;

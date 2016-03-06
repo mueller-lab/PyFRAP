@@ -1,62 +1,48 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# Don't push data
+Benchmarking/
+Mueller2012Data/
+Ideal_FRAP/
+TestDataset/
 
-# C extensions
-*.so
+# Don'tpush Benchmarking
+Benchmarking/
 
-# Distribution / packaging
-.Python
-env/
+# Don't push older versions
+oldversions/
+misc/
+
+# Don't push build folders
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+#Dont push egg
+*.egg-info
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# Don't push shell scripts
+*.sh
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*,cover
-.hypothesis/
+# Don't push any .txt files
+*.txt
 
-# Translations
-*.mo
-*.pot
+# Don't push Doc (yet)
+Doc/
 
-# Django stuff:
-*.log
+# Don't push deprecated modules
+pyfrp/deprecated/
 
-# Sphinx documentation
-docs/_build/
+# Don't push scripts
+pyfrp/scripts/
 
-# PyBuilder
-target/
+# Don't push custom meshes
+pyfrp/meshfiles/field/custom/
 
-#Ipython Notebook
-.ipynb_checkpoints
+# Don't push temp
+pyfrp/temp/
+
+#Don't push compiled python modules
+*.pyc
+
+
+
+
+

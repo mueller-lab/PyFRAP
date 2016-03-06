@@ -7,11 +7,11 @@ import numpy as np
 
 import time
 
-load=0
-analyze=1
-simulate=1
-fitemb=1
-pinemb=1
+load=1
+analyze=0
+simulate=0
+fitemb=0
+pinemb=0
 
 
 if not load:
@@ -117,12 +117,31 @@ else:
 	emb=mol.embryos[0]
 	emb.save(fn="../TestDataset/embryoFiles/TestEmbryo.emb")
 
+
+sl=emb.getROIByName("Slice")
+al=emb.getROIByName("All")
+
+
+
+print len(sl.meshIdx)/float(len(al.meshIdx)), abs(sl.getZExtend()[0]-sl.getZExtend()[1])/90.3
+
+
+sl.refineInMesh(debug=True,factor=5.,addZ=5.)
+emb.computeROIIdxs()
+
+print len(sl.meshIdx)/float(len(al.meshIdx)), abs(sl.getZExtend()[0]-sl.getZExtend()[1])/90.3
+raw_input()
+
+
 #Analyze Dataset
 if analyze:	
 	
 	emb.analysis.printProcess()
 	emb.analysis.run(debug=False)	
 	mol.save('../TestDataset/'+mol.name+'.mol')
+
+
+
 
 #Simulate
 if simulate:
@@ -138,10 +157,7 @@ if simulate:
 	#Generate Optimal Simulation TimeVector
 	sim.getOptTvecSim(150.)
 	
-	#Set Mesh Properties
-	#sim.mesh.setVolSizePx(22.)
-	#sim.mesh.genMesh()
-	
+	#Run simulation
 	sim.run()
 	mol.save('../TestDataset/'+mol.name+'.mol')
 

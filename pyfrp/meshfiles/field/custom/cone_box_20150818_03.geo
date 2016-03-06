@@ -1,6 +1,6 @@
 volSize_px=23.0;
-center_x=260.95483871;
-center_y=252.696774194;
+center_x=254.348387097;
+center_y=249.393548387;
 upper_radius=317.65;
 lower_radius=224.25;
 height=90.3332804037;
@@ -57,12 +57,12 @@ Volume(80) = {65};
 Field[1] = Box;
 Field[1].VIn = 4.6;
 Field[1].VOut = 23.0;
-Field[1].XMin = -36.2712475404;
-Field[1].XMax = 558.18092496;
-Field[1].YMin = -44.5293120566;
-Field[1].YMax = 549.922860444;
-Field[1].ZMin = -76.7091366902;
-Field[1].ZMax = -64.4508046801;
+Field[1].XMin = -46.5762090569;
+Field[1].XMax = 555.27298325;
+Field[1].YMin = -51.5310477666;
+Field[1].YMax = 550.318144541;
+Field[1].ZMin = -80.2862087694;
+Field[1].ZMax = -68.0278767593;
 
 Mesh.CharacteristicLengthExtendFromBoundary = 1;
 Field[2] = Min;
