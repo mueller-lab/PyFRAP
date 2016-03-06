@@ -56,11 +56,15 @@ and a bunch of standard Python2.7 libraries such as
 ### Running PyFRAP GUI
 
 PyFRAP comes with comprehensive GUI. To start the GUI, simply go to pyfrp/ and doubleclick on 
+
 	PyFRAP.py
+	
 or run
+
 	python pyfrp/PyFRAP.py
 
 If you are already in a python session, you can simply run 
+
 	import pyfrp
 	pyfrp.main()
 
