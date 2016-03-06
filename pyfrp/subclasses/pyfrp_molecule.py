@@ -75,11 +75,7 @@ class molecule:
 		self.degrStErr=None
 		
 		self.crucialParameters=["equOn","fitPinned","fitProd","fitDegr","LBD","LBProd","LBDegr","UBD","UBProd","UBDegr"]
-			
-		#self.fitting_parms=[]
-	
-		
-				
+					
 	def addEmbryo(self,embryo):
 		self.embryos.append(embryo)
 		return self.embryos

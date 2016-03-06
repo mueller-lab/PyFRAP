@@ -14,6 +14,9 @@
 import pickle
 import platform
 import gc
+import sys
+import inspect
+import os
 
 #===========================================================================================================================================================================
 #Module Functions
@@ -33,7 +36,14 @@ def saveToPickle(obj,fn=None):
         return fn
 
 def loadFromPickle(fn):
+	
 	cleanUp()
+	
+	#Need to do append subclasses folder here. Sometimes pickle has problem finding the classes
+	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+	subclassesPath=modulePath.replace("modules","subclasses")
+	sys.path.append(subclassesPath+'/')
+
         if platform.system() in ["Darwin","Linux"]:
                 filehandler=open(fn, 'r')
         elif platform.system() in ["Windows"]:

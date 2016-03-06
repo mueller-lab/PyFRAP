@@ -27,10 +27,7 @@ import matplotlib.collections as collections
 import matplotlib.pyplot as plt
 import matplotlib.patches as ptc
 import matplotlib.tri as tri
-import pylab as plab
-
-#Image
-import skimage.io as skiio
+#import pylab as plab
 
 #Misc
 import sys

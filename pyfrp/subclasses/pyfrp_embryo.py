@@ -768,7 +768,28 @@ class embryo:
 					printWarning("ROI " + r.name+ " needs its mesh indices computed. Will not be able to perform simulation otherwise.")
 				mesh=False
 		return img,sim	
-				
+	
+	def quickAnalysis(self):
+		
+		self.computeROIIdxs()
+
+		#Image analysis
+		self.analysis.run(showProgress=True)
+
+		#Simulation
+		self.simulation.getOptTvecSim(150.)
+		self.simulation.run(showProgress=True)
+
+		#Pin Concentrations
+		bkgdVal,normVal,bkgdValSim,normValSim=self.computeIdealFRAPPinVals(debug=True,useMin=False,useMax=False,switchThresh=0.95)
+		self.pinAllROIs(bkgdVal=bkgdVal,normVal=normVal,bkgdValSim=bkgdValSim,normValSim=normValSim,debug=False)
+
+		#Run all fits
+		for fit in self.fits:
+			fit.run(debug=False)
+		
+		
+		
 	#def grabDataDetails(self):
 	###NOTE make a function that automatically grabs filetype and what not
 	

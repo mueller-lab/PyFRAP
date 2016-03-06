@@ -1,11 +1,6 @@
 # Don't push data
 Benchmarking/
-Mueller2012Data/
-Ideal_FRAP/
 TestDataset/
-
-# Don'tpush Benchmarking
-Benchmarking/
 
 # Don't push older versions
 oldversions/
@@ -25,13 +20,14 @@ dist/
 *.txt
 
 # Don't push Doc (yet)
-Doc/
+docs/
 
 # Don't push deprecated modules
 pyfrp/deprecated/
 
 # Don't push scripts
 pyfrp/scripts/
+pyfrp/idealFRAP/
 
 # Don't push custom meshes
 pyfrp/meshfiles/field/custom/
@@ -41,6 +37,8 @@ pyfrp/temp/
 
 #Don't push compiled python modules
 *.pyc
+
+
 
 
 

@@ -11,8 +11,7 @@ PyFRAP: A Python based FRAP analysis tool box
 - Fit simulated experiment to analyzed data and extract diffusion coefficient
 - Statistical analysis of fitting results
 - Hierarchical data structure making data exchange/sharing easy
-
-# Getting Started
+- Comprehensive GUI, making almost all PyFRAP tools available
 
 ## Installation
 
@@ -52,6 +51,26 @@ and a bunch of standard Python2.7 libraries such as
 - gc
 - csv
 
+## Getting Started
+
+### Running PyFRAP GUI
+
+PyFRAP comes with comprehensive GUI. To start the GUI, simply go to pyfrp/ and doubleclick on 
+	PyFRAP.py
+or run
+	python pyfrp/PyFRAP.py
+
+If you are already in a python session, you can simply run 
+	import pyfrp
+	pyfrp.main()
+
+### Running PyFRAP from the command line
+
+```python
+	import pyfrp
+
+```
+	
 ## API
 
 The API of PyFRAP can be found [here](http://pyfrp.readthedocs.org/en/latest/pyrw.html#submodules "toAPI") .

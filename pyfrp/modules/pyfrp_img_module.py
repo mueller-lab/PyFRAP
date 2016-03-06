@@ -41,29 +41,33 @@ import matplotlib.patches as ptc
 import sys
 import time
 
-#Image processing
-import skimage
-import skimage.morphology
-import skimage.io
-#skimageVersion=skimage.__version__
-if int(skimage.__version__.split('.')[1])<11:
-	
-	
-	#skimage.__version__.split('.')[1]
-
-	import skimage.filter
-else:
-	import skimage.filters
-	
-import scipy.signal as spsig
-
 #PyFRAP modules
 import pyfrp_misc_module
 import pyfrp_plot_module
 import pyfrp_idx_module
 from pyfrp_term_module import *
 
+#Image processing
+import skimage
+import skimage.morphology
+import skimage.io
+#skimageVersion=skimage.__version__
+try:
+	if int(skimage.__version__.split('.')[1])<11:
+		
+		
+		#skimage.__version__.split('.')[1]
 
+		import skimage.filter
+	else:
+		import skimage.filters
+except:
+	skimage.filters
+	
+try:	
+	import scipy.signal as spsig
+except:
+	printWarning("Cannot import scipy.signal. Will not be able to do spsig.gaussian")
 
                     
 #===========================================================================================================================================================================

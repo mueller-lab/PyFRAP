@@ -5,8 +5,8 @@ PyFRAP: A Python based FRAP analysis tool box. Basic modules.
 """
 
 #Basic PyFRAP modules
-from . import pyfrp_IO_module 
 from . import pyfrp_term_module
+from . import pyfrp_IO_module 
 from . import pyfrp_misc_module
 from . import pyfrp_plot_module
 from . import pyfrp_img_module
