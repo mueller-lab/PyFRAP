@@ -1,5 +1,7 @@
 from setuptools import setup
+import os
 
+#Run setup
 setup(name='pyfrp',
       version='1.0',
       description='PyFRAP: A Python based FRAP analysis tool box',
@@ -12,6 +14,8 @@ setup(name='pyfrp',
 		   'pyfrp.modules': 'pyfrp/modules',
 		   'pyfrp.gui' : 'pyfrp/gui'
 		   },
+      #package_data = {'pyfrp':['meshfiles','configurations']},
+      include_package_data=True,
       classifiers= [
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
@@ -22,3 +26,5 @@ setup(name='pyfrp',
       keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
               ],
       zip_safe=False)
+      
+#      
