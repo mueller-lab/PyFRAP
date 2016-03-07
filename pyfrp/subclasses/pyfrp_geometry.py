@@ -20,6 +20,7 @@ import numpy as np
 from pyfrp.modules import pyfrp_gmsh_module
 from pyfrp.modules import pyfrp_gmsh_IO_module
 from pyfrp.modules import pyfrp_plot_module
+from pyfrp.modules import pyfrp_misc_module
 from pyfrp.modules.pyfrp_term_module import *
 
 #===========================================================================================================================================================================

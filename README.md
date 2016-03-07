@@ -21,8 +21,10 @@ If you have Python2.7 already installed, simply
 	
 and install via:
 
-	python setup.py install
+	python setup.py install --user
 	
+We highly recommend installing with the *--user* option, since PyFRAP needs to read/write data files in the installation folder. In some cases, this
+might lead to file permission issues.
 For a full installation documentation, have a look at the documentation.
 
 ### Requirements

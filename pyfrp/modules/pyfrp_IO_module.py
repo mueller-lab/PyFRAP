@@ -15,7 +15,6 @@ import pickle
 import platform
 import gc
 import sys
-import inspect
 import os
 
 import pyfrp_misc_module

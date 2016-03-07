@@ -45,6 +45,7 @@ import numpy as np
 import csv
 import time
 import os
+import inspect
 
 #===========================================================================================================================================================================
 #Module Functions
@@ -733,7 +734,7 @@ def simpleHist(x,y,bins):
 	
 	return xBin,np.asarray(yBin)
 	
-def getMeshfileDir():
+def getMeshfilesDir():
 	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 	path=modulePath.replace("modules","meshfiles")+"/"
 	return path
