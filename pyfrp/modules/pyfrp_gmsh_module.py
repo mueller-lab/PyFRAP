@@ -21,6 +21,7 @@ import shlex
 
 #PyFRAP
 import pyfrp_gmsh_IO_module
+import pyfrp_misc_module
 from pyfrp_term_module import *
 		
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------

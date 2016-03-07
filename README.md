@@ -70,6 +70,8 @@ If you are already in a python session, you can simply run
 	import pyfrp
 	pyfrp.main()
 
+Note that in the latter method PyFRAP's stdout might get redirected to the python shell you are executing it from.
+	
 ### Running PyFRAP from the command line
 
 ```python

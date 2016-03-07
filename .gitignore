@@ -38,7 +38,8 @@ pyfrp/temp/
 #Don't push compiled python modules
 *.pyc
 
-
+#Don't push swp files
+*swp
 
 
 
