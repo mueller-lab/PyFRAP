@@ -145,7 +145,9 @@ class zebrafishDomeStage(geometry):
 	
 	def __init__(self,embryo,center,imagingRadius,radiusScale=1.1):
 		
-		super(zebrafishDomeStage, self).__init__(embryo,"zebrafishDomeStage","../meshfiles/dome.geo",center)
+		mdir=pyfrp_misc_module.getMeshfilesDir()
+		
+		super(zebrafishDomeStage, self).__init__(embryo,"zebrafishDomeStage",mdir+"dome.geo",center)
 		
 		#How much bigger is the inner radius than the outerRadius
 		self.radiusScale=radiusScale
@@ -209,8 +211,9 @@ class zebrafishDomeStageQuad(zebrafishDomeStage):
 	
 	def __init__(self,embryo,center,imagingRadius,radiusScale=1.1):
 		
+		mdir=pyfrp_misc_module.getMeshfilesDir()
 		zebrafishDomeStage.__init__(self,embryo,center,imagingRadius,radiusScale=1.1)
-		geometry.__init__(self,embryo,"zebrafishDomeStageQuad","../meshfiles/quad_dome.geo",center)
+		geometry.__init__(self,embryo,"zebrafishDomeStageQuad",mdir+"quad_dome.geo",center)
 	
 	
 class cylinder(geometry):
@@ -246,15 +249,17 @@ class cylinderQuad(cylinder):
 	
 	def __init__(self,embryo,center,radius,height):
 		
+		mdir=pyfrp_misc_module.getMeshfilesDir()
 		cylinder.__init__(self,embryo,center,radius,height)
-		geometry.__init__(self,embryo,"cylinderQuad","../meshfiles/quad_cylinder.geo",center)
+		geometry.__init__(self,embryo,"cylinderQuad",mdir+"quad_cylinder.geo",center)
 		
 	
 class xenopusBall(geometry):
 	
 	def __init__(self,embryo,center,imagingRadius):		
 		
-		super(xenopusBall, self).__init__(embryo,"xenopusBall","../meshfiles/ball.geo",center)
+		mdir=pyfrp_misc_module.getMeshfilesDir()
+		super(xenopusBall, self).__init__(embryo,"xenopusBall",mdir+"ball.geo",center)
 		
 		self.imagingRadius=imagingRadius
 		
@@ -296,14 +301,16 @@ class xenopusBallQuad(xenopusBall):
 	
 	def __init__(self,embryo,center,imagingRadius):
 		
+		mdir=pyfrp_misc_module.getMeshfilesDir()
 		xenopusBall.__init__(self,embryo,center,imagingRadius)	
-		geometry.__init__(self,embryo,"xenopusBallQuad","meshfiles/quad_ball.geo",center)	
+		geometry.__init__(self,embryo,"xenopusBallQuad",mdir+"quad_ball.geo",center)	
 
 class cone(geometry):
 	
 	def __init__(self,embryo,center,upperRadius,lowerRadius,height):
 		
-		super(cone, self).__init__(embryo,"cone","../meshfiles/cone.geo",center)
+		mdir=pyfrp_misc_module.getMeshfilesDir()
+		super(cone, self).__init__(embryo,"cone",mdir+"cone.geo",center)
 
 		self.upperRadius=upperRadius
 		self.lowerRadius=lowerRadius

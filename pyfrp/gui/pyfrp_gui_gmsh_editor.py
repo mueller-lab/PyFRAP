@@ -107,8 +107,8 @@ class gmshFileEditor(QtGui.QDialog):
 		self.show()
 	
 	def openFile(self):
-		
-		fn = str(QtGui.QFileDialog.getOpenFileName(self, 'Open file', "meshfiles/","*.geo",))
+		mdir=pyfrp_misc_module.getMeshfilesDir()
+		fn = str(QtGui.QFileDialog.getOpenFileName(self, 'Open file', mdir,"*.geo",))
 		if fn=='':
 			return
 		
@@ -125,8 +125,8 @@ class gmshFileEditor(QtGui.QDialog):
 			
 		
 	def saveFileAs(self):
-		
-		fn=str(QtGui.QFileDialog.getSaveFileName(self, 'Save file', "meshfiles/newGeo.geo","*.geo",))
+		mdir=pyfrp_misc_module.getMeshfilesDir()
+		fn=str(QtGui.QFileDialog.getSaveFileName(self, 'Save file', mdir+"newGeo.geo","*.geo",))
 		
 		self.writeFile(fn)
 		
@@ -138,7 +138,8 @@ class gmshFileEditor(QtGui.QDialog):
 			printError("Invalid filename, won't save.")
 			return
 		
-		if fn=="meshfiles/emptyTemplate.geo":
+		mdir=pyfrp_misc_module.getMeshfilesDir()
+		if fn==mdir+"emptyTemplate.geo":
 			printError("Cannot overwrite emptyTemplate.geo! Choose a different file name.")
 			return
 		
@@ -153,11 +154,11 @@ class gmshFileEditor(QtGui.QDialog):
 	
 		
 	def newFile(self):
-		
+		mdir=pyfrp_misc_module.getMeshfilesDir()
 		try:
-			self.loadFile('meshfiles/emptyTemplate.geo')
+			self.loadFile(mdir+'emptyTemplate.geo')
 		except:
-			printWarning('Cannot load file meshfiles/emptyTemplate.geo')
+			printWarning('Cannot load file '+ mdir+'emptyTemplate.geo')
 		
 		return
 		

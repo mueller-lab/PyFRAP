@@ -140,8 +140,8 @@ class geometryDialog(pyfrp_gui_basics.basicCanvasDialog):
 		return center
 		
 	def setFnGeo(self):
-
-		fn = str(QtGui.QFileDialog.getOpenFileName(self, 'Open file', "meshfiles/","*.geo",))
+		mdir=pyfrp_misc_module.getMeshfilesDir()
+		fn = str(QtGui.QFileDialog.getOpenFileName(self, 'Open file', mdir,"*.geo",))
 		if fn=='':
 			return
 				

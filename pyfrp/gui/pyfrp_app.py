@@ -109,7 +109,7 @@ class pyfrp(QtGui.QMainWindow):
 		self.dpi = 100
 		self.version=version
 		self.website="http://www.fml.tuebingen.mpg.de/de/mueller-group/software.html"
-		self.pyfrpDir=os.getcwd()
+		self.pyfrpDir=pyfrp_misc_module.getConfDir().replace("configurations/","")
 		
 		#-------------------------------------------
 		#Statusbar
@@ -136,156 +136,7 @@ class pyfrp(QtGui.QMainWindow):
 		
 		#Keep track of which folder was recently used
 		self.lastopen=os.getcwd()
-		
-		#-------------------------------------------
-		#Menubar entries
-		#-------------------------------------------
-		
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		##Edit
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		
-		#removemolecule = QtGui.QAction('Remove Molecule', self)
-		#removemolecule.setShortcut('Ctrl+Alt+R')	
-		#self.connect(removemolecule, QtCore.SIGNAL('triggered()'), self.delete_molecule)
-		
-		#copymolecule = QtGui.QAction('Copy Molecule', self)
-		#copymolecule.setShortcut('Ctrl+Alt+C')	
-		#self.connect(copymolecule, QtCore.SIGNAL('triggered()'), self.copy_molecule)
-		
-		#editmolecule = QtGui.QAction('Edit Molecule', self)
-		#self.connect(editmolecule, QtCore.SIGNAL('triggered()'), self.edit_molecule)
-		
-		#exportplot = QtGui.QAction('Export Plot', self)	
-		#self.connect(exportplot, QtCore.SIGNAL('triggered()'), self.export_plot)
-		
-		#exportplotseries = QtGui.QAction('Export Plot Series', self)	
-		#self.connect(exportplotseries, QtCore.SIGNAL('triggered()'), self.export_plot_series)
-		
-		#exportmovie = QtGui.QAction('Export Movie', self)	
-		#self.connect(exportmovie, QtCore.SIGNAL('triggered()'), self.export_movie)
-		
-		#exportembryo = QtGui.QAction('Export Embryo to csv-file', self)	
-		#self.connect(exportembryo, QtCore.SIGNAL('triggered()'), self.export_embryo_csv)
-		
-		#exportmolecule = QtGui.QAction('Export Molecule to csv-file', self)	
-		#self.connect(exportmolecule, QtCore.SIGNAL('triggered()'), self.export_molecule_csv)
-		
-		#exportfit = QtGui.QAction('Export Fit to csv-file', self)	
-		#self.connect(exportfit, QtCore.SIGNAL('triggered()'), self.export_fit_to_csv)
-		
-		#exporterror = QtGui.QAction('Export errorbar plot to csv-file', self)	
-		#self.connect(exporterror, QtCore.SIGNAL('triggered()'), self.export_errorbar_to_csv)
-		
-		#memusage = QtGui.QAction('Print object memory usage', self)
-		#self.connect(memusage, QtCore.SIGNAL('triggered()'), self.print_mem_usage)
-		
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		##View
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		
-		#showconsole = QtGui.QAction('Show Console', self)	
-		#self.connect(showconsole, QtCore.SIGNAL('triggered()'), self.show_console)
-		
-		#hideconsole = QtGui.QAction('Hide Console', self)	
-		#self.connect(hideconsole, QtCore.SIGNAL('triggered()'), self.hide_console)
 	
-		#showproplist = QtGui.QAction('Show Property Column', self)	
-		#self.connect(showproplist, QtCore.SIGNAL('triggered()'), self.show_proplist)
-		
-		#hideproplist = QtGui.QAction('Hide Property Column', self)	
-		#self.connect(hideproplist, QtCore.SIGNAL('triggered()'), self.hide_proplist)
-		
-		#showplottab = QtGui.QAction('Show Plottab', self)	
-		#self.connect(showplottab, QtCore.SIGNAL('triggered()'), self.show_plottab)
-		
-		#hideplottab = QtGui.QAction('Hide Plottab', self)	
-		#self.connect(hideplottab, QtCore.SIGNAL('triggered()'), self.hide_plottab)
-	
-		
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		##Simulation
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		
-		#editgeom = QtGui.QAction('Edit Geometry', self)
-		#self.connect(editgeom, QtCore.SIGNAL('triggered()'), self.edit_geometry)
-		
-		#editpde = QtGui.QAction('Edit PDE Parameters', self)
-		#self.connect(editpde, QtCore.SIGNAL('triggered()'), self.edit_pde_parms)
-		
-		#startsim = QtGui.QAction('Start Simulation', self)
-		#self.connect(startsim, QtCore.SIGNAL('triggered()'), self.simulate_embryo)
-		
-		#plotsim = QtGui.QAction('Plot simulation timeseries', self)
-		#self.connect(plotsim, QtCore.SIGNAL('triggered()'), self.plot_sim_timeseries)
-		
-		#plotsimdata = QtGui.QAction('Plot simulation + data timeseries', self)
-		#self.connect(plotsimdata, QtCore.SIGNAL('triggered()'), self.plot_sim_data_timeseries)
-		
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		##Fitting
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		
-		#addfit = QtGui.QAction('New fit', self)
-		#self.connect(addfit, QtCore.SIGNAL('triggered()'), self.add_fit)
-		
-		#removefit = QtGui.QAction('Remove fit', self)
-		#self.connect(removefit, QtCore.SIGNAL('triggered()'), self.delete_fit)
-		
-		#editfit = QtGui.QAction('Edit fit', self)
-		#self.connect(editfit, QtCore.SIGNAL('triggered()'), self.edit_fit)
-		
-		#editmultfit = QtGui.QAction('Edit multiple fits', self)
-		#self.connect(editmultfit, QtCore.SIGNAL('triggered()'), self.edit_mult_fit)
-		
-		#copyfit = QtGui.QAction('Copy fit', self)
-		#self.connect(copyfit, QtCore.SIGNAL('triggered()'), self.copy_fit)
-		
-		#copyfitforall = QtGui.QAction('Copy fit into all embryos', self)
-		#self.connect(copyfitforall, QtCore.SIGNAL('triggered()'), self.copy_fit_to_all)
-		
-		#performfit = QtGui.QAction('Perform fit', self)
-		#self.connect(performfit, QtCore.SIGNAL('triggered()'), self.perform_fit)
-		
-		
-		#fitall = QtGui.QAction('Perform all fits in molecule', self)
-		#self.connect(fitall, QtCore.SIGNAL('triggered()'), self.perform_fits_molecule)
-		
-		#plotfit = QtGui.QAction('Plot fit', self)
-		#self.connect(plotfit, QtCore.SIGNAL('triggered()'), self.plot_fit)
-		
-		#plottrackfit = QtGui.QAction('Plot fitting progress', self)
-		#self.connect(plottrackfit, QtCore.SIGNAL('triggered()'), self.plot_track_fit)
-		
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		##Stats
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		
-		#sumupmol = QtGui.QAction('Average Molecule', self)
-		#self.connect(sumupmol, QtCore.SIGNAL('triggered()'), self.sumup_molecule)
-		
-		#errplot = QtGui.QAction('Plot normed average fit', self)
-		#self.connect(errplot, QtCore.SIGNAL('triggered()'), self.err_data_fit_plot)
-		
-		#barDs = QtGui.QAction('Plot diffusion rates by fit', self)
-		#self.connect(barDs, QtCore.SIGNAL('triggered()'), self.plot_Ds_by_fit)
-	
-		#barprods = QtGui.QAction('Plot production rates by fit', self)
-		#self.connect(barprods, QtCore.SIGNAL('triggered()'), self.plot_prods_by_fit)
-		
-		#bardegrs = QtGui.QAction('Plot degredation rates by fit', self)
-		#self.connect(bardegrs, QtCore.SIGNAL('triggered()'), self.plot_degrs_by_fit)
-		
-		#barall = QtGui.QAction('Plot all parameters by fit', self)
-		#self.connect(barall, QtCore.SIGNAL('triggered()'), self.plot_all_by_fit)
-		
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		##Help
-		##~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		
-		#about  = QtGui.QAction('About PyFDAP', self)
-		#self.connect(about, QtCore.SIGNAL('triggered()'), self.show_about)
-		
 		#-------------------------------------------
 		#Menubar
 		#-------------------------------------------
@@ -318,98 +169,10 @@ class pyfrp(QtGui.QMainWindow):
 		
 		#Stats Menubar Entries
 		self.initStatsMenubar()
-		
-		#self.edit_mb.addAction(copymolecule)
-		#self.edit_mb.addAction(editmolecule)
-		#self.edit_mb.addAction(removemolecule)
-		#self.edit_export_mb=self.edit_mb.addMenu('&Export')
-		#self.edit_export_mb.addAction(exportplot)
-		#self.edit_export_mb.addAction(exportplotseries)
-		#self.edit_export_mb.addAction(exportmovie)
-		#self.edit_export_mb.addAction(exportembryo)
-		#self.edit_export_mb.addAction(exportmolecule)
-		#self.edit_export_mb.addAction(exportfit)
-		#self.edit_export_mb.addAction(exporterror)
-		#self.edit_mb.addAction(memusage)
-		
-		#self.view_mb = self.menubar.addMenu('&View')
-		#self.view_console_mb = self.view_mb.addMenu('&Console')
-		#self.view_console_mb.addAction(showconsole)
-		#self.view_console_mb.addAction(hideconsole)
-		#self.view_proplist_mb = self.view_mb.addMenu('&Property Column')
-		#self.view_proplist_mb.addAction(showproplist)
-		#self.view_proplist_mb.addAction(hideproplist)
-		#self.view_plottab_mb = self.view_mb.addMenu('&Plot Tabs')
-		#self.view_plottab_mb.addAction(showplottab)
-		#self.view_plottab_mb.addAction(hideplottab)
-		
-		#self.data_mb = self.menubar.addMenu('&Data Analyses')
-		#self.data_data_mb=self.data_mb.addMenu('&Embryo')
-		#self.data_data_mb.addAction(newembryo)
-		#self.data_data_mb.addAction(loadembryo)
-		#self.data_data_mb.addAction(saveembryo)
-		#self.data_data_mb.addAction(removeembryo)
-		#self.data_data_mb.addAction(copyembryo)
-		#self.data_data_mb.addAction(editdataset)
-		##self.data_data_mb.addAction(editignored)
-		
-		#self.data_analysis_mb=self.data_mb.addMenu('&Analysis')
-		#self.data_analysis_mb.addAction(analyzeall)
-		#self.data_analysis_mb.addAction(analyze)
-		
-		#self.data_plotting_mb=self.data_mb.addMenu('&Plotting')
-		##self.data_plotting_main_mb=self.data_plotting_mb.addMenu('&Main Dataset')
-		#self.data_plotting_mb.addAction(plotdata)
-		##self.data_plotting_main_mb.addAction(plotdatabkgds)
-		##self.data_plotting_main_mb.addAction(plotembryosliceimgs)
-		##self.data_plotting_main_mb.addAction(plotembryoextimgs)
-		##self.data_plotting_main_mb.addAction(plotembryointimgs)
-		##self.data_plotting_main_mb.addAction(plotembryoslicemasks)
-		##self.data_plotting_main_mb.addAction(plotembryoextmasks)
-		##self.data_plotting_main_mb.addAction(plotembryointmasks)
-		
-		#self.sim_mb=self.menubar.addMenu('&Simulation')
-		#self.sim_mb.addAction(editgeom)
-		#self.sim_mb.addAction(editpde)
-		#self.sim_mb.addAction(startsim)
-		#self.sim_plot_mb=self.sim_mb.addMenu('&Plotting')
-		#self.sim_plot_mb.addAction(plotsim)
-		#self.sim_plot_mb.addAction(plotsimdata)
-		
-		
-		#self.fit_mb = self.menubar.addMenu('&Fitting')
-		#self.fit_fits_mb=self.fit_mb.addMenu('&Fits')
-		#self.fit_fitting_mb=self.fit_mb.addMenu('&Perform Fits')
-		
-		#self.fit_fits_mb.addAction(addfit)
-		#self.fit_fits_mb.addAction(removefit)
-		#self.fit_fits_mb.addAction(editfit)
-		#self.fit_fits_mb.addAction(editmultfit)
-		#self.fit_fits_mb.addAction(copyfit)
-		#self.fit_fits_mb.addAction(copyfitforall)
-		#self.fit_fitting_mb.addAction(performfit)
-		#self.fit_fitting_mb.addAction(fitall)
-		#self.fit_plot_mb=self.fit_mb.addMenu('&Plotting')
-		#self.fit_plot_mb.addAction(plotfit)
-		#self.fit_plot_mb.addAction(plottrackfit)
-		
-		#self.stats_mb = self.menubar.addMenu('&Statistics')
-		#self.stats_mb.addAction(sumupmol)
-		#self.stats_plot_mb = self.stats_mb.addMenu('&Plotting')
 	
-		#self.stats_plot_mb.addAction(errplot)
-		#self.stats_plot_mb.addAction(barDs)
-		#self.stats_plot_mb.addAction(barprods)
-		#self.stats_plot_mb.addAction(bardegrs)
-		#self.stats_plot_mb.addAction(barall)
-		
-		#self.help_mb = self.menubar.addMenu('&Help')
-		#self.help_mb.addAction(about)
-		
-		
-		##-------------------------------------------
-		##Embryo list
-		##-------------------------------------------
+		#-------------------------------------------
+		#Embryo list
+		#-------------------------------------------
 
 		self.objectBar=QtGui.QTreeWidget()
 		self.objectBar.setHeaderLabels(["Object","Analyzed","Simulated","Fitted"])
@@ -788,7 +551,7 @@ class pyfrp(QtGui.QMainWindow):
 		reply = QtGui.QMessageBox.question(self, 'Message',"Are you sure you want to quit?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
 	
 		if reply == QtGui.QMessageBox.Yes:
-			fn=self.pyfrpDir+"../configurations/lastConfiguration.conf"
+			fn=pyfrp_misc_module.getConfDir()+"lastConfiguration.conf"
 			self.config.consoleHistory=self.console.history
 			self.config.save(fn=fn)
 			event.accept()
@@ -823,7 +586,7 @@ class pyfrp(QtGui.QMainWindow):
 	
 	def initConfiguration(self):
 		
-		fn=self.pyfrpDir+"../configurations/lastConfiguration.conf"
+		fn=pyfrp_misc_module.getConfDir()+"lastConfiguration.conf"
 		
 		if os.path.isfile(fn):
 			self.config=pyfrp_IO_module.loadFromPickle(fn)

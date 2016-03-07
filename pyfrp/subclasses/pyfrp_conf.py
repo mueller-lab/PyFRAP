@@ -61,7 +61,7 @@ class configuration:
 	def save(self,fn=None):
 		
 		if fn==None:
-			fn="lastConfiguration"+".conf"
+			fn=pyfrp_misc_module.getConfDir()+"lastConfiguration"+".conf"
 		
 		pyfrp_IO_module.saveToPickle(self,fn=fn)	
 		

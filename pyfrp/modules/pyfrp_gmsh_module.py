@@ -187,8 +187,15 @@ def refineMsh(fn,debug=False):
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Run gmsh
 
-def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout='../meshfiles/gmshLogs/gmsh.stout',fnSterr='../meshfiles/gmshLogs/gmsh.sterr',volSizeMax=None):
+def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,volSizeMax=None):
 	
+	#Define where to put log files if necessary
+	if fnStout==None:
+		fnStout=pyfrp_misc_module.getMeshfilesDir()+'gmshLogs/gmsh.stout'
+		
+	if fnSterr==None:
+		fnSterr=pyfrp_misc_module.getMeshfilesDir()+'gmshLogs/gmsh.sterr'
+		
 	v=5*int(debug)
 	
 	#Define which command to execute
@@ -228,7 +235,9 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout='../meshfiles/gmshL
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Gets gmsh executable from path configuration file
 
-def getGmshBin(fnPath="../configurations/paths",identifier="gmshBin"):
+def getGmshBin(fnPath="paths",identifier="gmshBin"):
+	
+	fnPath=pyfrp_misc_module.getConfDir()+fnPath
 	
 	if not os.path.isfile(fnPath):
 		printWarning(fnPath + " does not exist. Check your paths definition file. Will return 'gmsh'.")

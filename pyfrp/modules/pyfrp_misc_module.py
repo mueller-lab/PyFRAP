@@ -733,4 +733,26 @@ def simpleHist(x,y,bins):
 	
 	return xBin,np.asarray(yBin)
 	
-	
+def getMeshfileDir():
+	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+	path=modulePath.replace("modules","meshfiles")+"/"
+	return path
+
+def getSubclassesDir():
+	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+	path=modulePath.replace("modules","subclasses")+"/"
+	return path
+
+def getGUIDir():
+	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+	path=modulePath.replace("modules","GUI")+"/"
+	return path
+
+def getConfDir():
+	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+	path=modulePath.replace("modules","configurations")+"/"
+	return path
+
+def getModulesDir():
+	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+	return modulePath+"/"
