@@ -54,16 +54,11 @@ import skimage.io
 #skimageVersion=skimage.__version__
 try:
 	if int(skimage.__version__.split('.')[1])<11:
-		
-		
-		#skimage.__version__.split('.')[1]
-
-		import skimage.filter
+		import skimage.filter as skifilt
 	else:
-		import skimage.filters
+		import skimage.filters  as skifilt
 except:
-	skimage.filters
-	
+	import skimage.filters as skifilt
 try:	
 	import scipy.signal as spsig
 except:
@@ -542,7 +537,7 @@ def medianFilter(img,radius=1,debug=False,dtype='uint16',scaleImg=False,method='
 	if method=='scipy':
 		img=spsig.medfilt(img,kernel_size=int(radius))
 	elif method=='skimage':
-		img=skimage.filters.rank.median(img, skimage.morphology.disk(radius))
+		img=skifilt.rank.median(img, skimage.morphology.disk(radius))
 	
 	if scaleImg:
 		#Convert to old dtype	
@@ -575,7 +570,7 @@ def gaussianFilter(img,sigma=2.,debug=False,dtype='uint16',axes=None):
 	orgImg=img.copy()
 	
 	#Apply gaussian filter
-	img = skimage.filters.gaussian_filter(img,sigma)
+	img = skifilt.gaussian_filter(img,sigma)
 	
 	#Debugging plots
 	if debug:
@@ -770,6 +765,10 @@ def computeFlatMask(img,offset=1E-10):
 #Computes Mean Image from a list of files
 
 def computeMeanImg(fnFolder,fileList,dataEnc,median=False):
+	
+	if len(fileList)==0:
+		raise ValueError("There are no images in %s" %(fnFolder+fileList))
+		
 	for i in range(len(fileList)):
 		
 		fn=fnFolder+fileList[i]
@@ -783,6 +782,7 @@ def computeMeanImg(fnFolder,fileList,dataEnc,median=False):
 			mImg=mImg+img
 		else:
 			mImg=img
+	
 	
 	mImg=mImg/float(len(fileList))
 	return mImg

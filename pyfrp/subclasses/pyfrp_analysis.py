@@ -296,9 +296,9 @@ class analysis:
 	
 	def computePreMask(self,flatteningMask,bkgdMask,applyProcess=True):
 		
-		fileList=pyfrp_misc_module.getSortedFileList(self.fnPre,self.embryo.dataFT)
+		fileList=pyfrp_misc_module.getSortedFileList(self.fnPreimage,self.embryo.dataFT)
 		fileList=fileList[:self.nPre]
-		meanImg=pyfrp_img_module.computeMeanImg(self.fnPre,fileList,self.embryo.dataEnc)
+		meanImg=pyfrp_img_module.computeMeanImg(self.fnPreimage,fileList,self.embryo.dataEnc)
 		
 		if applyProcess:
 		
