@@ -577,10 +577,10 @@ class ROI(object):
 			color=self.color
 		
 		ax = pyfrp_plot_module.plotTS(fit.tvecFit,self.getFittedVec(fit),ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' ' + fit.name,title="Fit"+fit.name,sup=self.name+" fitted",linestyle='-.')
+		label=self.name + ' ' + fit.name,title="Fit"+fit.name,sup=self.name+" fitted",linestyle='-.',legend=legend)
 		
 		ax = pyfrp_plot_module.plotTS(fit.tvecFit,self.getdataVecFitted(fit),ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' ' + fit.name,title="Fit"+fit.name,sup=self.name+" fitted",linestyle='-')
+		label=self.name + ' ' + fit.name,title="Fit"+fit.name,sup=self.name+" fitted",linestyle='-',legend=legend)
 		
 		return ax
 	

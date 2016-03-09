@@ -189,10 +189,10 @@ class fit:
 		
 		return self.DOptPx, self.prodOpt, self.degrOpt, self.DOptMu
 	
-	def plotFit(self,ax=None):
+	def plotFit(self,ax=None,legend=True):
 		
 		for r in self.ROIsFitted:
-			ax=r.plotFit(self,ax=ax)
+			ax=r.plotFit(self,ax=ax,legend=legend)
 			
 		return ax
 	

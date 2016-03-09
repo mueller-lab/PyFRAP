@@ -498,7 +498,7 @@ def loadImg(fn,enc,dtype='float'):
 #Norms image by preimage, applies gaussian blur if selected
 
 def normImg(img,imgPre,dataOffset=1.,debug=False):
-			
+		
 	#Norm and add offset to pre img to avoid singularities
 	img=(img+dataOffset)/(imgPre+dataOffset)
 			
@@ -696,19 +696,19 @@ def fixedThresh(img,thresh,fill=np.nan):
 
 def showImgAndHist(img,axes=None,sup='',title=None,color='b',vmin=None,vmax=None,binMin=0,binMax=65535,nbins=256,binSize=1,binsFit=True,fixSize=False,density=False):
 	
-	if len(axes)!=2:
-		printWarning("Axes do not have right size! Will create new figure.")
-		axes=None
-	
+	if axes!=None:
+		if len(axes)!=2:
+			printWarning("Axes do not have right size! Will create new figure.")
+			axes=None
+		
 	if title!=None:
 		if len(title)!=2:
 			printWarning("title do not have right size! Will not draw title.")
 			title=None
 	
-			
 	if axes==None:
 		#Create figure
-		fig,axes = pyfrp_plot_module.makeSubplot([2,1],titles=title,sup=sup)
+		fig,axes = pyfrp_plot_module.makeSubplot([2,1],titles=title,sup=sup,tight=True)
 		
 	#Show img
 	a=axes[0].imshow(img,vmin=vmin,vmax=vmax)
@@ -946,8 +946,85 @@ def computeRadialProfile(img,center):
 def dist(p1,p2):
 	return np.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
 	
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#Checks which pixels are problematic for norming
+		
+def findProblematicNormingPixels(img,imgPre,dataOffset,axes=None,debug=False):
+	
+	pxs=np.zeros(np.shape(img))
+	
+	#Loop through img and see which pixels actually generate errors when dividing
+	with np.errstate(divide='raise'): #Need this line, so numpy RuntimeWarning actually gets raised instead of just printed
+		for i in range(img.shape[0]):
+			for j in range(img.shape[1]):
+			
+				try:
+					a=(img[i,j]+dataOffset)/(imgPre[i,j]+dataOffset)
+				except FloatingPointError:
+					pxs[i,j]=1
+					
+	#Make some nice debugging plots
+	if debug:
+		vmin=min([img.min(),imgPre.min()])
+		vmax=max([img.max(),imgPre.max()])
+		
+		
+		if axes==None:
+			fig,axes=pyfrp_plot_module.makeSubplot([2,4])
+		if len(axes)<8:
+			printWarning("Axes do not have the right size, will swiftly create some new ones for you.")
+			fig,axes=pyfrp_plot_module.makeSubplot([2,4])
+			
+		showImgAndHist(img,axes=[axes[0],axes[4]],vmin=vmin,vmax=vmax)
+		showImgAndHist(imgPre,axes=[axes[1],axes[5]],vmin=vmin,vmax=vmax)
+		showImgAndHist(pxs*img,axes=[axes[2],axes[6]])
+		showImgAndHist(pxs*imgPre,axes=[axes[3],axes[7]])
+		
+	return pxs	
 
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#Simple function that loops through all images in file list and returns minimum integer that needs to be added such that all pixels are positiv
+		
+def findMinOffset(fnFolder,fileList,dataEnc,oldOffset=None,defaultAdd=1.,debug=False):
+	
+	#Check if there are images
+	if len(fileList)==0:
+		printError("fileList contains no files. Going return min(["+str(oldOffset)+","+str(defaultAdd)+"]")
+		if oldOffset!=None:
+			return min([oldOffset,defaultAdd])
+		else:
+			return defaultAdd
+	
+	#Loop through images and get minima
+	mins=[]
+	
+	for i in range(len(fileList)):
+		
+		#Load Img
+		fn=fnFolder+fileList[i]
+		img=loadImg(fn,dataEnc)	
+		
+		mins.append(img.min())
+	minVal=min(mins)
+	
+	#Some debugging output
+	if debug:
+		print "Minimum value over all images in ", fnFolder ," = ", minVal
+		print "Proposed offset is hence = ", abs(minVal)+defaultAdd
+		
+		if oldOffset!=None:
+			print "Old offset was ", oldOffset
+			if oldOffset>abs(minVal)+defaultAdd:
+				print "Going to return ", oldOffset
+			else:
+				print "Going to return ", abs(minVal)+defaultAdd
+	
+	if oldOffset!=None:
+		if oldOffset>abs(minVal)+defaultAdd:
+			return oldOffset
 
+	return abs(minVal)+defaultAdd
+	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Functions that still need testing
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------

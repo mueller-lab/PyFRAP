@@ -311,6 +311,25 @@ class analysis:
 		
 		return imgPre
  
+	def getOptimalOffset(self,debug=False):
+		
+		self.dataOffset=pyfrp_img_module.findMinOffset(self.embryo.fnDatafolder,self.embryo.fileList,self.embryo.dataEnc,oldOffset=self.dataOffset,defaultAdd=1.,debug=debug)
+		
+		if self.fnPreimage!=None:
+			fileList=pyfrp_misc_module.getSortedFileList(self.fnPreimage,self.embryo.dataFT)[:self.nPre]
+			self.dataOffset=pyfrp_img_module.findMinOffset(self.fnPreimage,fileList,self.embryo.dataEnc,oldOffset=self.dataOffset,defaultAdd=1.,debug=debug)
+		
+		if self.fnFlatten!=None:
+			fileList=pyfrp_misc_module.getSortedFileList(self.fnFlatten,self.embryo.dataFT)[:self.nFlatten]
+			self.dataOffset=pyfrp_img_module.findMinOffset(self.fnFlatten,fileList,self.embryo.dataEnc,oldOffset=self.dataOffset,defaultAdd=1.,debug=debug)
+			
+		if self.fnBkgd!=None:
+			fileList=pyfrp_misc_module.getSortedFileList(self.fnBkgd,self.embryo.dataFT)[:self.nBkgd]
+			self.dataOffset=pyfrp_img_module.findMinOffset(self.fnBkgd,fileList,self.embryo.dataEnc,oldOffset=self.dataOffset,defaultAdd=1.,debug=debug)
+			
+		return self.dataOffset
+		
+	###NOTE: This function can be removed at publication date
 	def testImport(self):
 		printWarning("Testing module")
 		print pyfrp_misc_module.remRepeatsList([3,3,4,56,1,3])

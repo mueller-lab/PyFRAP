@@ -229,7 +229,7 @@ class FRAPBoundarySelector():
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Generates matplotlib figure with (x,y) subplots
 
-def makeSubplot(size,titles=None,tight=False,sup=None,proj=None,fig=None):
+def makeSubplot(size,titles=None,tight=False,sup=None,proj=None,fig=None,show=True):
 	
 	#How many axes need to be created
 	n_ax=size[0]*size[1]
@@ -250,7 +250,8 @@ def makeSubplot(size,titles=None,tight=False,sup=None,proj=None,fig=None):
 	#Creating figure
 	if fig==None:
 		fig=plt.figure()
-		fig.show()
+		if show:
+			fig.show()
 	fig.set_tight_layout(tight)
 	
 	#Suptitle
@@ -332,7 +333,9 @@ def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,leg
 	if ax==None:
 		fig,axes = makeSubplot([1,1],titles=[title],sup=sup,tight=False)
 		ax=axes[0]
-	
+	else:
+		ax.set_title(title)
+		
 	ax.plot(xvec,yvec,color=color,label=label,linestyle=linestyle)
 	
 	if legend:
