@@ -1,11 +1,9 @@
-
-
 #Import setuptools
 from setuptools import setup
 
 #We need those two for doing some file permission magic later
 import os
-import pwd
+import platform
 
 #Overwrite setuptools install to be able to set file permissions
 from setuptools.command.install import install
@@ -81,32 +79,64 @@ class OverrideInstall(install):
 				return False
 				
 #Define setup
-setup(name='pyfrp',
-      version='1.0',
-      description='PyFRAP: A Python based FRAP analysis tool box',
-      url='https://github.com/alexblaessle/PyFRAP',
-      author='Alexander Blaessle',
-      author_email='alexander.blaessle@tuebingen.mpg.de',
-      license='GNU GPL Version 3',
-      packages=['pyfrp','pyfrp.modules','pyfrp.subclasses','pyfrp.gui'],
-      package_dir={'pyfrp': 'pyfrp',
-		   'pyfrp.modules': 'pyfrp/modules',
-		   'pyfrp.gui' : 'pyfrp/gui'
-		   },
-      #package_data = {'pyfrp':['meshfiles','configurations']},
-      include_package_data=True,
-      classifiers= [
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.7',
-        'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
-        'Intended Audience :: Science/Research'
-        ],
-      platforms=['ALL'],
-      keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
-              ],
-      zip_safe=False,
-      cmdclass={'install': OverrideInstall} #Need this here to overwrite our install
-      )
-      
 
+#Check which operating system: If Windows, do not override installation procedure
+if platform.system() in ["Windows"]:
 
+	setup(name='pyfrp',
+	version='1.0',
+	description='PyFRAP: A Python based FRAP analysis tool box',
+	url='https://github.com/alexblaessle/PyFRAP',
+	author='Alexander Blaessle',
+	author_email='alexander.blaessle@tuebingen.mpg.de',
+	license='GNU GPL Version 3',
+	packages=['pyfrp','pyfrp.modules','pyfrp.subclasses','pyfrp.gui'],
+	package_dir={'pyfrp': 'pyfrp',
+			'pyfrp.modules': 'pyfrp/modules',
+			'pyfrp.gui' : 'pyfrp/gui'
+			},
+	#package_data = {'pyfrp':['meshfiles','configurations']},
+	include_package_data=True,
+	classifiers= [
+		'Operating System :: OS Independent',
+		'Programming Language :: Python :: 2.7',
+		'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
+		'Intended Audience :: Science/Research'
+		],
+	platforms=['ALL'],
+	keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
+		],
+	zip_safe=False,
+	)
+
+#If OS is not Windows, we will overwrite the install procedure to set the file permissions for data files
+else:
+	#Import this only here, since pwd only exists for Unixoids.
+	import pwd
+	
+	setup(name='pyfrp',
+		version='1.0',
+		description='PyFRAP: A Python based FRAP analysis tool box',
+		url='https://github.com/alexblaessle/PyFRAP',
+		author='Alexander Blaessle',
+		author_email='alexander.blaessle@tuebingen.mpg.de',
+		license='GNU GPL Version 3',
+		packages=['pyfrp','pyfrp.modules','pyfrp.subclasses','pyfrp.gui'],
+		package_dir={'pyfrp': 'pyfrp',
+				'pyfrp.modules': 'pyfrp/modules',
+				'pyfrp.gui' : 'pyfrp/gui'
+				},
+		#package_data = {'pyfrp':['meshfiles','configurations']},
+		include_package_data=True,
+		classifiers= [
+			'Operating System :: OS Independent',
+			'Programming Language :: Python :: 2.7',
+			'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
+			'Intended Audience :: Science/Research'
+			],
+		platforms=['ALL'],
+		keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
+			],
+		zip_safe=False,
+		cmdclass={'install': OverrideInstall} #Need this here to overwrite our install
+		)
