@@ -45,10 +45,14 @@ from pyfrp_term_module import *
 
 class FRAPBoundarySelector():
 	
-	def __init__(self,embryo):
+	def __init__(self,embryo=None,fn=None):
 		
 		#Passing embryo to class
 		self.embryo=embryo	
+		self.fn=fn
+		
+		#Img
+		self.img=None
 		
 		#Plot resolution
 		self.dpi = 100
@@ -64,10 +68,19 @@ class FRAPBoundarySelector():
 		
 		#Creating figure and canvas
 		self.createCanvas()
+		
+		#Close everthing down if faulty input
+		self.checkInput()
 			
 		#Plot image if existent
 		self.showFirstDataImg()
 		plt.show()
+	
+	def checkInput(self):
+		if self.fn==None and self.embryo==None:
+			printError("No Embryo or fn defined. Going to exit.")
+			plt.close(self.fig)
+			return
 	
 	def createCanvas(self):
 			
@@ -81,9 +94,11 @@ class FRAPBoundarySelector():
 		self.canvas=self.fig.canvas
 		
 		self.ax = self.fig.add_subplot(111)
-		self.ax.set_xlim([0, self.embryo.dataResPx])
-		self.ax.set_ylim([0, self.embryo.dataResPx])
 		
+		if self.embryo!=None:
+			self.ax.set_xlim([0, self.embryo.dataResPx])
+			self.ax.set_ylim([0, self.embryo.dataResPx])
+			
 		#Connect to mouseclick event
 		self.fig.canvas.mpl_connect('close_event', self.closeFigure)
 		self.canvas.mpl_connect('button_press_event', self.getMouseInput)
@@ -103,7 +118,7 @@ class FRAPBoundarySelector():
 	
 	def drawCenterMarker(self):
 		
-		centerImg=[self.embryo.dataResPx/2.,self.embryo.dataResPx/2.]
+		centerImg=[self.img.shape[0]/2.,self.img.shape[1]/2.]
 		
 		if len(self.centerMarker)>0:
 			self.clearCenterMarker()
@@ -170,17 +185,22 @@ class FRAPBoundarySelector():
 		
 		
 	def showFirstDataImg(self):
+		if self.embryo!=None:
+			self.embryo.updateFileList()
 		
-		self.embryo.updateFileList()
+			fnImg=self.embryo.fnDatafolder
+			if fnImg[-1]!='/':
+				fnImg=fnImg+'/'
+			fnImg=fnImg+self.embryo.fileList[0]
+			
+			self.img=pyfrp_img_module.loadImg(fnImg,self.embryo.dataEnc)
 		
-		fnImg=self.embryo.fnDatafolder
-		if fnImg[-1]!='/':
-			fnImg=fnImg+'/'
-		fnImg=fnImg+self.embryo.fileList[0]
-		
-		img=pyfrp_img_module.loadImg(fnImg,self.embryo.dataEnc)
-	
-		self.showImg(img)
+		elif self.fn!=None:
+			self.img=pyfrp_img_module.loadImg(self.fn,'uint16')
+			self.ax.set_xlim([0, self.img.shape[0]])
+			self.ax.set_ylim([0, self.img.shape[1]])
+			
+		self.showImg(self.img)
 	
 	def showImg(self,img):
 		

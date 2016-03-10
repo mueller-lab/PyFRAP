@@ -270,7 +270,7 @@ class analysis:
 			###NOTE: Also remove bkgd??? Having bkgd in there could lead to singularities with flattening norming? 
 			meanImg=pyfrp_img_module.processImg(meanImg,processDic,None,None,None,dataOffset=self.dataOffset)
 		
-		self.flatteningMask=pyfrp_img_module.computeFlatMask(meanImg)
+		self.flatteningMask=pyfrp_img_module.computeFlatMask(meanImg,self.dataOffset)
 	
 		return self.flatteningMask
 	

@@ -17,6 +17,8 @@ import numpy as np
 from pyfrp.modules import pyfrp_misc_module 
 from pyfrp.modules import pyfrp_plot_module
 from pyfrp.modules import pyfrp_fit_module
+from pyfrp.modules import pyfrp_stats_module
+
 
 from pyfrp.modules.pyfrp_term_module import *
 
@@ -96,6 +98,7 @@ class fit:
 		#Statistics
 		self.Rsq=None
 		self.MeanRsq=None
+		self.RsqByROI={}
 		
 		#Equalization
 		self.equFacts=[]
@@ -189,10 +192,10 @@ class fit:
 		
 		return self.DOptPx, self.prodOpt, self.degrOpt, self.DOptMu
 	
-	def plotFit(self,ax=None,legend=True):
+	def plotFit(self,ax=None,legend=True,title=None):
 		
 		for r in self.ROIsFitted:
-			ax=r.plotFit(self,ax=ax,legend=legend)
+			ax=r.plotFit(self,ax=ax,legend=legend,title=title)
 			
 		return ax
 	
@@ -375,8 +378,16 @@ class fit:
 			b = b + len(r.simVec)==len(self.embryo.simulation.tvecSim)
 		return b
 		
-		
 	def updateVersion(self):
 		fittemp=fit(self.embryo,"temp")
 		pyfrp_misc_module.updateObj(fittemp,self)
 		return self
+	
+	def computeStats(self):
+		self=pyfrp_stats_module.computeFitRsq(self)
+		
+	def printRsqByROI(self):
+		print "Rsq Values by ROI for fit ", self.name
+		printDict(self.RsqByROI)
+		
+		

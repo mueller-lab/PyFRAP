@@ -571,16 +571,19 @@ class ROI(object):
 	def getdataVecFitted(self,fit):
 		return fit.dataVecsFitted[fit.ROIsFitted.index(self)]
 		
-	def plotFit(self,fit,ax=None,color=None,linewidth=1,legend=True):
+	def plotFit(self,fit,ax=None,color=None,linewidth=1,legend=True,title=None):
 		
 		if color==None:
 			color=self.color
 		
+		if title==None:
+			title="Fit"+fit.name
+			
 		ax = pyfrp_plot_module.plotTS(fit.tvecFit,self.getFittedVec(fit),ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' ' + fit.name,title="Fit"+fit.name,sup=self.name+" fitted",linestyle='-.',legend=legend)
+		label=self.name + ' ' + fit.name,title=title,sup=self.name+" fitted",linestyle='-.',legend=legend)
 		
 		ax = pyfrp_plot_module.plotTS(fit.tvecFit,self.getdataVecFitted(fit),ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' ' + fit.name,title="Fit"+fit.name,sup=self.name+" fitted",linestyle='-',legend=legend)
+		label=self.name + ' ' + fit.name,title=title,sup=self.name+" fitted",linestyle='-',legend=legend)
 		
 		return ax
 	

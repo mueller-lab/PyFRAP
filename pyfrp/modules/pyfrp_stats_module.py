@@ -21,10 +21,12 @@ import numpy as np
 	
 def computeFitRsq(fit):
 	Rsqs=[]
+	
 	#Compute Rsqs for regions used for fitting	
 	for i in range(len(fit.dataVecsFitted)):
-		Rsqs.append(Rsq(fit.dataVecsFitted[i],fit.fittedVecs[i]))
-			
+		r=Rsq(fit.dataVecsFitted[i],fit.fittedVecs[i])
+		fit.RsqByROI[fit.ROIsFitted[i].name]=r
+		Rsqs.append(r)
 	
 	fit.MeanRsq=np.mean(Rsqs)	
 	fit.Rsq=np.prod(Rsqs)

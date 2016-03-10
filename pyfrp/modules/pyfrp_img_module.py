@@ -292,7 +292,7 @@ def flipQuad(img,debug=False,testimg=False):
 			#Generate fake ICs with optimal settings
 			img=genFakeIC(img.shape[0],0,1,[256.5-50,256.5-50],100,256,[256.5,256.5],101,0)
 			
-			fixed_thresh(img,)
+			#fixed_thresh(img,)
 			
 			#Check symmetry
 			if not symmetryTest(img,debug=debug):
@@ -590,11 +590,15 @@ def gaussianFilter(img,sigma=2.,debug=False,dtype='uint16',axes=None):
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Substracts background from img
 
-def substractBkgd(img,bkgd,substractMean=True):
+def substractBkgd(img,bkgd,substractMean=True,nonNeg=True):
 	if substractMean:
 		bkgd=np.mean(bkgd)
 	
-	return img-bkgd
+	#Make sure that there image stays non-negative
+	if nonNeg:
+		img,indX,indY=fixedThresh(img,0.,smaller=True,fill=1.)
+	
+	return img
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Processes image (Flip/Norm/Gauss)
@@ -681,10 +685,13 @@ def imgHist(img,binMin=0,binMax=65535,nbins=256,binSize=1,binsFit=True,fixSize=F
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Apply fixed threshhold to image and fill pixels with values greater than thresh with fill value 
 	
-def fixedThresh(img,thresh,fill=np.nan):
+def fixedThresh(img,thresh,smaller=False,fill=np.nan):
 	
 	#Find pixels greater than thresh 
-	indX,indY=np.where(img>thresh)
+	if smaller:
+		indX,indY=np.where(img<thresh)
+	else:
+		indX,indY=np.where(img>thresh)
 	
 	#fill with value
 	img[indX,indY]=fill
@@ -756,9 +763,9 @@ def flattenImg(img,mask):
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Flattens image with flattening mask
 
-def computeFlatMask(img,offset=1E-10):
+def computeFlatMask(img,dataOffset):
 	#mask=1-(img-img.min()+offset)/(img.max()-img.min()+offset)
-	mask=img.max()/img
+	mask=(img.max()+dataOffset)/(img+dataOffset)
 	return mask
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
