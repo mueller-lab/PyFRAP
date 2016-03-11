@@ -637,7 +637,7 @@ class pyfrp(QtGui.QMainWindow):
 		
 		for i in range(len(self.config.recentFiles)): 
 			if i>5:
-				self.config.recent.pop(i)
+				self.config.recentFiles.pop(i)
 			else:
 				self.recentActions.append(QtGui.QAction(self.config.recentFiles[i], self))
 				item=self.recentActions[i]
@@ -673,10 +673,7 @@ class pyfrp(QtGui.QMainWindow):
 		
 		
 		return False
-		
-		###NOTE: Need to add here something for different types, but need to first figure out how we finally do keeping track of nodes!
-		#if typ=="Molecule":
-			
+				
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Adds Embryo to ObjectBar
 
@@ -1424,17 +1421,12 @@ class pyfrp(QtGui.QMainWindow):
 			
 			self.statusBar().showMessage("Indexing ROIs of embryo  " + currEmbryo.name)
 			
-			#Generate Qthread and pass analysis there
+			#Generate worker and generate Qthread
 			self.task=pyfrp_gui_basics.pyfrpThread()
 			self.worker=pyfrp_gui_basics.pyfrpWorker(currEmbryo.computeROIIdxs,signal=self.task.progressSignal)
 			
-			#Init and start
+			#Start
 			self.initTask()
-			self.worker.moveToThread(self.task)
-			self.worker.start.emit()
-			
-			
-			
 			
 		return
 
@@ -1528,7 +1520,8 @@ class pyfrp(QtGui.QMainWindow):
 		self.statusBar().showMessage("Analyzing Dataset " + currEmbryo.name)
 		
 		#Generate Qthread and pass analysis there
-		self.task=pyfrp_gui_analysis_dialogs.analysisThread(embryo=currEmbryo)
+		self.task=pyfrp_gui_basics.pyfrpThread()
+		self.worker=pyfrp_gui_basics.pyfrpWorker(currEmbryo.analysis.run,signal=self.task.progressSignal)
 		
 		#Init and start
 		self.initTask()
@@ -1588,7 +1581,8 @@ class pyfrp(QtGui.QMainWindow):
 		self.statusBar().showMessage("Simulating Dataset " + currEmbryo.name)
 		
 		#Generate Qthread and pass analysis there
-		self.task=pyfrp_gui_simulation_dialogs.simulationThread(embryo=currEmbryo)
+		self.task=pyfrp_gui_basics.pyfrpThread()
+		self.worker=pyfrp_gui_basics.pyfrpWorker(currEmbryo.simulation.run,signal=self.task.progressSignal)
 		
 		#Init and start
 		self.initTask()
@@ -1627,7 +1621,8 @@ class pyfrp(QtGui.QMainWindow):
 		self.statusBar().showMessage("Generating Mesh " + currEmbryo.name)
 		
 		#Generate Qthread and pass analysis there
-		self.task=pyfrp_gui_mesh_dialogs.genMeshThread(embryo=currEmbryo)
+		self.task=pyfrp_gui_basics.pyfrpThread()
+		self.worker=pyfrp_gui_basics.pyfrpWorker(currEmbryo.simulation.mesh.genMesh)
 		
 		#Init and start
 		self.initTask()
@@ -1650,12 +1645,13 @@ class pyfrp(QtGui.QMainWindow):
 		self.backupObj=cpy.deepcopy(currEmbryo)
 		
 		self.statusBar().showMessage("Refining Mesh " + currEmbryo.name)
-		
+	
 		#Generate Qthread and pass analysis there
-		self.task=pyfrp_gui_mesh_dialogs.refineMeshThread(embryo=currEmbryo)
+		self.task=pyfrp_gui_basics.pyfrpThread()
+		self.worker=pyfrp_gui_basics.pyfrpWorker(currEmbryo.simulation.mesh.refine)
 		
 		#Init and start
-		self.initTask()	
+		self.initTask()
 		
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#force Mesh task/progressbar
@@ -1668,9 +1664,9 @@ class pyfrp(QtGui.QMainWindow):
 			return
 		
 		#Get options
-		ret=pyfrp_gui_mesh_dialogs.forceMeshSettingsDialog(currEmbryo.simulation.mesh,self).exec_()
-		
-		print ret
+		forceMeshDialog=pyfrp_gui_mesh_dialogs.forceMeshSettingsDialog(currEmbryo.simulation.mesh,self)
+		if forceMeshDialog.exec_():
+			roiUsed,density,stepPercentage,debug,findIdxs,method,maxCells=forceMeshDialog.getVals()
 		
 		#Genereate wait popup
 		self.progressDialog=pyfrp_gui_mesh_dialogs.forceMeshProgressDialog(None)
@@ -1682,10 +1678,11 @@ class pyfrp(QtGui.QMainWindow):
 		self.statusBar().showMessage("Computing new mesh with required density " + currEmbryo.name)
 		
 		#Generate Qthread and pass analysis there
-		self.task=pyfrp_gui_mesh_dialogs.forceMeshThread(embryo=currEmbryo)
+		self.task=pyfrp_gui_basics.pyfrpThread()
+		self.worker=pyfrp_gui_basics.pyfrpWorker(currEmbryo.simulation.mesh.forceMinMeshDensityInROI,roiUsed,density,stepPercentage,debug=debug,findIdxs=findIdxs,method=method,maxCells=maxCells)
 		
 		#Init and start
-		self.initTask()	
+		self.initTask()
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#force Mesh in ROI
@@ -1899,11 +1896,8 @@ class pyfrp(QtGui.QMainWindow):
 		self.statusBar().showMessage("Performing fit " + self.currObj.name)
 		
 		#Generate Qthread and pass analysis there
-		#self.worker=pyfrp_gui_basic_dialogs.pyfrpWorker()
-		
-		self.task=pyfrp_gui_fit_dialogs.fittingThread(fit=self.currObj)
-		
-		
+		self.task=pyfrp_gui_basics.pyfrpThread()
+		self.worker=pyfrp_gui_basics.pyfrpWorker(self.currObj.run)
 		
 		#Init and start
 		self.initTask()
@@ -2008,11 +2002,17 @@ class pyfrp(QtGui.QMainWindow):
 	
 	def initTask(self):
 		
+		#Set Main GUI set disabled
 		self.setDisabled(True)
 		
+		#Connect signals
 		self.worker.taskFinished.connect(self.taskFinished)
 		self.task.progressSignal.connect(self.updateProgressDialog)
 		self.progressDialog.accepted.connect(self.taskCanceled)
+		
+		#Move worker and start
+		self.worker.moveToThread(self.task)
+		self.worker.start.emit()
 		
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Updates ProgressBar
