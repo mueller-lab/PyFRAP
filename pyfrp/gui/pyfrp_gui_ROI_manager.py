@@ -208,6 +208,9 @@ class ROImanager(QtGui.QDialog):
 		
 	def editROI(self):
 		typ=self.currROI.getType()
+		
+		print typ
+		
 		self.openDialog(self.currROI,typ)
 		self.updateROIList()
 	

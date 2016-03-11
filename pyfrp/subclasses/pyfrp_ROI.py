@@ -154,6 +154,9 @@ class ROI(object):
 		before,typ,after=typ.split("'")
 		typ=typ.replace('pyfrp_ROI.','')
 		typ=typ.replace('ROI','')
+		
+		typ=typ.replace('pyfrp.subclasses.','')
+		
 		return typ
 	
 	def setColor(self,color):

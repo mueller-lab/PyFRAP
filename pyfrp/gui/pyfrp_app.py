@@ -913,7 +913,8 @@ class pyfrp(QtGui.QMainWindow):
 			return self.propBar
 		
 		for item in vars(obj):
-
+			
+			###NOTE: Creates deprecation warning on Windows
 			if isinstance(vars(obj)[str(item)],(int,float,str)) or vars(obj)[str(item)]==None:
 				pass
 			elif len(np.shape(vars(obj)[str(item)]))>0 and np.shape(vars(obj)[str(item)])[0]<maxArraySize:
