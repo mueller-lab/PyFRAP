@@ -507,7 +507,7 @@ class pyfrpWorker(QtCore.QObject):
 
 	start = QtCore.pyqtSignal(str)
 
-	@pyqtSlot
+	@QtCore.pyqtSlot()
 	def run(self, some_string_arg):
 		self.function(*self.args, **self.kwargs)
 
