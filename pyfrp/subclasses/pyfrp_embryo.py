@@ -456,7 +456,7 @@ class embryo:
 		return self.analysis
 	
 	def computeROIIdxs(self,signal=None,debug=True):
-			
+		
 		for i,r in enumerate(self.ROIs):
 			startInit=time.clock()
 			r.computeIdxs()

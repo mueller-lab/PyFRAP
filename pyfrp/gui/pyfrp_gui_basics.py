@@ -495,46 +495,36 @@ class progressDialog(QtGui.QDialog):
 #Basic PyFRAP Thread
 #===================================================================================================================================
 
+#Simple worker class        
 class pyfrpWorker(QtCore.QObject):
+	
+	taskFinished = QtCore.pyqtSignal()
+	start = QtCore.pyqtSignal()
 	
 	def __init__(self, function, *args, **kwargs):
 		super(pyfrpWorker, self).__init__()
-
+		
 		self.function = function
 		self.args = args
 		self.kwargs = kwargs
 		self.start.connect(self.run)
-
-	start = QtCore.pyqtSignal(str)
-
-	@QtCore.pyqtSlot()
-	def run(self, some_string_arg):
+		
+	#@QtCore.pyqtSlot() (Interesting: the pyqtslot decorator seems to block the start signal...)
+	def run(self):
 		self.function(*self.args, **self.kwargs)
-
+		self.taskFinished.emit()
+		
+		
 class pyfrpThread(QtCore.QThread):
 	
-	taskFinished = QtCore.pyqtSignal()
 	progressSignal = QtCore.pyqtSignal(int)
 	
 	def __init__(self, parent=None):
 		QtCore.QThread.__init__(self)
-		self.obj=None
 		
-	#def __del__(self):
-		#self.wait()
+	def __del__(self):
+		self.wait()
     
-	def run(self):
-		
-		if self.obj==None:
-			self.terminate()
-			self.taskFinished.emit() 	
-		else:
-			self.runTask()
-			self.taskFinished.emit()
-			
-	def runTask(self):
-		printError("No task specified.")
-		return
 		
 #===================================================================================================================================
 #Basic Wait Dialog
@@ -563,7 +553,6 @@ class waitDialog(QtGui.QDialog):
 		self.show()	
 	
 	def cancel(self):
-	
 		self.accepted.emit()
 	
 	

@@ -64,6 +64,8 @@ import pyfrp_gui_mesh_dialogs
 import pyfrp_gui_fit_dialogs
 import pyfrp_gui_pinning_dialogs
 import pyfrp_gui_statistics_dialogs
+import pyfrp_gui_basics
+
 
 #PyFRAP Classes
 from pyfrp.subclasses import pyfrp_conf
@@ -1423,11 +1425,17 @@ class pyfrp(QtGui.QMainWindow):
 			self.statusBar().showMessage("Indexing ROIs of embryo  " + currEmbryo.name)
 			
 			#Generate Qthread and pass analysis there
-			self.task=pyfrp_gui_ROI_manager.indexThread(embryo=currEmbryo)
+			self.task=pyfrp_gui_basics.pyfrpThread()
+			self.worker=pyfrp_gui_basics.pyfrpWorker(currEmbryo.computeROIIdxs,signal=self.task.progressSignal)
 			
 			#Init and start
-			self.initTask()	
-				
+			self.initTask()
+			self.worker.moveToThread(self.task)
+			self.worker.start.emit()
+			
+			
+			
+			
 		return
 
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2002,12 +2010,10 @@ class pyfrp(QtGui.QMainWindow):
 		
 		self.setDisabled(True)
 		
-		self.task.taskFinished.connect(self.taskFinished)
+		self.worker.taskFinished.connect(self.taskFinished)
 		self.task.progressSignal.connect(self.updateProgressDialog)
 		self.progressDialog.accepted.connect(self.taskCanceled)
 		
-		self.task.start()
-	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Updates ProgressBar
 	
@@ -2018,6 +2024,11 @@ class pyfrp(QtGui.QMainWindow):
 	#Launched when task is finished. Sets Main GUI available again, closes all dialogs, updates ObjectBar
 	
 	def taskFinished(self):
+		
+		#Quit thread
+		self.task.quit()
+		
+		#Close dialog and make GUI available again
 		self.progressDialog.close()
 		self.statusBar().showMessage("Idle")
 		self.setEnabled(True)

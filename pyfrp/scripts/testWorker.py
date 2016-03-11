@@ -2,15 +2,20 @@
 from pyfrp.modules import pyfrp_misc_module
 from PyQt4 import QtGui, QtCore
 import sys
+import time
 
 #Simple test function
-def testFunc():
+def testFunc(sig):
 	
 	#List that is going to be passed along
 	l=[3,3,4,56,1,3]
 	
 	#Call pyfrp function
 	print pyfrp_misc_module.remRepeatsList(l)
+	
+	for i in range(100):
+		time.sleep(0.03)	
+		sig.emit(i)
 	
 #Main Window
 class Window(QtGui.QWidget):
@@ -23,8 +28,15 @@ class Window(QtGui.QWidget):
 		self.btnStart=QtGui.QPushButton('Start')
 		self.btnStart.connect(self.btnStart, QtCore.SIGNAL('clicked()'), self.startPressed)
 		
+		#Progressbar
+		self.progressbar = QtGui.QProgressBar()
+		self.progressbar.setMinimum(1)
+		self.progressbar.setMaximum(100)
+		
+		#Layout
 		self.hbox = QtGui.QHBoxLayout()
 		self.hbox.addWidget(self.btnStart)
+		self.hbox.addWidget(self.progressbar)
 		
 		self.setLayout(self.hbox)    
 		
@@ -37,32 +49,41 @@ class Window(QtGui.QWidget):
 		self.thread.start()
 		
 		#Make worker
-		self.worker = GenericWorker(testFunc)
+		self.worker = GenericWorker(testFunc,self.thread.progressSignal)
 		
 		#Pass worker to thread
 		self.worker.moveToThread(self.thread)
 		
-		
-		self.worker.finished.connect(self.thread.quit)
+		#Connect
+		self.worker.finished.connect(self.quitThread)
+		self.thread.progressSignal.connect(self.updateProgressDialog)
 		
 		#Run
 		self.worker.start.emit()
 		
+	def quitThread(self):
+		self.thread.quit()
+	
+	def updateProgressDialog(self,n):
+		self.progressbar.setValue(n)
+	
+	#def closeEvent(self, event):
+			
+		#self.thread.__del__()	
+			
+		#self.worker.__del__()
 		
-		#self.worker = worker
+		#return
 		
-		#thread.wait()
-		
-		
-		
-
 class GenericThread(QtCore.QThread):
+	
+	progressSignal = QtCore.pyqtSignal(int)
 	
 	def __init__(self):
 		QtCore.QThread.__init__(self)
 		
-	#def __del__(self):
-		#self.wait()
+	def __del__(self):
+		self.wait()
 		
 		
 		
