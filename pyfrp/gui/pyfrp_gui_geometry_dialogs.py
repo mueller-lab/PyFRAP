@@ -239,6 +239,48 @@ class zebrafishDomeStageDialog(geometryDialog):
 		self.geometry.restoreDefault()
 		self.geometry.updateGeoFile()
 		self.drawGeometry()
+
+class cylinderDialog(geometryDialog):
+	
+	def __init__(self,geometry,parent):	
+		super(cylinderDialog,self).__init__(geometry,parent)	
+		
+		#Labels
+		self.lblRadius = QtGui.QLabel("Radius (px):", self)
+		self.lblHeight = QtGui.QLabel("Height (px):", self)
+		
+		#LineEdits
+		self.qleRadius = QtGui.QLineEdit(str(self.geometry.radius))
+		self.qleHeight = QtGui.QLineEdit(str(self.geometry.height))
+		
+		self.qleRadius.setValidator(self.doubleValid)
+		self.qleHeight.setValidator(self.doubleValid)
+		
+		self.qleRadius.editingFinished.connect(self.setRadius)
+		self.qleHeight.editingFinished.connect(self.setHeight)
+		
+		#Layout
+		nRows=self.grid.rowCount()
+		
+		self.grid.addWidget(self.lblRadius,nRows+1,1)
+		self.grid.addWidget(self.lblHeight,nRows+3,1)
+		
+		self.grid.addWidget(self.qleRadius,nRows+1,2)
+		self.grid.addWidget(self.qleHeight,nRows+3,2)
+		
+		self.show()
+	
+	def setRadius(self):
+		self.geometry.setRadius(float(str(self.qleRadius.text())))
+		self.geometry.updateGeoFile()
+		self.drawGeometry()
+		return self.geometry.getRadius()
+	
+	def setHeight(self):
+		self.geometry.setHeight(float(str(self.qleHeight.text())))
+		self.geometry.updateGeoFile()
+		self.drawGeometry()
+		return self.geometry.getHeight()
 		
 class coneDialog(geometryDialog):
 	
@@ -450,9 +492,9 @@ class geometrySelectDialog(QtGui.QDialog):
 		center,radius,height=self.getOldAttr()
 		
 		if text=='zebraFishDomeStage':
-			print "bla"
+			
 			self.embryo.setGeometry2ZebraFishDomeStage(center,radius,radiusScale=1.1)
-			print self.embryo.geometry
+			
 		elif text=='cylinder':
 			self.embryo.setGeometry2Cylinder(center,radius,height)
 		elif text=='xenopusBall':

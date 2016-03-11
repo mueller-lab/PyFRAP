@@ -102,11 +102,63 @@ class FRAPBoundarySelector():
 		#Connect to mouseclick event
 		self.fig.canvas.mpl_connect('close_event', self.closeFigure)
 		self.canvas.mpl_connect('button_press_event', self.getMouseInput)
+		self.canvas.mpl_connect('key_press_event', self.keyPressed)
 		
 		self.canvas.draw()
 		
 		return 
 	
+	def keyPressed(self,event):
+		if event.key=='left':
+			self.moveLeft()
+		elif event.key=='right':
+			self.moveRight()
+		elif event.key=='up':
+			self.moveUp()
+		elif event.key=='down':
+			self.moveDown()
+		elif event.key=='ctrl+up':
+			self.increaseRadius()
+		elif event.key=='ctrl+down':
+			self.decreaseRadius()
+			
+	def moveLeft(self):
+		if self.center!=None:
+			self.center=[self.center[0]-1,self.center[1]]
+			self.drawCenter()
+		
+		
+	def moveRight(self):
+		if self.center!=None:
+			self.center=[self.center[0]+1,self.center[1]]
+			self.redraw()
+	
+	def moveUp(self):
+		if self.center!=None:
+			self.center=[self.center[0],self.center[1]+1]
+			self.redraw()
+	
+	def moveDown(self):
+		if self.center!=None:
+			self.center=[self.center[0],self.center[1]-1]
+			self.redraw()
+	
+	def redraw(self):
+		if self.center!=None:
+			self.drawCenter()
+		if self.radius!=None:
+			self.drawRadius()
+			
+	def increaseRadius(self):
+		if self.radius!=None:
+			self.radius=self.radius+1
+			self.redraw()
+			
+	def decreaseRadius(self):
+		if self.radius!=None:
+			self.radius=self.radius-1
+			self.redraw()
+			
 	def closeFigure(self,event):
 		return self.center,self.radius
 		

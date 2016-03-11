@@ -220,8 +220,8 @@ class zebrafishDomeStageQuad(zebrafishDomeStage):
 class cylinder(geometry):
 	
 	def __init__(self,embryo,center,radius,height):
-		
-		super(cylinder, self).__init__(embryo,"cylinder","../meshfiles/cylinder.geo",center)
+		mdir=pyfrp_misc_module.getMeshfilesDir()
+		super(cylinder, self).__init__(embryo,"cylinder",mdir+"cylinder.geo",center)
 
 		self.radius=radius
 		self.height=height

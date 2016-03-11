@@ -1,2 +1,2 @@
 gmshBin=~/Downloads/gmsh-2.10.1-source/build3/./gmsh
-fijiBin/opt/Fiji.app/./ImageJ-linux64
+fijiBin=/opt/Fiji.app/./ImageJ-linux64
