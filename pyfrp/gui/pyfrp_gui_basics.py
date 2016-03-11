@@ -495,6 +495,22 @@ class progressDialog(QtGui.QDialog):
 #Basic PyFRAP Thread
 #===================================================================================================================================
 
+class pyfrpWorker(QtCore.QObject):
+	
+	def __init__(self, function, *args, **kwargs):
+		super(pyfrpWorker, self).__init__()
+
+		self.function = function
+		self.args = args
+		self.kwargs = kwargs
+		self.start.connect(self.run)
+
+	start = QtCore.pyqtSignal(str)
+
+	@pyqtSlot
+	def run(self, some_string_arg):
+		self.function(*self.args, **self.kwargs)
+
 class pyfrpThread(QtCore.QThread):
 	
 	taskFinished = QtCore.pyqtSignal()
@@ -504,8 +520,8 @@ class pyfrpThread(QtCore.QThread):
 		QtCore.QThread.__init__(self)
 		self.obj=None
 		
-	def __del__(self):
-		self.wait()
+	#def __del__(self):
+		#self.wait()
     
 	def run(self):
 		
@@ -519,8 +535,7 @@ class pyfrpThread(QtCore.QThread):
 	def runTask(self):
 		printError("No task specified.")
 		return
-	
-	
+		
 #===================================================================================================================================
 #Basic Wait Dialog
 #===================================================================================================================================

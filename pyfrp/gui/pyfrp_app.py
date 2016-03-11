@@ -1891,7 +1891,11 @@ class pyfrp(QtGui.QMainWindow):
 		self.statusBar().showMessage("Performing fit " + self.currObj.name)
 		
 		#Generate Qthread and pass analysis there
+		#self.worker=pyfrp_gui_basic_dialogs.pyfrpWorker()
+		
 		self.task=pyfrp_gui_fit_dialogs.fittingThread(fit=self.currObj)
+		
+		
 		
 		#Init and start
 		self.initTask()
