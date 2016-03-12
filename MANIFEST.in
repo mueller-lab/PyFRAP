@@ -3,3 +3,4 @@ include pyfrp/meshfiles/experimental/*
 include pyfrp/meshfiles/field/*
 
 include pyfrp/configurations/*
+include pyfrp/configurations/macros/*

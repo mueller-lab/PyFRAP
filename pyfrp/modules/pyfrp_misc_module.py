@@ -37,6 +37,10 @@
 
 #PyFRAP modules
 from pyfrp_term_module import *
+from pyfrp.modules import pyfrp_img_module
+
+#PyFRAP subclasses
+
 
 #Numpy
 import numpy as np
@@ -46,6 +50,7 @@ import csv
 import time
 import os
 import inspect
+import platform
 
 #===========================================================================================================================================================================
 #Module Functions
@@ -668,8 +673,13 @@ def objAttrToList(listOfObjects,AttributeName):
 
 def slashToFn(fn):
 	
-	if fn[-1]!="/":
-		fn=fn+"/"
+	if platform.system() in ["Windows"]:
+		s="\\"
+	else:
+		s="/"
+		
+	if fn[-1]!=s:
+		fn=fn+s
 	return fn
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -757,3 +767,304 @@ def getConfDir():
 def getModulesDir():
 	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 	return modulePath+"/"
+
+def getMacroDir():
+	return getConfDir()+'macros/'
+
+def getPathFile():
+	return getConfDir()+'paths'
+
+def getFijiBin(fnPath=None):
+	return getPath('fijiBin',fnPath=fnPath)
+	
+def getPath(identifier,fnPath=None,defaultOutput=""):
+	
+	"""Extracts path with identifier from path definition file.
+	
+	If not defined diferently, will first look in configurations/paths,
+	then configurations/paths.default.
+	
+	Args:
+		identifier (str): Identifier of path
+		
+	Keyword Args:
+		fnPath (str): Path to path definition file
+			
+	Returns:
+		str: Path
+
+	"""
+	
+	if fnPath==None:
+		fnPath=getPathFile()
+	
+	else:
+		if not os.path.isfile(fnPath):
+			printWarning(fnPath+" does not exist. Will continue with paths defined in default paths files.")
+			fnPath=getPathFile()
+		
+	path=None
+	
+	with  open (fnPath,'rb') as f:
+		for line in f:
+			if line.strip().startswith(identifier):
+				ident,path=line.split('=')
+				path=path.strip()
+				break
+		
+	if path==None:
+		printWarning("There is no line starting with ", identifier+"= in ", fnPath, ".")
+		fnPath=getPathFile()+'.default'
+		path=getPath(identifier,fnPath=fnPath)
+		
+	path=os.path.expanduser(path)
+	
+	return path
+	
+def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True):
+	
+	"""Creates embryo object ready for analysis from microscope data.
+	
+	(1) Extracts microscope data into .tif files
+	(2) Builds folder structure
+	(3) Moves image files in proper folders
+	(4) Creates embryo object and automatically sets filepaths properly
+	
+	Args:
+		fn (str): Path to embryo folder
+		ftype (str): Type of microscopy file, such as lsm or czi
+		name (str): Name of embryo
+	
+	Keyword Args:
+		nChannel (int): Defines which channel of the images contains relevant data
+		fnDest (str): Path of embryo data structure
+		createEmbryo (boo): Flag if embryo object should be created
+		
+	Returns:
+		pyfrp.subclasses.pyfrp_embryo.embryo: Created Embryo in case of success, otherwise -1
+
+	"""
+	
+	fn=slashToFn(fn)
+	
+	if not os.path.isdir(fn):
+		printError(fn+ " does not exist.")
+		return -1
+	
+	l=getSortedFileList(fn,ftype)
+	if len(l)==0:
+		printError(fn+ "does not contain images of type ", ftype)
+		return -1
+	
+	r=pyfrp_img_module.extractMicroscope(fn,ftype)
+	
+	if r==-1:
+		return -1
+	
+	if fnDest==None:
+		fnDest=fn
+	
+	fnDest=slashToFn(fnDest)
+	
+	makeEmbryoFolderStruct(fnDest)
+	sortImageFiles(fn,fnDest,ftype,nChannel=nChannel)
+	
+	if createEmbryo:
+		from pyfrp.subclasses import pyfrp_embryo
+		
+		emb=pyfrp_embryo.embryo(name)
+		emb.setDataFolder(fnDest+'recover')
+		a=emb.newAnalysis()
+		a.setFnPre(fnDest+'pre')
+		
+		return emb
+	else:
+		return 1
+	
+def sortImageFiles(fn,fnDest,ftype,recoverIdent=['recover','post'],bleachIdent=['bleach'],preIdent=['pre'],nChannel=1,debug=False,colorPrefix='_c00'):
+	
+	"""Sorts all image data in fn into the respective folders of embryo project.
+	
+	Args:
+		fn (str): Path to folder containing images
+		fnDest (str): Path of embryo project.
+		ftype (str): Type of microscopy file, such as lsm or czi
+
+	Keyword Args:
+		recoverIdent (list): List of identifiers for recovery data
+		bleachIdent (list): List of identifiers for bleach data
+		preIdent (list): List of identifiers for pre-bleach data
+		nChannel (int): Defines which channel of the images contains relevant data
+		debug (bool): Debugging flag
+		colorPrefix (str): Defines how to detect if multichannel or not
+		
+	Returns:
+		int: 0
+
+	"""
+	
+	recoverMulti,preMulti,bleachMulti=checkDataMultiChannel(fn,recoverIdent=recoverIdent,bleachIdent=bleachIdent,preIdent=preIdent,colorPrefix=colorPrefix)
+	
+	moveImageFiles(fn,'recover','tif',recoverIdent,recoverMulti,fnDest=fnDest,debug=debug,colorPrefix=colorPrefix)
+	moveImageFiles(fn,'pre','tif',preIdent,preMulti,fnDest=fnDest,debug=debug,colorPrefix=colorPrefix)
+	moveImageFiles(fn,'bleach','tif',bleachIdent,bleachMulti,fnDest=fnDest,debug=debug,colorPrefix=colorPrefix)
+	moveImageFiles(fn,'lsm','lsm',[""],False,fnDest=fnDest,debug=debug,colorPrefix=colorPrefix)
+	
+	return 
+	
+def moveImageFiles(fn,fnTarget,ftype,ident,isMulti,fnDest=None,debug=False,colorPrefix='_c00',nChannel=1):
+	
+	"""Moves all image files fullfilling *ident*(isMulti*colorPrefix)* to fnDest+fnTarget.
+	
+	Args:
+		fn (str): Path to folder containing images
+		fnTarget (str): Name of folder files should go in, for example "recover"
+		ftype (str): Type of file, for example "tif"
+		indent (list): List of identifiers, for example ["recover","post"]
+		isMulti (bool): Flag if images are multichannel or not
+
+	Keyword Args:
+		fnDest (str): Path containing fnTarget
+		debug (bool): Debugging flag
+		colorPrefix (str): Defines how to detect if multichannel or not
+		nChannel (int): Defines which channel of the images contains relevant data
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+
+	"""
+	
+	if fnDest==None:
+		fnDest=fn
+	
+	debugFlag=debug*' -v '
+	r=0
+	for ind in ident:
+		try:
+			colorFlag=isMulti*('*'+colorPrefix+str(nChannel))
+			cmd='mv '+debugFlag+fn+'*'+ind+colorFlag+'*.'+ftype +' ' + fnDest + fnTarget+'/'
+			os.system(cmd)
+			r=1
+		except:
+			printError("Something went wrong executing:" )
+			print cmd
+			r=0
+	
+	return r
+	
+def checkDataMultiChannel(fn,recoverIdent=['recover','post'],bleachIdent=['bleach'],preIdent=['pre'],colorPrefix='_c00'):
+	
+	"""Checks if extracted bleach/pre/recover microscopy data are multichannel.
+	
+	Args:
+		fn (str): Path to folder containing images
+
+	Keyword Args:
+		recoverIdent (list): List of identifiers for recovery data
+		bleachIdent (list): List of identifiers for bleach data
+		preIdent (list): List of identifiers for pre-bleach data
+		colorPrefix (str): Defines how to detect if multichannel or not
+				
+	Returns:
+		{
+		bool: True if recover is multichannel
+		bool: True if pre is multichannel
+		bool: True if bleach is multichannel
+		}
+	"""
+	
+	l=getSortedFileList(fn,'.tif')
+	
+	recoverMulti=checkMultiChannel(fn,recoverIdent,colorPrefix=colorPrefix)
+	preMulti=checkMultiChannel(fn,preIdent,colorPrefix=colorPrefix)
+	bleachMulti=checkMultiChannel(fn,bleachIdent,colorPrefix=colorPrefix)
+	
+	return recoverMulti,preMulti,bleachMulti
+	
+	
+
+def checkMultiChannel(fn,ident,colorPrefix='_c00'):
+	
+	"""Checks if extracted microscopy with identifier are multichannel.
+	
+	Args:
+		fn (str): Path to folder containing images
+		indent (list): List of identifiers, for example ["recover","post"]
+	
+	Keyword Args:
+		colorPrefix (str): Defines how to detect if multichannel or not
+		
+	Returns:
+		bool: True if multichannel, False if not
+
+	"""
+	
+	l=getSortedFileList(fn,'.tif')
+	for f in l:
+		for i in ident:
+			if colorPrefix in f:
+				return True
+	return False		
+			
+
+def makeEmbryoFolderStruct(fn):
+	
+	"""Creates default folder structure for embryo object.
+	
+	fn
+	|--recover
+	|--pre
+	|--bleach
+	|--lsm
+	|--meshfiles
+	
+	Args:
+		fn (str): Path to embryo folder
+			
+	Returns:
+		int: 0
+
+	"""
+	
+	try:
+		os.mkdir(fn)
+	except OSError:
+		pass
+		
+	try:
+		os.mkdir(fn+"recover")
+	except OSError:
+		pass
+
+	try:
+		os.mkdir(fn+"pre")
+	except OSError:
+		pass
+	
+	try:
+		os.mkdir(fn+"bleach")
+	except OSError:
+		pass
+	
+	try:
+		os.mkdir(fn+"meshfiles")
+	except OSError:
+		pass
+	
+	try:
+		os.mkdir(fn+"lsm")
+	except OSError:
+		pass
+	
+	
+	return 0
+	
+	
+	
+	
+		
+	
+	
+	
+	
+	

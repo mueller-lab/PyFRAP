@@ -42,10 +42,13 @@ class OverrideInstall(install):
 				self.changePermissions(filepath,uid,gid,mode)
 				
 				#Make some more necessary data folders
-				if folderpath.endswith("meshfiles"):	
+				if folderpath.endswith("meshfiles"):
 					self.makeAdditionalDataFolders(folderpath,"field",uid,gid,mode)
 					self.makeAdditionalDataFolders(folderpath,"field/custom",uid,gid,mode)
-	
+					
+				if folderpath.endswith("configurations"):
+					self.makeAdditionalDataFolders(folderpath,"macros",uid,gid,mode)
+					
 	def changePermissions(self,filepath,uid,gid,mode):
 		ret=True
 		try:

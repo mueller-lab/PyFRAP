@@ -233,33 +233,7 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 
 	return fn
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Gets gmsh executable from path configuration file
-
-def getGmshBin(fnPath="paths",identifier="gmshBin"):
+def getGmshBin(fnPath=None):
+	return pyfrp_misc_module.getPath("gmshBin",fnPath=fnPath)
 	
-	fnPath=pyfrp_misc_module.getConfDir()+fnPath
-	
-	if not os.path.isfile(fnPath):
-		printWarning(fnPath + " does not exist. Check your paths definition file. Will return 'gmsh'.")
-		return "gmsh"
-	
-	path=None
-	
-	f = open (fnPath,'rb')
-	for line in f:
-		if line.strip().startswith(identifier):
-			ident,path=line.split('=')
-			path=path.strip()
-			break
-	
-	if path==None:
-		printWarning("There is no line starting with ", identifier+"= in ", fnPath, ". Will return 'gmsh'.")
-		return "gmsh"
-
-	path=os.path.expanduser(path)
-	
-	return path
-
-
 	

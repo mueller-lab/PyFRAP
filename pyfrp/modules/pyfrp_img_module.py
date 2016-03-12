@@ -40,6 +40,7 @@ import matplotlib.patches as ptc
 #Misc
 import sys
 import time
+import os
 
 #PyFRAP modules
 import pyfrp_misc_module
@@ -1296,68 +1297,8 @@ def findMinOffset(fnFolder,fileList,dataEnc,oldOffset=None,defaultAdd=1.,debug=F
 			
 	#return embryo		
 	
-##-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-##Convert lsm file to tiff
-
-#def convLsm2Tiff(fnImg):	
-	
-	##Open file
-	#lsm= tifffile.TiffFile(fnImg)	
-	
-	##Grabbing image data
-	#lsm_img=lsm.asarray()
-	
-	##Looping over all timepoints, z-stacks and channels and print files
-	#for i in range(lsm.series[0].shape[0]):
-		#for j in range(lsm.series[0].shape[1]):
-			#for k in range(lsm.series[0].shape[2]):
-				
-				##Cutting of lsm
-				#fname,ftype=lsm.fname.split(".")
-				#outname=lsm.fpath+"/"+fname+"_t"+str(i)+"_z"+str(j+1)+"_c"+str(k+1)+".tif"
-				
-				##Going through all different stacks and see if they exist in this dataset
-				#if lsm.series[0].shape[0]==1:
-					##No timeseries
-					#if lsm.series[0].shape[0]==1:
-						##No z_stack
-						#if lsm.series[0].shape[0]==1:
-							##Only 1 channel
-							#curr_img=lsm_img
-						#else:
-							#curr_img=lsm_img[k,:,:]
-					#else:
-						#curr_img=lsm_img[j,k,:,:]
-				#else:
-						#curr_img=lsm_img[i,j,k,:,:]
-				
-				##Writing file
-				#tifffile.imsave(outname, curr_img)
-	##Close file			
-	#lsm.close()
-	
-##-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-##Convert lsm file to tiff
-	
-#def convLsmSeries2Tiff(fn_folder):	
-	
-	##If folder string ends without /, add /
-	#if fn_folder[-1]=="/":
-		#pass
-	#else:
-		#fn_folder=fn_folder+"/"
-	
-	##Generate search key for sequence
-	#fn_search=fn_folder+"*lsm"
-	
-	#lsm=tifffile.TiffSequence(fn_search)	
-	
-	##Loop through for files
-	#for fn in lsm.files:
-		#conv_lsm_to_tiff(fn)
-
-##-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-##otsu algorithm of imagej
+#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#otsu algorithm of imagej
 
 def otsuImageJ(img,maxVal,minVal,debug):
 	
@@ -1442,12 +1383,105 @@ def otsuImageJ(img,maxVal,minVal,debug):
 			
 	return kStar,binImg	
 
+def extractMicroscope(folder,ftype,fijiBin=None,macroPath=None):
+	
+	"""Converts all microscopy files of type ftype in folder to files using Fiji.
+
+	Args:
+		folder (str): Path to folder containing czi files
+		ftype (str): Type of microscopy file, such as lsm or czi
+	
+	Keyword Args:
+		fijiBin (str): Path to fiji binary
+		macroPath (str): Path to fiji macro
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+
+	"""
+	
+	if ftype=='lsm':
+		r=extractLSM(folder,fijiBin=fijiBin,macroPath=macroPath)
+	elif ftype=='czi':
+		r=extractCZI(folder,fijiBin=fijiBin,macroPath=macroPath)
+	else:
+		printError("Unknown filetype "+ftype)
+		return -1
+	return r
+
+def extractLSM(folder,fijiBin=None,macroPath=None):
+	
+	"""Converts all lsm files in folder to tif files using Fiji.
+
+	Args:
+		folder (str): Path to folder containing lsm files
+	
+	Keyword Args:
+		fijiBin (str): Path to fiji binary
+		macroPath (str): Path to fiji macro
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+
+	"""
+
+	if macroPath==None:
+		macroPath=pyfrp_misc_module.getMacroDir()+'lsm2tif.ijm'
+	
+	return runFijiMacro(macroPath,folder,fijiBin=fijiBin)
+	
+def extractCZI(folder,fijiBin=None,macroPath=None):
+	
+	"""Converts all czi files in folder to tif files using Fiji.
+
+	Args:
+		folder (str): Path to folder containing czi files
+		
+	Keyword Args:	
+		fijiBin (str): Path to fiji binary
+		macroPath (str): Path to fiji macro
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+
+	"""
+	
+	if macroPath==None:
+		macroPath=pyfrp_misc_module.getMacroDir()+'czi2tif.ijm'
+	
+	return runFijiMacro(macroPath,folder,fijiBin=fijiBin)
 	
 	
+def runFijiMacro(macroPath,macroArgs,fijiBin=None):
 	
+	"""Runs Fiji Macro.
+
+	Args:
+		macroPath (str): Path to fiji macro
+		macroArgs (str): Arguments being passed to Fiji macro
+		
+	Keyword Args:	
+		fijiBin (str): Path to fiji binary
+			
+	Returns:
+		int: Returns 0 if success, -1 if error
+
+	"""
 	
+	if fijiBin==None:
+		fijiBin=pyfrp_misc_module.getFijiBin()
+		
+	#Define Command to run
+	cmd=fijiBin+" -macro "+ macroPath + " '"+macroArgs +"'"+ " -batch " 
 	
-	
+	#Run
+	try:
+		os.system(cmd)
+		return 0
+	except:
+		printError("Something went wrong executing:" )
+		print cmd
+		return -1	
 	
 	
 	
