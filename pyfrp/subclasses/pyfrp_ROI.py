@@ -621,7 +621,7 @@ class ROI(object):
 		zExtend=self.getZExtend()
 		return xExtend,yExtend,zExtend
 		
-	def refineInMesh(self,factor=3.,addZ=15.,findIdxs=True,debug=False):
+	def refineInMesh(self,factor=3.,addZ=15.,findIdxs=True,debug=False,run=True):
 		
 		xExtend,yExtend,zExtend=self.getEncapsulatingBox()
 		zExtend=[zExtend[0]-addZ,zExtend[1]+addZ]
@@ -630,7 +630,7 @@ class ROI(object):
 			print "Adding Box Field for ROI " + self.name
 			print "Mesh Nodes in ROI before: ", len(self.meshIdx)
 			
-		fnOut=self.embryo.simulation.mesh.addBoxField(self.embryo.simulation.mesh.volSizePx/factor,xExtend,yExtend,zExtend,comment=self.name+" field",run=True)
+		fnOut=self.embryo.simulation.mesh.addBoxField(self.embryo.simulation.mesh.volSizePx/factor,xExtend,yExtend,zExtend,comment=self.name+" field",run=run)
 	
 		if findIdxs:
 			self.computeMeshIdx(self.embryo.simulation.mesh.mesh)

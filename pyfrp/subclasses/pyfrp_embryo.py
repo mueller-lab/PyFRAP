@@ -189,6 +189,7 @@ class embryo:
 	
 	def updateNFrames(self):
 		self.nFrames=len(self.fileList)
+		self.updateTimeDimensions()
 		return self.nFrames
 	
 	def getNFrames(self):
@@ -393,8 +394,10 @@ class embryo:
 	
 	def updateFileList(self):
 		self.fileList=pyfrp_misc_module.getSortedFileList(self.fnDatafolder,self.dataFT)
-		if len(self.fileList)<0:
+		if len(self.fileList)==0:
 			printWarning("There are no files of type " + self.dataFT + " in " + self.fnDatafolder +" . This can lead to problems.")
+		else:
+			self.updateNFrames()
 		return self.fileList
 	
 	def setFileList(self,l):

@@ -127,7 +127,7 @@ class simulation(object):
 		if self.ICimg!=None:
 			
 			if ax==None:
-				fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["IC Img"],sup="",tight=False)
+				fig,axes = pyfrp_plot_module.makeSubplot([1,1],sup="",tight=False)
 				ax=axes[0]
 				
 			res=self.ICimg.shape[0]
@@ -138,6 +138,8 @@ class simulation(object):
 			
 			plt_ICs=ax.contourf(X,Y,self.ICimg)
 			
+			ax.autoscale(enable=True, axis='both', tight=True)
+			plt.axis('equal')
 			#cb=plt.colorbar(plt_ICs,orientation='horizontal',pad=0.05,shrink=0.9)
 			
 			plt.draw()
