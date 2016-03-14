@@ -33,11 +33,8 @@ import sys
 
 #PyFRAP Modules
 import pyfrp_plot_module 
-#import pyfrp_debug_module 
-#import pyfrp_gmsh_module as pyfrp_gmsh
 import pyfrp_integration_module
-#import pyfrp_misc_module as pyfrp_misc
-
+from pyfrp_term_module import *
 import pyfrp_idx_module
 
 #===========================================================================================================================================================================
