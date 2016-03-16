@@ -352,6 +352,8 @@ class mesh(object):
 		if newFile:
 			if "_box" not in self.geometry.fnGeo:	
 				fnOut=os.path.dirname(self.geometry.fnGeo)+"/field/custom/"+os.path.basename(self.geometry.fnGeo).replace(".geo",fnAppendix+"_"+self.geometry.embryo.name+".geo")
+			else:
+				fnOut=fnOut=self.geometry.fnGeo
 		else:
 			fnOut=self.geometry.fnGeo
 		

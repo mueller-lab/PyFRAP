@@ -641,6 +641,8 @@ def assignIfVal(var,val,valCheck):
 
 def enumeratedName(baseName,listOfNames,sep="_"):
 	
+	
+	
 	numbers=[]
 	for name in listOfNames:
 		if baseName in name and sep in name:
@@ -657,10 +659,18 @@ def enumeratedName(baseName,listOfNames,sep="_"):
 	
 	return baseName+sep+newNumber
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Extracts a single object attribute from a list of objects and saves it into list 
-
 def objAttrToList(listOfObjects,AttributeName):
+	
+	"""Extracts a single object attribute from a list of
+	objects and saves it into list.
+	
+	Args:
+		listOfObjects (list): List of objects that all possess the same attribute
+		AttributeName (str): Name of attribute to be appended
+		
+	Returns:
+		list: List containing value of attribute of all objects
+	"""
 	
 	l=[]
 	for obj in listOfObjects:
@@ -668,10 +678,16 @@ def objAttrToList(listOfObjects,AttributeName):
 		
 	return l
 	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Append / to filepath if necessary
-
 def slashToFn(fn):
+	
+	"""Append / or \\ to filepath if necessary
+	
+	Args:
+		fn (str): Filepath 
+		
+	Returns:
+		str: Filepath
+	"""
 	
 	if platform.system() in ["Windows"]:
 		s="\\"
@@ -682,10 +698,28 @@ def slashToFn(fn):
 		fn=fn+s
 	return fn
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Sorts two lists according to key list
-
 def sortListsWithKey(l,keyList):
+	
+	"""Sorts two lists according to key list.
+	
+	Example:
+	>>>l=[1,3,5]
+	>>>keyList=[2,5,1]
+	
+	would result in 
+	
+	>>>[5,1,3],[1,2,5]
+	
+	Args:
+		l (list): list to be sorted.
+		keyList (list): list after which is being sorted.
+		
+	Returns:
+		{
+		list: Sorted list
+		list: Sorted keys
+		}
+	"""
 	
 	s=sorted(zip(keyList, l), key=lambda keyList:keyList[0])
 	
@@ -698,10 +732,22 @@ def sortListsWithKey(l,keyList):
 		
 	return sortedList,sortedKeys
 		
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Compare the values of two objects
-
 def compareObjAttr(obj1,obj2):
+	
+	"""Compare the values of two objects.
+	
+	Args:
+		obj1 (object): First object.
+		object2 (object): Second object.
+		
+	Returns:
+		{
+		dict: Dictionary of attributes with same values
+		dict: Dictionary of attributes with different values
+		dict: Dictionary of attributes that are not in both objects
+		}
+
+	"""
 	
 	same={}
 	different={}
@@ -723,6 +769,22 @@ def compareObjAttr(obj1,obj2):
 	return same,different,notInBoth
 
 def simpleHist(x,y,bins):
+
+	"""Performs a simple histogram onto x-array.
+	
+	Args:
+		x (numpy.array): x coordinates of data
+		y (numpy.array): y coordinates of data
+		bins (int):  number of bins
+	
+	Returns:
+		{
+		np.array: Center of bins
+		np.array: Bin Values
+		}
+
+	"""
+	
 
 	xBin=np.linspace(min(x),max(x),bins+1)
 			
@@ -776,6 +838,9 @@ def getPathFile():
 
 def getFijiBin(fnPath=None):
 	return getPath('fijiBin',fnPath=fnPath)
+
+def checkIfGmshBin(fn):
+	return not os.system(fn + '-1')
 	
 def getPath(identifier,fnPath=None,defaultOutput=""):
 	
@@ -797,7 +862,6 @@ def getPath(identifier,fnPath=None,defaultOutput=""):
 	
 	if fnPath==None:
 		fnPath=getPathFile()
-	
 	else:
 		if not os.path.isfile(fnPath):
 			printWarning(fnPath+" does not exist. Will continue with paths defined in default paths files.")

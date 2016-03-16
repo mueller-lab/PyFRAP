@@ -16,18 +16,26 @@ class OverrideInstall(install):
 
 	def run(self):
 		
+		#Run setuptools install
+		install.run(self) 
+		
+		#Print log info
+		log.info("Overriding setuptools mode of scripts ...")
+		
+		#Add Data and edit file permissions
+		if platform.system() not in ["Windows"]:
+			self.addData()
+	
+	def addData(self):
+		
+		import pwd
+		
 		#Grab user ID and group ID of actual user
 		uid=pwd.getpwnam(os.getlogin())[2]
 		gid=pwd.getpwnam(os.getlogin())[3]
 		
 		#Mode for files (everyone can read/write/execute. This is somewhat an overkill, but 0666 seems somehow not to work.)
 		mode=0777
-		
-		#Run setuptools install
-		install.run(self) 
-		
-		#Print log info
-		log.info("Overriding setuptools mode of scripts ...")
 		
 		#Overwrite file permissions
 		for filepath in self.get_outputs():
@@ -48,7 +56,7 @@ class OverrideInstall(install):
 					
 				if folderpath.endswith("configurations"):
 					self.makeAdditionalDataFolders(folderpath,"macros",uid,gid,mode)
-					
+		
 	def changePermissions(self,filepath,uid,gid,mode):
 		ret=True
 		try:
@@ -80,13 +88,46 @@ class OverrideInstall(install):
 			except:
 				log.info("Unable to create folder %s" %(folder+fn))
 				return False
+			
+			
 				
 #Define setup
 
 #Check which operating system: If Windows, do not override installation procedure
-if platform.system() in ["Windows"]:
 
-	setup(name='pyfrp',
+
+	#setup(name='pyfrp',
+	#version='1.0',
+	#description='PyFRAP: A Python based FRAP analysis tool box',
+	#url='https://github.com/alexblaessle/PyFRAP',
+	#author='Alexander Blaessle',
+	#author_email='alexander.blaessle@tuebingen.mpg.de',
+	#license='GNU GPL Version 3',
+	#packages=['pyfrp','pyfrp.modules','pyfrp.subclasses','pyfrp.gui'],
+	#package_dir={'pyfrp': 'pyfrp',
+			#'pyfrp.modules': 'pyfrp/modules',
+			#'pyfrp.gui' : 'pyfrp/gui'
+			#},
+	##package_data = {'pyfrp':['meshfiles','configurations']},
+	#include_package_data=True,
+	#classifiers= [
+		#'Operating System :: OS Independent',
+		#'Programming Language :: Python :: 2.7',
+		#'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
+		#'Intended Audience :: Science/Research'
+		#],
+	#platforms=['ALL'],
+	#keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
+		#],
+	#zip_safe=False,
+	#)
+
+#If OS is not Windows, we will overwrite the install procedure to set the file permissions for data files
+#else:
+	#Import this only here, since pwd only exists for Unixoids.
+	#import pwd
+	
+setup(name='pyfrp',
 	version='1.0',
 	description='PyFRAP: A Python based FRAP analysis tool box',
 	url='https://github.com/alexblaessle/PyFRAP',
@@ -110,36 +151,5 @@ if platform.system() in ["Windows"]:
 	keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
 		],
 	zip_safe=False,
+	cmdclass={'install': OverrideInstall} #Need this here to overwrite our install
 	)
-
-#If OS is not Windows, we will overwrite the install procedure to set the file permissions for data files
-else:
-	#Import this only here, since pwd only exists for Unixoids.
-	import pwd
-	
-	setup(name='pyfrp',
-		version='1.0',
-		description='PyFRAP: A Python based FRAP analysis tool box',
-		url='https://github.com/alexblaessle/PyFRAP',
-		author='Alexander Blaessle',
-		author_email='alexander.blaessle@tuebingen.mpg.de',
-		license='GNU GPL Version 3',
-		packages=['pyfrp','pyfrp.modules','pyfrp.subclasses','pyfrp.gui'],
-		package_dir={'pyfrp': 'pyfrp',
-				'pyfrp.modules': 'pyfrp/modules',
-				'pyfrp.gui' : 'pyfrp/gui'
-				},
-		#package_data = {'pyfrp':['meshfiles','configurations']},
-		include_package_data=True,
-		classifiers= [
-			'Operating System :: OS Independent',
-			'Programming Language :: Python :: 2.7',
-			'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
-			'Intended Audience :: Science/Research'
-			],
-		platforms=['ALL'],
-		keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
-			],
-		zip_safe=False,
-		cmdclass={'install': OverrideInstall} #Need this here to overwrite our install
-		)

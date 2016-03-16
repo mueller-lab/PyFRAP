@@ -75,15 +75,15 @@ class fitSelector(pyfrp_gui_basics.listSelectorDialog):
 	def initLeftList(self):
 		
 		for emb in self.molecule.embryos:
-			if emb.isFitted():
-				self.currEmbryoNode=QtGui.QTreeWidgetItem(self.leftList,[emb.name])
-					
-				for fit in emb.fits:
-					if fit.isFitted():
-						QtGui.QTreeWidgetItem(self.currEmbryoNode,[fit.name])
+			#if emb.isFitted():s
+			self.currEmbryoNode=QtGui.QTreeWidgetItem(self.leftList,[emb.name])
 				
-				self.leftList.expandItem(self.currEmbryoNode)
-	
+			for fit in emb.fits:
+				if fit.isFitted():
+					QtGui.QTreeWidgetItem(self.currEmbryoNode,[fit.name])
+			
+			self.leftList.expandItem(self.currEmbryoNode)
+
 	def initRightList(self):
 		
 		for fit in self.molecule.selFits:
