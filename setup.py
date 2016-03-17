@@ -77,6 +77,12 @@ class OverrideInstall(install):
 		#Flag to see if gmsh DL went through
 		self.gmshDownloaded=False
 		
+		#Make executables folder if it doesn't exist yet
+		try:
+			os.mkdir('pyfrp/executables')	
+		except OSError:
+			log.info('Was not able to create directore pyfrp/executables')
+		
 		#Get fileList before
 		filesBefore=os.listdir('.')
 		
@@ -164,7 +170,10 @@ class OverrideInstall(install):
 			
 			#Difference between files
 			filesDiff=list(set(filesAfter)-set(filesBefore))
-			shutil.rmtree(filesDiff[0])
+			try:
+				shutil.rmtree(filesDiff[0])
+			except:
+				pass
 			
 			#Remove files
 			log.info("Installed gmsh to "+ self.gmshPath)
