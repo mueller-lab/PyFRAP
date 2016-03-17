@@ -4,3 +4,10 @@ include pyfrp/meshfiles/field/*
 
 include pyfrp/configurations/*
 include pyfrp/configurations/macros/*
+
+include pyfrp/executables/*
+include pyfrp/executables/*/*
+include pyfrp/executables/*/*/*
+
+
+

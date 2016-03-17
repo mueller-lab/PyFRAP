@@ -319,8 +319,13 @@ class pyfrp(QtGui.QMainWindow):
 		editMoleculeButton = QtGui.QAction('Edit Molecule', self)
 		self.connect(editMoleculeButton, QtCore.SIGNAL('triggered()'), self.editMolecule)
 		
+		openWizardButton = QtGui.QAction('PyFRAP Wizard', self)
+		self.connect(openWizardButton, QtCore.SIGNAL('triggered()'), self.openWizard)
+		
+		
 		self.mbEdit.addAction(editMoleculeButton)
-	
+		self.mbEdit.addAction(openWizardButton)
+		
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Initiates embryo toolbar
 	
@@ -762,6 +767,7 @@ class pyfrp(QtGui.QMainWindow):
 			for fit in currEmbryo.fits:
 				newFitNode=QtGui.QTreeWidgetItem(fitsNode,[fit.name,'','',str(int(fit.isFitted()))])
 		self.getCurrentObjNode()
+		return newFitNode
 		
 		
 	def updateROIsNodeChildren(self):
@@ -1380,6 +1386,22 @@ class pyfrp(QtGui.QMainWindow):
 	
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	#Wizard
+	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	
+	def openWizard(self):
+		self.newEmbryo()
+		self.createDefaultROIs()
+		self.openROIManager()
+		self.getCurrentEmbryo().newSimulation()
+		self.generateMesh()
+		self.updateROIIdxs()
+		self.analyzeEmbryo()
+		self.simulateEmbryo()
+		self.newFit()
+		self.plotFit()
+	
+	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Embryo Menubar Methods
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
@@ -1506,7 +1528,9 @@ class pyfrp(QtGui.QMainWindow):
 		currEmbryo=self.getCurrentEmbryo()
 		if currEmbryo==None:
 			return
-	
+		
+		
+		
 		#Launching Dialog
 		self.editAnalysis()
 		
@@ -1828,7 +1852,8 @@ class pyfrp(QtGui.QMainWindow):
 		ret=pyfrp_gui_fit_dialogs.fitSettingsDialog(newFit,self).exec_()
 		
 		#Update Object Bar
-		self.updateFitsNodeChildren()
+		newNode=self.updateFitsNodeChildren()
+		self.objectBar.setCurrentItem(newNode)
 		
 		#Perform the new fit
 		self.performFit()

@@ -26,12 +26,15 @@ docs/
 pyfrp/deprecated/
 
 # Don't push scripts
-# pyfrp/scripts/
-pyfrp/idealFRAP/
+pyfrp/scripts/
 
 # Don't push custom meshes
 pyfrp/meshfiles/field/custom/
 pyfrp/meshfiles/experimental/
+
+# Don't push executables
+pyfrp/executables/gmsh
+
 
 # Don't push temp
 pyfrp/temp/
@@ -41,6 +44,8 @@ pyfrp/temp/
 
 #Don't push swp files
 *swp
+
+
 
 
 

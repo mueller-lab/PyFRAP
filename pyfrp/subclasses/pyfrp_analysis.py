@@ -74,7 +74,10 @@ class analysis:
 	def run(self,signal=None,embCount=None,debug=False,debugAll=False,showProgress=True):
 		if 'norm' in self.process and 'flatten' in  self.process:
 			printWarning("Both norm and flatten have been selected for data analysis. This is not advisable.")
-
+		
+		if not self.embryo.checkROIIdxs()[0]:
+			self.embryo.computeROIIdxs()
+			
 		self=pyfrp_img_module.analyzeDataset(self,signal=signal,embCount=embCount,debug=debug,debugAll=debugAll,showProgress=showProgress)
 		return self
 	

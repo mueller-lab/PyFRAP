@@ -24,7 +24,7 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#PyQT Dialogs for managin and editing ROIs
+#PyQT Dialogs for managing and editing ROIs
 #(1)  ROImanager
 #(2)  ROIDialog
 #(3)  sliceROIDialog
@@ -1279,5 +1279,3 @@ class indexThread(pyfrp_gui_basics.pyfrpThread):
 	def runTask(self,debug=False):
 		self.embryo.computeROIIdxs(signal=self.progressSignal,debug=True)
 
-
-			

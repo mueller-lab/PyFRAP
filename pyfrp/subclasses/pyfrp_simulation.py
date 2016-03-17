@@ -75,6 +75,10 @@ class simulation(object):
 		return self.ICmode
 		
 	def run(self,signal=None,embCount=None,showProgress=True,debug=False):
+		
+		if not self.embryo.checkROIIdxs()[1]:
+			self.embryo.computeROIIdxs()
+		
 		pyfrp_sim_module.simulateReactDiff(self,signal=signal,embCount=embCount,showProgress=showProgress,debug=debug)
 		return True
 	

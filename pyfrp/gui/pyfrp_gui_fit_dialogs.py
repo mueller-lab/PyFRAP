@@ -426,7 +426,7 @@ class fitSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		
 	def removeROI(self):
 		idx=self.ROIList.indexFromItem(self.ROIList.currentItem()).row()
-		self.fit.removeROI(self.ROIsFitted[idx])
+		self.fit.removeROI(self.fit.ROIsFitted[idx])
 		self.updateROIList()
 		
 #===================================================================================================================================

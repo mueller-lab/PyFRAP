@@ -347,7 +347,7 @@ class embryo:
 		
 		allsl=self.newSliceROI("All",0,-np.inf,np.inf,True,color=(0.5,0.3,0.4))
 		
-		allsqu=self.newSquareROI('All Square',1,self.offsetBleachedPx,self.sideLengthBleachedPx,color=(0.1,0.7,0.5))
+		allsqu=self.newSquareROI('All Square',1,self.offsetBleachedPx,self.sideLengthBleachedPx,color=(0.1,0.,0.5))
 		
 		allout=self.newCustomROI("All Out",2,color=(0.3,0.4,0.5))
 		allout.addROI(allsl,1)
@@ -727,6 +727,8 @@ class embryo:
 			elif isinstance(vars(self)[str(item)],(list,np.ndarray)) and max(np.shape(vars(self)[str(item)]))<5:
 				print item, " = ", vars(self)[str(item)]		
 	
+	
+	
 	def isAnalyzed(self):
 		b=True
 		for r in self.ROIs:
@@ -770,7 +772,7 @@ class embryo:
 				if debug:
 					printWarning("ROI " + r.name+ " needs its mesh indices computed. Will not be able to perform simulation otherwise.")
 				mesh=False
-		return img,sim	
+		return img,mesh
 	
 	def quickAnalysis(self):
 		
