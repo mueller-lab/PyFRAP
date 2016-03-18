@@ -25,7 +25,7 @@ and install via:
 	
 We highly recommend installing with the *--user* option, since PyFRAP needs to read/write data files in the installation folder. In some cases, this
 might lead to file permission issues.
-For a full installation documentation, have a look at the documentation.
+For a full installation documentation, have a look at the [wiki](https://github.com/alexblaessle/PyFRAP/wiki/Installation).
 
 ### Requirements
 
@@ -40,18 +40,8 @@ PyFRAP depends on
 - vtk>=5.8.0
 - colorama>=0.2.5
 - meshio>=1.2.1
-- pickle
+- wget>=3.2
 - gmsh (compiled with TetGen Algorithm)
-
-and a bunch of standard Python2.7 libraries such as
-
-- time
-- platform
-- sys
-- shutil
-- tempfile
-- gc
-- csv
 
 ## Getting Started
 
@@ -71,21 +61,25 @@ If you are already in a python session, you can simply run
 	pyfrp.main()
 
 Note that in the latter method PyFRAP's stdout might get redirected to the python shell you are executing it from.
-	
+
 ### Running PyFRAP from the command line
 
 ```python
 	import pyfrp
-
 ```
-	
-## API
 
-The API of PyFRAP can be found [here](http://pyfrp.readthedocs.org/en/latest/pyrw.html#submodules "toAPI") .
+### Using PyFRAP GUI to analyze a FRAP experiments
+
+Check out the PyFRAP wiki's [First Steps Section](https://github.com/alexblaessle/PyFRAP/wiki/FirstSteps).
+
+<!--## API
+
+The API of PyFRAP can be found [here](http://pyfrp.readthedocs.org/en/latest/pyrw.html#submodules "toAPI") .-->
 
 ## Documentation
 
-<!-- The Documentation of pyrw can be found [here](http://pyrw.readthedocs.org/en/latest/pyrw.html "toAPI") . -->
+To learn more about PyFRAP, check out the PyFRAP [wiki](https://github.com/alexblaessle/PyFRAP/wiki)
 
-## Example
+
+
 
