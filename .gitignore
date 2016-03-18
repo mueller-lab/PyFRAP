@@ -39,13 +39,14 @@ pyfrp/executables/gmsh
 # Don't push temp
 pyfrp/temp/
 
-#Don't push compiled python modules
+# Don't push compiled python modules
 *.pyc
 
-#Don't push swp files
+# Don't push swp files
 *swp
 
-
+# Don't push wiki
+PyFRAP.wiki/
 
 
 
