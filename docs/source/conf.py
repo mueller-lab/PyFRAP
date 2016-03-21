@@ -43,6 +43,8 @@ sys.path.insert(0, os.path.abspath('../../pyfrp/'))
             #return Mock()
 
 MOCK_MODULES = [
+		#Colorama
+		'colorama',
 		#numpy
 		'numpy',
 		#Fipy
