@@ -1,8 +1,0 @@
-\contentsline {section}{\numberline {1}PyFDAP: Software for analysis of Fluorescence Decrease After Photoconversion (FDAP) experiments}{2}{section.1}
-\contentsline {section}{\numberline {2}Installation}{2}{section.2}
-\contentsline {subsection}{\numberline {2.1}Running PyFDAP on Microsoft Windows}{2}{subsection.2.1}
-\contentsline {subsection}{\numberline {2.2}Running PyFDAP under Mac OSX}{3}{subsection.2.2}
-\contentsline {subsection}{\numberline {2.3}Running PyFDAP under Linux}{6}{subsection.2.3}
-\contentsline {section}{\numberline {3}Working with PyFDAP}{6}{section.3}
-\contentsline {subsection}{\numberline {3.1}The PyFDAP Main Window}{6}{subsection.3.1}
-\contentsline {subsection}{\numberline {3.2}First Steps with PyFDAP}{7}{subsection.3.2}

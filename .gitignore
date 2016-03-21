@@ -21,6 +21,8 @@ dist/
 
 # Don't push built docs
 docs/build/
+docs/manual.*
+docs/doxy/
 
 # Don't push deprecated modules
 pyfrp/deprecated/
