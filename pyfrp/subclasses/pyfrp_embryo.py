@@ -246,8 +246,8 @@ class embryo:
 	def getMasterROIIdx(self):
 		return self.masterROIIdx
 	
-	def newROI(self,name,Id,zmin=-np.inf,zmax=np.inf,color='b',asMaster=False):
-		roi=pyfrp_ROI.ROI(self,name,Id,zmin=-np.inf,zmax=np.inf,color=color)
+	def newROI(self,name,Id,zmin='-inf',zmax='inf',color='b',asMaster=False):
+		roi=pyfrp_ROI.ROI(self,name,Id,zmin=zmin.inf,zmax=zmax,color=color)
 		self.ROIs.append(roi)
 		if asMaster:
 			self.masterROIIdx=self.ROIs.index(roi)

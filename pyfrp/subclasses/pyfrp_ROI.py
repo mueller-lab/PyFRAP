@@ -45,7 +45,7 @@ import time
 
 class ROI(object):
 
-	def __init__(self,embryo,name,Id,zmin=-np.inf,zmax=np.inf,color='b'):
+	def __init__(self,embryo,name,Id,zmin='-inf',zmax='inf',color='b'):
 		
 		#Name/Id
 		self.name=name
@@ -54,8 +54,8 @@ class ROI(object):
 		self.color=color
 		
 		#zExtend
-		self.zmin=zmin
-		self.zmax=zmax
+		self.zmin=pyfrp_misc_module.translateNPFloat(zmin)
+		self.zmax=pyfrp_misc_module.translateNPFloat(zmax)
 		
 		#Idxs from data analysis/simulation
 		self.imgIdxX=[]

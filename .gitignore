@@ -19,8 +19,8 @@ dist/
 # Don't push any .txt files
 *.txt
 
-# Don't push Doc (yet)
-docs/
+# Don't push built docs
+docs/build/
 
 # Don't push deprecated modules
 pyfrp/deprecated/

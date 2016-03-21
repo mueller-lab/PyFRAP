@@ -297,7 +297,7 @@ class fitSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		self.cbSaveTrack.setCheckState(2*int(self.fit.saveTrack))
 		
 	def checkEquOn(self,val):
-		self.fit.setEquOn(bool(2*val))
+		self.fit.setEqu(bool(2*val))
 	
 	def checkFitPinned(self,val):
 		self.fit.setFitPinned(bool(2*val))

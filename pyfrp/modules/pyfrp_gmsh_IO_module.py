@@ -20,7 +20,6 @@ import shutil
 from tempfile import mkstemp
 import os
 
-
 def splitLine(line,delim="=",closer=";"):
 	line=line.strip()
 	var,val=line.split(delim)

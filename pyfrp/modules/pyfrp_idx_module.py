@@ -190,7 +190,11 @@ def getPolyIdxImg(corners,res,debug=False):
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Returns all indices in mesh that lie within given circle
 		
-def getCircleIdxMesh(center,radius,mesh,zmin=-np.inf,zmax=np.inf,debug=False):
+def getCircleIdxMesh(center,radius,mesh,zmin="-inf",zmax="inf",debug=False):
+	
+	#Checking that zmin/zmax are converted into numpy floats
+	zmin=pyfrp_misc.translateNPFloat(zmin)
+	zmax=pyfrp_misc.translateNPFloat(zmax)
 	
 	#Grabbing cellCenters of mesh
 	x,y,z=mesh.cellCenters
@@ -220,7 +224,11 @@ def getSliceIdxMesh(z,zmin,zmax,debug=False):
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Returns all indices in mesh that lie within given rectangle
 
-def getRectangleIdxMesh(sidelengthX,sidelengthY,offset,mesh,zmin=-np.inf,zmax=np.inf,debug=False):
+def getRectangleIdxMesh(sidelengthX,sidelengthY,offset,mesh,zmin="-inf",zmax="inf",debug=False):
+	
+	#Checking that zmin/zmax are converted into numpy floats
+	zmin=pyfrp_misc.translateNPFloat(zmin)
+	zmax=pyfrp_misc.translateNPFloat(zmax)
 	
 	#Grabbing cellCenters of mesh
 	x,y,z=mesh.cellCenters
@@ -239,7 +247,11 @@ def getRectangleIdxMesh(sidelengthX,sidelengthY,offset,mesh,zmin=-np.inf,zmax=np
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Returns all indices in mesh that lie within given square
 
-def getSquareIdxMesh(sidelength,offset,mesh,zmin=-np.inf,zmax=np.inf,debug=False):
+def getSquareIdxMesh(sidelength,offset,mesh,zmin="-inf",zmax="inf",debug=False):
+	
+	#Checking that zmin/zmax are converted into numpy floats
+	zmin=pyfrp_misc.translateNPFloat(zmin)
+	zmax=pyfrp_misc.translateNPFloat(zmax)
 	
 	#Grabbing cellCenters of mesh
 	x,y,z=mesh.cellCenters
@@ -258,7 +270,11 @@ def getSquareIdxMesh(sidelength,offset,mesh,zmin=-np.inf,zmax=np.inf,debug=False
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Returns all indices in mesh that lie within given polygon
 
-def getPolyIdxMesh(corners,mesh,zmin=-np.inf,zmax=np.inf,debug=False):
+def getPolyIdxMesh(corners,mesh,zmin="-inf",zmax="inf",debug=False):
+	
+	#Checking that zmin/zmax are converted into numpy floats
+	zmin=pyfrp_misc.translateNPFloat(zmin)
+	zmax=pyfrp_misc.translateNPFloat(zmax)
 	
 	#Grabbing cellCenters of mesh
 	x,y,z=mesh.cellCenters

@@ -3,4 +3,6 @@
 import sys
 import pyfrp
 
-pyfrp.main()
+if __name__ == '__main__':
+
+	pyfrp.main()

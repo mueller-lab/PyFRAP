@@ -1123,9 +1123,25 @@ def makeEmbryoFolderStruct(fn):
 	
 	return 0
 	
+def translateNPFloat(x):
 	
+	"""Translates string into numpy float.
+	If string==+/-'inf', will return +/- numpy.inf,
+	otherwise will leave x unchanged.
 	
+	This function is necessary to prevent Sphinx from
+	not being able to import modules because np.inf is an 
+	default value for an keyword arg, but numpy is mocked.
 	
+	Args:
+		x (float): Input number/string.
+			
+	Returns:
+		float: Translated float.
+
+	"""
+	
+	return np.float(x)
 		
 	
 	
