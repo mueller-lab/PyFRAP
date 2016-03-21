@@ -52,7 +52,7 @@ MOCK_MODULES = [
 		#Scipy
 		'scipy','scipy.optimize','scipy.interpolate','scipy.ndimage','scipy.ndimage.interpolation',
 		#Matplotlib (and all submodules)
-		'matplotlib', 'matplotlib.pyplot','matplotlib.axes','mpl_toolkits.mplot3d','matplotlib.collections',
+		'matplotlib', 'matplotlib.pyplot','matplotlib.axes','mpl_toolkits','mpl_toolkits.mplot3d','matplotlib.collections',
 		'matplotlib.patches','matplotlib.tri','matplotlib.backends','matplotlib.backends.backend_qt4agg',
 		'matplotlib.bakends.backend_qt4agg.FigureCanvasQTAgg','matplotlib.backends.backend_qt4agg.FigureCanvas',
 		'matplotlib.figure',
