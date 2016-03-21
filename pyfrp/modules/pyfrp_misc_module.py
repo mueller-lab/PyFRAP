@@ -618,12 +618,28 @@ def updateObj(obj_blank,obj,debug=False):
 #Remove multiple entries from list	
 		
 def remRepeatsList(l,debug=False):
+	
+	
+	
 	return list(set(l))
 	 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #unzips into two different lists	
 		
-def unzipLists(l,debug=False):
+def unzipLists(l):
+	
+	"""Unzips two zipped lists into seperate lists.
+	
+	Args:
+		l (list): Zipped lists
+		
+	Returns:
+		{
+		list: Unzipped list 1.
+		list: Unzipped list 2.
+		}
+	"""
+	
 	l1,l2=zip(*l)
 	return list(l1),list(l2)
 
@@ -631,17 +647,40 @@ def unzipLists(l,debug=False):
 #Assigns value if not value	
 		
 def assignIfVal(var,val,valCheck):
+	
+	"""Assigns val to var if var==valCheck.
+
+	Args:
+		var (var): Variable 
+		val(any): Value to be assigned
+		valCheck(any): Value to be checked for
+		
+	"""
+	
 	if var==valCheck:
 		return val
 	else:
 		return var
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Generates new name in the form baseName+seperater+number such that the new name does not exist in the list so far
-
 def enumeratedName(baseName,listOfNames,sep="_"):
 	
+	"""Generates a new name given a list of names.
+	Example:
+	>>> baseName=embryo
+	>>> listOfNames=[embryo_1,embryo_5]
+	>>> enumeratedName(baseNamem,listOfNames)
+	"embryo_6"
 	
+	Args:
+		baseName (str): basename used for naming
+		listOfNames(list): List of names
+	
+	Keyword Args:
+		sep (str): Seperator between basename and number
+	
+	Returns:
+		str: New name that has not been used yet
+	"""
 	
 	numbers=[]
 	for name in listOfNames:

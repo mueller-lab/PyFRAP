@@ -31,14 +31,15 @@ class OverrideInstall(install):
 			
 	def addData(self):
 		
-		import pwd
-		
-		#Grab user ID and group ID of actual user
-		uid=pwd.getpwnam(os.getlogin())[2]
-		gid=pwd.getpwnam(os.getlogin())[3]
-		
-		#Mode for files (everyone can read/write/execute. This is somewhat an overkill, but 0666 seems somehow not to work.)
-		mode=0777
+		if platform.system() not in ["Windows"]:
+			import pwd
+			
+			#Grab user ID and group ID of actual user
+			uid=pwd.getpwnam(os.getlogin())[2]
+			gid=pwd.getpwnam(os.getlogin())[3]
+			
+			#Mode for files (everyone can read/write/execute. This is somewhat an overkill, but 0666 seems somehow not to work.)
+			mode=0777
 		
 		#Overwrite file permissions
 		for filepath in self.get_outputs():
