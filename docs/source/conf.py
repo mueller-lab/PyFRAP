@@ -59,7 +59,7 @@ MOCK_MODULES = [
 		#Skimage 
 		'skimage','skimage.io','skimage.morphology','scipy.signal','skimage.measure','skimage.filters',
 		#PyQT
-		'PyQT4',
+		'PyQt4','PyQt4.QtGui','PyQt4.QtCore',
 		#MeshIO
 		'meshio']
 
