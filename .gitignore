@@ -21,7 +21,7 @@ dist/
 
 
 # Don't push built docs
-docs/build/
+# docs/build/
 docs/manual.*
 docs/doxy/
 

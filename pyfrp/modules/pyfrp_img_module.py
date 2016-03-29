@@ -1001,9 +1001,11 @@ def findMinOffset(fnFolder,fileList,dataEnc,oldOffset=None,defaultAdd=1.,debug=F
 	Args:
 		fnFolder (str): Path to folder containing files.
 		fileList (list): List of file names in fnFolder.
-		dataEnc (str): 
+		dataEnc (str): Encoding of images, e.g. uint16.
 		
 	Keyword Args:
+		oldOffset (int): 
+		defaultAdd (int): Show debugging outputs and plots.
 		debug (bool): Show debugging outputs and plots.
 		
 	Returns:
