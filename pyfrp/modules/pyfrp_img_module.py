@@ -2,28 +2,9 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Image analysis module for PyFRAP toolbox, including following functions:
+""" Image analysis module for PyFRAP toolbox.
 
-#(1)  analyzeDataset: returns concentration profiles for image data set
-#(3)  genExtImg: Generate extended image
-#(4)  convSkio2NP: Converts skio image to 2D numpy array
-#(5)  genFakeIC: Generates a fake image with ideal bleaching
-
-
-#(7)  analyze_conc_sq: Analyze concentration in bleached area
-#(8)  analyze_conc_circ: Analyze concentration in embryo without bleached area
-#(9)  analyze_conc_slice: Analyze concentration in embryo in slice
-#(10) find_longest_boundary: Finds longest boundary from contours (automatic detection)
-#(11) compute_com: Computes center of Mass of found boundary pixels
-#(12) compute_radius_hist: Computes radius of embryo by taking maximum of radii histogram
-#(13) find_range_ind: finds index of values in vec between val_min - val_max
-#(14) compute_squ_from_mouse: Computes square size from mouse input
-#(15) crop_conc_rim_from_pre: Crops rim concentration from pre image
-#(16) sliding_win: Sliding window implementation for images
-#(17) conv_lsm_to_tiff: Converts lsm to tiff file (developmental)
-#(18) conv_lsm_series_to_tiff: Converts lsm series to multiple tiff files (developmental)
-#(19) otsu_imagej: Improved ImageJ implementation of the Otsu algorithm
-
+"""
 
 #===========================================================================================================================================================================
 #Improting necessary modules
@@ -70,11 +51,28 @@ except:
 #Module Functions
 #===========================================================================================================================================================================
 
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Getting concentrations in and outside of square and in slice
-
 def analyzeDataset(analysis,signal=None,embCount=None,debug=False,debugAll=False,showProgress=True):
+	
+	"""Main dataset analysis function doing the following steps.
+	
+	* Reset all data arrays for all ROIs.
+	* Computes flattening/norm/background mask if necessary.
+	* Loops through images, processing images and computing mean concentraions per ROI.
+	* Showing final debugging plots if selected.
+	
+	Args:
+		analysis (pyfrp.subclasses.pyfrp_analysis):  Object containing all necessary information for analysis.
+		
+	Keyword Args:
+		signal (PyQt4.QtCore.pyqtSignal): 
+		embCount (int): Counter of counter process if multiple datasets are analyzed. 
+		debug (bool): Print final debugging messages and show debugging plots.
+		debugAll (bool): Print debugging messages and show debugging plots of each step.
+		showProgress (bool): Print out progress.
+		
+	Returns:
+		pyfrp.subclasses.pyfrp_analysis: Performed analysis.
+	"""
 	
 	if debug or signal==None:
 		print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -195,12 +193,28 @@ def analyzeDataset(analysis,signal=None,embCount=None,debug=False,debugAll=False
 #Converts skiomage to numpy array
 
 def convSkio2NP(img):
+	
+	"""Returns mean concentration over given indices. 
+
+	Args:
+		idxX (list): x-indices of pixels used.
+		idxY (list): y-indices of pixels used. 
+		vals (numpy.ndarray): Input image.
+		
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		float: Mean concentration.
+	"""
+	
 	return np.asarray(img)
 	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Create fake dataset for testing
-
 def genFakeIC(res,valIn,valOut,offset,sidelength,radius,center,rim,add_rim_from_radius,debug=False):
+	
+	"""Create fake image consisting of circular ROI with pixel value valOut
+	and a square ROI centered inside circle with pixel value valIn. 
+	"""
 	
 	#Empty picture
 	vals=np.nan*np.ones((res,res))
@@ -228,10 +242,23 @@ def genFakeIC(res,valIn,valOut,offset,sidelength,radius,center,rim,add_rim_from_
 	
 	return vals
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns mean concentration over given indices 
 
 def meanConc(idxX,idxY,vals,debug=False):
+	
+	"""Returns mean concentration over given indices. 
+
+	Args:
+		idxX (list): x-indices of pixels used.
+		idxY (list): y-indices of pixels used. 
+		vals (numpy.ndarray): Input image.
+		
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		float: Mean concentration.
+	"""
+	
 	if debug:
 		print "======= mean_conc debugging output ======="
 		print "len(idxX)", len(idxX)
@@ -240,10 +267,24 @@ def meanConc(idxX,idxY,vals,debug=False):
 		
 	return np.mean(vals[idxX,idxY])
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns mean concentration, taking potential pixels outside of image into account
-
 def meanExtConc(idxX,idxY,img,concRim,numExt,addRimImg,debug=False):
+	
+	"""Returns mean concentration, taking potential pixels outside of image into account. 
+
+	Args:
+		idxX (list): x-indices of pixels used.
+		idxY (list): y-indices of pixels used. 
+		img (numpy.ndarray): Input image.
+		concRim (float): Rim concentration applied to pixels outside of image.
+		numExt (int): Number of pixels outside of image.
+		addRimImg (bool): Add rim concentraion.
+		
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		float: Mean extendended concentration.
+	"""
 	
 	#Adding up concentrations of all selected indices (can't use mean conc since addRimImg could be True)
 	concSum=img[idxX,idxY].sum()
@@ -259,10 +300,21 @@ def meanExtConc(idxX,idxY,img,concRim,numExt,addRimImg,debug=False):
 	#Return final concentration
 	return float(concSum)/float(concNum)
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Computes mean rim concentration
 
 def getRimConc(ROIs,img,debug=False):
+	
+	"""Computes mean rim concentration from ROIs that have *useForRim* flag on. 
+
+	Args:
+		ROIs (list): List of pyfrp.subclasses.pyfrp_ROI objects.
+		img (numpy.ndarray): Input image.
+			
+	Keyword Args:
+		debug (bool): Print debugging messages and show debugging plots.
+		
+	Returns:
+		float: Rim concentration.
+	"""
 	
 	#Loop through all ROIs and find the ones needed to compute concentration rim
 	idxX=[]
@@ -280,11 +332,20 @@ def getRimConc(ROIs,img,debug=False):
 	#Compute concentration 
 	return meanConc(idxX,idxY,img,debug=debug)
 
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Flip images to quaddrant
-
 def flipQuad(img,debug=False,testimg=False):
+	
+	"""Flip image into quaddrant.
+
+	Args:
+		img (numpy.ndarray): Input image.
+			
+	Keyword Args:
+		debug (bool): Print debugging messages and show debugging plots.
+		testimg (bool): Check with test image if flip works properly
+		
+	Returns:
+		numpy.ndarray: Flipped image.
+	"""
 	
 	if debug:
 		
@@ -353,10 +414,20 @@ def flipQuad(img,debug=False,testimg=False):
 		
 	return img
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Unflip images from quaddrant into normal picture
-
 def unflipQuad(img,debug=False,testimg=False):
+	
+	"""Unflip image from quaddrant into normal picture.
+
+	Args:
+		img (numpy.ndarray): Input image.
+			
+	Keyword Args:
+		debug (bool): Print debugging messages and show debugging plots.
+		testimg (bool): Check with test image if unflip works properly
+		
+	Returns:
+		numpy.ndarray: Unflipped image.
+	"""
 	
 	if debug:
 		if testimg:
@@ -416,10 +487,19 @@ def unflipQuad(img,debug=False,testimg=False):
 	
 	return img
 	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks if images is LR and UD symmetirc. If so, returns True.
-
 def symmetryTest(img,debug=False):
+	
+	"""Checks if images is LR and UD symmetirc. If so, returns True.
+
+	Args:
+		img (numpy.ndarray): Input image.
+			
+	Keyword Args:
+		debug (bool): Print debugging messages and show debugging plots.
+	
+	Returns:
+		bool: True if image is both LR and UD symmetric
+	"""
 	
 	#Grab image resolution
 	res=np.shape(img)[0]
@@ -458,10 +538,21 @@ def symmetryTest(img,debug=False):
 	
 	return not bool(lr.sum()+ud.sum())
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Loops through all channels of image and returns channel of image with maximal range 
-	
 def getMaxRangeChannel(img,debug=False):
+	
+	"""Loops through all channels of image and returns channel of image with maximal range.
+
+	Args:
+		img (numpy.ndarray): Input image.
+			
+	Keyword Args:
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		tuple: Tuple containing:
+			* img (numpy.ndarray): Monochromatic image.
+			* ind_max (int): Index of channel chosen.
+	"""
 	
 	#Empty list
 	im_ranges=[]
@@ -481,10 +572,20 @@ def getMaxRangeChannel(img,debug=False):
 	
 	return img,ind_max
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Loads image from filename fn with encoding enc and returns it as with given dtype
-
 def loadImg(fn,enc,dtype='float'):
+	
+	"""Loads image from filename fn with encoding enc and returns it as with given dtype.
+
+	Args:
+		fn (str): File path.
+		enc (str): Image encoding, e.g. 'uint16'.
+			
+	Keyword Args:
+		dtype (str): Datatype of pixels of returned image.
+	
+	Returns:
+		numpy.ndarray: Loaded image.
+	"""
 	
 	#Load image
 	img = skimage.io.imread(fn).astype(enc)
@@ -495,20 +596,47 @@ def loadImg(fn,enc,dtype='float'):
 	
 	return img
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Norms image by preimage, applies gaussian blur if selected
-
 def normImg(img,imgPre,dataOffset=1.,debug=False):
+	
+	"""Norms image by preimage.
+
+	Args:
+		img (numpy.ndarray): Input image.
+		imgPre (numpy.ndarray): Norming mask.
 		
+	Keyword Args:
+		dataOffset (float): Offset used for norming.
+		debug (bool): Print debugging messages and show debugging plots.
+		
+	Returns:
+		numpy.ndarray: Processed image.
+	"""
+	
 	#Norm and add offset to pre img to avoid singularities
 	img=(img+dataOffset)/(imgPre+dataOffset)
 			
 	return img
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Applies median filter to image
 	
 def medianFilter(img,radius=1,debug=False,dtype='uint16',scaleImg=False,method='scipy',axes=None):
+	
+	"""Applies median filter to image.
+	
+	.. note:: Skimage algorithm requires images to be scaled up into 16bit range.
+	
+	Args:
+		img (numpy.ndarray): Input image.
+			
+	Keyword Args:
+		radius (int): Odd integer defining median kernel size.
+		axes (list): List of matplotlib axes used for plotting. If not specified, will generate new ones.
+		debug (bool): Print debugging messages and show debugging plots.
+		dtype (str): Optimal image dtype necessary for scaling.
+		scaleImg (bool): Scale image to full range of dtype.
+		method (str): Median algorithm used (scipy/skimage).
+		
+	Returns:
+		numpy.ndarray: Processed image.
+	"""
 	
 	if method=='skimage' and scaleImg==False:
 		printWarning('Method skimage requires scaleImg=True. Going to do this.')  
@@ -561,11 +689,23 @@ def medianFilter(img,radius=1,debug=False,dtype='uint16',scaleImg=False,method='
 		showImgAndHist(img,axes=axes[2:],vmin=vmin,vmax=vmax)
 	
 	return img
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Applies gaussian filter to image
 	
-def gaussianFilter(img,sigma=2.,debug=False,dtype='uint16',axes=None):
+def gaussianFilter(img,sigma=2.,debug=False,axes=None):
+	
+	"""Applies gaussian filter to image.
+	
+	Args:
+		img (numpy.ndarray): Input image.
+			
+	Keyword Args:
+		sigma (float): Standard deviation of gaussian kernel applied.
+		axes (list): List of matplotlib axes used for plotting. If not specified, will generate new ones.
+		debug (bool): Print debugging messages and show debugging plots.
+		
+	Returns:
+		numpy.ndarray: Processed image.
+	"""
+	
 	
 	#Grab original image
 	orgImg=img.copy()
@@ -588,10 +728,22 @@ def gaussianFilter(img,sigma=2.,debug=False,dtype='uint16',axes=None):
 	
 	return img
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Substracts background from img
-
 def substractBkgd(img,bkgd,substractMean=True,nonNeg=True):
+	
+	"""Substracts background from image.
+	
+	Args:
+		img (numpy.ndarray): Input image.
+		bkgd (numpy.ndarray): Background mask that will be used.
+			
+	Keyword Args:
+		substractMean (bool): Substract mean background.
+		nonNeg (bool): Fill negative pixels with 1. to avoid further problems.
+	
+	Returns:
+		numpy.ndarray: Processed image.
+	"""
+	
 	if substractMean:
 		bkgd=np.mean(bkgd)
 	
@@ -601,10 +753,34 @@ def substractBkgd(img,bkgd,substractMean=True,nonNeg=True):
 	
 	return img
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Processes image (Flip/Norm/Gauss)
-
 def processImg(img,processDic,flatteningMask,bkgdMask,preMask,dataOffset=1.,axes=None,debug=False):
+
+	"""Main image processing function containing the following steps:
+	
+	* Quadrant reduction.
+	* Median filter.
+	* Gaussian filter.
+	* Norming.
+	* Background substraction.
+	* Flattening.
+		
+	Args:
+		img (numpy.ndarray): Input image.
+		processDic (dict): Dictionary defining what to do. See also pyfrp.subclasses.pyfrp_analysis .
+		flatteningMask (np.ndarray): Flattening mask that will be used if flattening is selected.
+		bkgdMask (numpy.ndarray): Background mask that will be used if background substraction is selected.
+		preMask (numpy.ndarray): Preimage mask that will be used if norming is selected.
+		
+			
+	Keyword Args:
+		dataOffset (float): Offset used for norming.
+		axes (list): List of matplotlib axes used for plotting. If not specified, will generate new ones.
+		debug (bool): Print debugging messages and show debugging plots.
+	
+	Returns:
+		numpy.ndarray: Processed image.
+	"""
+	
 	
 	#Flip image in case of quad_red and flip_before_process
 	if 'quad' in processDic.keys():
@@ -660,10 +836,29 @@ def processImg(img,processDic,flatteningMask,bkgdMask,preMask,dataOffset=1.,axes
 		
 	return img
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Creates histogram for image with some good default settings	
-	
 def imgHist(img,binMin=0,binMax=65535,nbins=256,binSize=1,binsFit=True,fixSize=False,density=False):
+	
+	"""Creates histogram for image with some good default settings.
+		
+	Args:
+		img (numpy.ndarray): Input image.
+		
+	Keyword Args:
+		nbins (int): Number of bins of histogram.
+		binSize (int): Size of bins.
+		binMin (float): Minimum value of bins.
+		binMax (float): Maximum value of bins.
+		binsFit (bool): Fits bin range properly around range of image.
+		fixSize (bool): Use binSize for fixed bin size.
+		density (bool): Normalize histogram as probability density function.
+		
+	Returns:
+		tuple: Tuple containing:
+
+			* bins (float): Bin array of histogram.
+			* hist (float): Histogram array.
+			* w (float): Width of bins.
+	"""
 	
 	if binsFit:
 		if fixSize:
@@ -683,10 +878,26 @@ def imgHist(img,binMin=0,binMax=65535,nbins=256,binSize=1,binsFit=True,fixSize=F
 	
 	return bins,hist,w
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Apply fixed threshhold to image and fill pixels with values greater than thresh with fill value 
-	
 def fixedThresh(img,thresh,smaller=False,fill=np.nan):
+	
+	"""Apply fixed threshhold to image and fill pixels with values 
+	greater than thresh with fill value .
+		
+	Args:
+		img (numpy.ndarray): Image for threshholding.
+		thresh (float): Threshhold used.
+		
+	Keyword Args:
+		fill (float): Fill values for pixels that are smaller or greater than thresh. 
+		smaller (bool): Apply fill to pixels smaller or greater than thresh.
+		
+	Returns:
+		tuple: Tuple containing:
+
+			* img (numpy.ndarray): Output image.
+			* indX (numpy.ndarray): x-indices of pixels that where threshholded. 
+			* indY (numpy.ndarray): y-indices of pixels that where threshholded. 
+	"""
 	
 	#Find pixels greater than thresh 
 	if smaller:
@@ -699,10 +910,35 @@ def fixedThresh(img,thresh,smaller=False,fill=np.nan):
 	
 	return img,indX,indY
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Creates plot of image and corresponding histogram
-
 def showImgAndHist(img,axes=None,sup='',title=None,color='b',vmin=None,vmax=None,binMin=0,binMax=65535,nbins=256,binSize=1,binsFit=True,fixSize=False,density=False):
+	
+	"""Creates plot of image and corresponding histogram.
+		
+	Args:
+		img (numpy.ndarray): Image to be plotted.
+		
+	Keyword Args:
+		nbins (int): Number of bins of histogram.
+		binSize (int): Size of bins.
+		binMin (float): Minimum value of bins.
+		binMax (float): Maximum value of bins.
+		binsFit (bool): Fits bin range properly around range of image.
+		fixSize (bool): Use binSize for fixed bin size.
+		density (bool): Normalize histogram as probability density function.
+		vmin (float): Minimum display value of image.
+		vmax (float): Maximum display value of image.
+		title (list): List of titles of plots.
+		sup (str): Supporting title of figure.
+		axes (list): List of matplotlib axes used for plotting. If not specified, will generate new ones.
+		color (str): Color of histogram plot.
+		
+	Returns:
+		tuple: Tuple containing:
+
+			* bins (float): Bin array of histogram.
+			* hist (float): Histogram array.
+			* w (float): Width of bins.
+	"""
 	
 	if axes!=None:
 		if len(axes)!=2:
@@ -732,13 +968,25 @@ def showImgAndHist(img,axes=None,sup='',title=None,color='b',vmin=None,vmax=None
 	
 	#Draw
 	plt.draw()
-		
+	
 	return bins,hist,w	
 		
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Finds common range of list of images	
-
 def getCommonRange(imgs):
+	
+	"""Finds common range of list of images.
+		
+	Args:
+		imgs (list): List of images.
+		
+	Returns:
+		tuple: Tuple containing:
+
+			* minVal (float): Lowest value over all images.
+			* maxVal (float): Largest value over all images.
+	
+	"""
+	
+	
 	
 	mins=[]
 	maxs=[]
@@ -746,33 +994,56 @@ def getCommonRange(imgs):
 	for img in imgs:
 		mins.append(img.min())
 		maxs.append(img.max())
-		
-	return min(mins),max(maxs)
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns range of int based dtype
+	
+	minVal=min(mins)
+	maxVal=max(mins)
+	
+	return minVal,maxVal
 
 def getIntRangeDtype(dtype):
+	
+	"""Returns range of int based dtype.
+	"""
+	
 	return np.iinfo(dtype).min,np.iinfo(dtype).max
 	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Flattens image with flattening mask
-
 def flattenImg(img,mask):
+	
+	"""Flattens image with flattening mask.
+	"""
+	
 	return img*mask
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Flattens image with flattening mask
-
 def computeFlatMask(img,dataOffset):
-	#mask=1-(img-img.min()+offset)/(img.max()-img.min()+offset)
+	
+	"""Computes flattening mask from image.
+		
+	Args:
+		img (numpy.ndarray): Image to be used.
+		dataOffset (int): Offset used.
+			
+	Returns:
+		numpy.ndarray: Flattening mask.	
+	"""
+	
 	mask=(img.max()+dataOffset)/(img+dataOffset)
 	return mask
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Computes Mean Image from a list of files
-
 def computeMeanImg(fnFolder,fileList,dataEnc,median=False):
+	
+	"""Computes Mean Image from a list of files.
+		
+	Args:
+		fnFolder (str): Path to folder containing files.
+		fileList (list): List of file names in fnFolder.
+		dataEnc (str): Encoding of images, e.g. uint16.
+	
+	Keyword Args:
+		median (bool): Apply median filter per image.
+		
+	Returns:
+		numpy.ndarray: Mean image.
+	"""
 	
 	if len(fileList)==0:
 		raise ValueError("There are no images in %s" %(fnFolder+fileList))
@@ -795,10 +1066,18 @@ def computeMeanImg(fnFolder,fileList,dataEnc,median=False):
 	mImg=mImg/float(len(fileList))
 	return mImg
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Reads all images in folder, returns mean intensity vector
-
 def getMeanIntensitiesImgs(fnFolder,fileList,dataEnc):
+	
+	"""Reads all images in folder, returns mean intensity vector.
+		
+	Args:
+		fnFolder (str): Path to folder containing files.
+		fileList (list): List of file names in fnFolder.
+		dataEnc (str): Encoding of images, e.g. uint16.
+	
+	Returns:
+		list: Array of mean intensities per image.
+	"""
 	
 	meanIntensities=[]
 	
@@ -811,11 +1090,29 @@ def getMeanIntensitiesImgs(fnFolder,fileList,dataEnc):
 		meanIntensities.append(np.mean(img))
 		
 	return meanIntensities	
-		
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Computes radial histogram of image
-		
+				
 def radialImgHist(img,center,nbins=10,byMean=True,maxR=None):
+	
+	"""Computes radial histogram of image from center.
+		
+	Args:
+		img (numpy.ndarray): Image to be profiled
+		center (list): Center of image.
+	
+	Keyword Args:
+		nbins (int): Number of bins of histogram.
+		byMean (bool): Norm bins by number of items in bin.
+		maxR (float): Maximum radius considered.
+		
+	Returns:
+		tuple: Tuple containing:
+
+			* bins (numpy.ndarray): Bin vector.
+			* binsMid (numpy.ndarray): Array of midpoints of bins.
+			* histY (numpy.ndarray): Array of number of items per bin.
+			* binY (numpy.ndarray): Array of average value per bin.
+		
+	"""
 	
 	#Get resolution
 	res=img.shape[0]
@@ -854,10 +1151,38 @@ def radialImgHist(img,center,nbins=10,byMean=True,maxR=None):
 	
 	return bins,binsMid,histY,binY
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Computes radial histogram of image
 
-def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle='-',fullOutput=False,maxR=None,plotBinSize=False,label='',legend=False):
+def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle='-',fullOutput=False,maxR=None,plotBinSize=False,label='',legend=False,linewidth=1.):
+	
+	"""Plots radial histogram of image from center.
+		
+	Args:
+		img (numpy.ndarray): Image to be profiled
+		center (list): Center of image.
+	
+	Keyword Args:
+		nbins (int): Number of bins of histogram.
+		byMean (bool): Norm bins by number of items in bin.
+		maxR (float): Maximum radius considered.
+		plotBinSize (bool): Include number of items in bin on secondary axis.
+		ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+		color (str): Color of plot.
+		linestyle (str): Linestyle of plot.
+		fullOutput (bool): Also return result arrays from radialImgHist ?
+		linewidth (float): Linewidth of plot.
+		
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* ax (matplotlib.axes): Matplotlib axes.
+			* ax2 (matplotlib.axes): Matplotlib axes for secondary axes. None if plotBinSize==False
+			* bins (numpy.ndarray): Bin vector.
+			* binsMid (numpy.ndarray): Array of midpoints of bins.
+			* histY (numpy.ndarray): Array of number of items per bin.
+			* binY (numpy.ndarray): Array of average value per bin.
+		
+	"""
 	
 	bins,binsMid,histY,binY=radialImgHist(img,center,nbins=nbins,byMean=byMean,maxR=maxR)
 	
@@ -883,7 +1208,7 @@ def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle
 	if not plotBinSize:
 		ax2=None
 	
-	ax.plot(binsMid,binY,color=color,linestyle=linestyle,label=label)
+	ax.plot(binsMid,binY,color=color,linestyle=linestyle,label=label,linewidth=linewidth)
 	
 	if linestyle=='-':
 		newstyle='--'
@@ -891,7 +1216,7 @@ def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle
 		newstyle='-'
 	
 	if plotBinSize:
-		ax2.plot(binsMid,histY,color=color,linestyle=newstyle)
+		ax2.plot(binsMid,histY,color=color,linestyle=newstyle,linewidth=linewidth)
 	
 	plt.draw()
 	
@@ -903,10 +1228,30 @@ def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle
 	else:
 		return ax,ax2
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Computes and plots radial profile of image
-
 def plotRadialProfile(img,center,ax=None,color='r',linestyle='-',fullOutput=False,linewidth=1.):
+	
+	"""Plots radial profile of image from center.
+		
+	Args:
+		img (numpy.ndarray): Image to be profiled
+		center (list): Center of image.
+	
+	Keyword Args:
+		ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+		color (str): Color of plot.
+		linestyle (str): Linestyle of plot.
+		fullOutput (bool): Also return result arrays from computeRadialProfile ?
+		linewidth (float): Linewidth of plot.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* ax (matplotlib.axes): Matplotlib axes.
+			* r (numpy.ndarray): Array of radii.
+			* v (numpy.ndarray): Array of corresponding image values.
+		
+	"""
+	
 	r,v=computeRadialProfile(img,center)
 	
 	if ax==None:
@@ -922,10 +1267,20 @@ def plotRadialProfile(img,center,ax=None,color='r',linestyle='-',fullOutput=Fals
 	else:
 		return ax
 	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Computes radial profile of image	
-	
 def computeRadialProfile(img,center):
+	
+	"""Computes radial profile of image from center.
+		
+	Args:
+		img (numpy.ndarray): Image to be profiled
+		center (list): Center of image.
+			
+	Returns:
+		tuple: Tuple containing:
+		
+			* r (numpy.ndarray): Array of radii.
+			* v (numpy.ndarray): Array of corresponding image values.
+	"""
 	
 	#Empty lists
 	r=[]
@@ -948,10 +1303,13 @@ def computeRadialProfile(img,center):
 	
 	return r,v
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Computes distance between two points
-		
+	
 def dist(p1,p2):
+	
+	"""Computes euclidean distance between two points p1 and p2.
+	
+	"""
+	
 	return np.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
 	
 
@@ -960,18 +1318,22 @@ def findProblematicNormingPixels(img,imgPre,dataOffset,axes=None,debug=False):
 	
 	"""Checks which pixels are problematic for norming.
 	
+	Note that function will temporarily set 
+	>>> np.errstate(divide='raise')
+	so numpy RuntimeWarning actually gets raised instead of just printed.
+	
 	Args:
-		img (numpy.ndarray): Path to folder containing files.
-		fileList (list): List of file names in fnFolder.
-		dataEnc (str): Encoding of images, e.g. uint16.
+		img (numpy.ndarray): Image to be normed.
+		imgPre (numpy.ndarray): Image to be normed.
+		dataOffset (int): Offset used for norming.
 		
 	Keyword Args:
-		oldOffset (int): Take some other offset into account.
-		defaultAdd (int): Default value added to minimal offset.
-		debug (bool): Show debugging outputs.
+		axes (list): List with matplotlib axes used for plotting. If not specified,
+		will generate new ones.
+		debug (bool): Show debugging outputs and plots.
 		
 	Returns:
-		int: Minimal Offset
+		numpy.ndarray: Binary mask of problematic pixels.
 	"""
 	
 	pxs=np.zeros(np.shape(img))
@@ -1077,10 +1439,10 @@ def otsuImageJ(img,maxVal,minVal,debug=False):
 		debug (bool): Show debugging outputs and plots.
 		
 	Returns:
-		{
-		int: Optimal threshhold
-		np.ndarray: Binary image
-		}
+		tuple: Tuple containing:
+		
+			* kStar (int): Optimal threshhold
+			* binImg (np.ndarray): Binary image
 	"""
 	
 	#Initialize values

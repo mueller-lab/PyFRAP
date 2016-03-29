@@ -17,6 +17,11 @@ from . import modules
 from . import subclasses
 
 #PyFRAP GUI classes
+
+#Only import if not RTD. RTD is currently having problems 
+#with importing GUI classes. Will need to have fix for this 
+#at some point
+
 import os
 if os.environ.get('READTHEDOCS', None) == 'True':
 	pass
