@@ -136,7 +136,7 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns = ['../../pyfrp/__init__.py','../../pyfrp/subclasses/__init__.py','../../pyfrp/modules/__init__.py','../../pyfrp/gui/__init__.py','../../pyfrp/PyFRAP.py','../../pyfrp/gui/pyfrp_gui_basics.py']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
