@@ -991,9 +991,27 @@ def findProblematicNormingPixels(img,imgPre,dataOffset,axes=None,debug=False):
 	return pxs	
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Simple function that loops through all images in file list and returns minimum integer that needs to be added such that all pixels are positiv
+#
 		
 def findMinOffset(fnFolder,fileList,dataEnc,oldOffset=None,defaultAdd=1.,debug=False):
+	
+	"""Simple function that loops through all images in file list and returns minimum integer 
+	that needs to be added such that all pixels are positiv. 
+	
+	Args:
+		fnFolder (str): Path to folder containing files.
+		fileList (list): List of file names in fnFolder.
+		dataEnc (str): 
+		
+	Keyword Args:
+		debug (bool): Show debugging outputs and plots.
+		
+	Returns:
+		{
+		int: Optimal threshhold
+		np.ndarray: Binary image
+		}
+	"""
 	
 	#Check if there are images
 	if len(fileList)==0:
