@@ -1,3 +1,6 @@
+pyopenssl
+ndg-httpsclient
+pyasn1
 ez_setup>=0.9
 numpy>=1.8.2
 scipy>=0.13.3

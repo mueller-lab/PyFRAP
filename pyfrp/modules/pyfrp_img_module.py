@@ -1300,14 +1300,17 @@ def findMinOffset(fnFolder,fileList,dataEnc,oldOffset=None,defaultAdd=1.,debug=F
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #otsu algorithm of imagej
 
-def otsuImageJ(img,maxVal,minVal,debug):
+def otsuImageJ(img,maxVal,minVal,debug=False):
 	
 	"""Python implementation of Fiji's Otsu algorithm. 
 	
 	See also http://imagej.nih.gov/ij/source/ij/process/AutoThresholder.java.
 
 	Args:
-		folder (str): Path to folder containing lsm files
+		img (numpy.ndarray): Image as 2D-array.
+		maxVal (int): Image as 2D-array.
+		minVal (int): 
+		debug (bool)
 	
 	Keyword Args:
 		fijiBin (str): Path to fiji binary
@@ -1329,7 +1332,7 @@ def otsuImageJ(img,maxVal,minVal,debug):
 	binWidth=np.diff(binEdges)[0]
 	
 	#Debugging plot for histogram
-	if debug==1:
+	if debug:
 		binVec=arange(L)
 		fig=plt.figure()
 		fig.show()
@@ -1387,7 +1390,7 @@ def otsuImageJ(img,maxVal,minVal,debug):
 			else:				
 				binImg[i,j]=maxVal
 	
-	if debug==1:
+	if debug:
 		print "Optimal threshold = ", kStar
 		print "#Pixels above threshold = ", sum(binImg)/float(maxVal)
 		print "#Pixels below threshold = ", np.shape(img)[0]**2-sum(binImg)/float(maxVal)
