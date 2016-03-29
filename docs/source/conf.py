@@ -30,6 +30,49 @@ sys.path.insert(0, os.path.abspath('../../pyfrp/modules/'))
 sys.path.insert(0, os.path.abspath('../../pyfrp/gui/'))
 sys.path.insert(0, os.path.abspath('../../pyfrp/subclasses/'))
 
+# -- Mocking packages ------------------------------------------------
+
+#Mocking numpy and matplotlib so they don't crash readthedocs ### NOTE: might need to add numpy here again
+
+#from mock import Mock as MagicMock
+
+#class Mock(MagicMock):
+    #@classmethod
+    #def __getattr__(cls, name):
+            #return Mock()
+
+#If on RTD, moch some stuff
+if os.environ.get('READTHEDOCS', None) == 'True':
+	import mock
+	MOCK_MODULES = [
+			#Colorama
+			'colorama',
+			#numpy
+			'numpy','numpy.core','numpy.core.multiarray',
+			#Fipy
+			'fipy',
+			#cv2
+			'cv2',
+			#Scipy
+			'scipy','scipy.optimize','scipy.interpolate','scipy.ndimage','scipy.ndimage.interpolation',
+			#Matplotlib (and all submodules)
+			'matplotlib', 'matplotlib.pyplot','matplotlib.axes','mpl_toolkits','mpl_toolkits.mplot3d','matplotlib.collections',
+			'matplotlib.patches','matplotlib.tri','matplotlib.backends','matplotlib.backends.backend_qt4agg',
+			'matplotlib.bakends.backend_qt4agg.FigureCanvasQTAgg','matplotlib.backends.backend_qt4agg.FigureCanvas',
+			'matplotlib.figure',
+			#Skimage 
+			'skimage','skimage.io','skimage.morphology','scipy.signal','skimage.measure','skimage.filters',
+			#PyQT
+			'PyQt4','PyQt4.QtGui','PyQt4.QtCore',
+			#MeshIO
+			'meshio']
+
+	#sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
+	for mod_name in MOCK_MODULES:
+		sys.modules[mod_name] = mock.Mock()
+
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
