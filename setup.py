@@ -18,7 +18,7 @@ class OverrideInstall(install):
 	def run(self):
 		
 		#Try to download gmsh
-		self.downloadGmsh()
+		#self.downloadGmsh()
 				
 		#Run setuptools install
 		install.run(self) 
@@ -64,9 +64,9 @@ class OverrideInstall(install):
 						self.makeAdditionalDataFolders(folderpath,"macros",uid,gid,mode)
 			
 			#Add gmsh into paths.default if download was successful
-			if 'paths.default' in filepath:
-				if self.gmshDownloaded:
-					self.setGmshPath(filepath)
+			#if 'paths.default' in filepath:
+				#if self.gmshDownloaded:
+					#self.setGmshPath(filepath)
 					#if platform.system() not in ["Windows"]:
 						#self.changePermissions(filepath,uid,gid,mode)
 				
@@ -240,30 +240,65 @@ class OverrideInstall(install):
 				log.info("Unable to create folder %s" %(folder+fn))
 				return False
 			
-#Define setup	
-setup(name='pyfrp',
-	version='1.0',
-	description='PyFRAP: A Python based FRAP analysis tool box',
-	url='https://github.com/alexblaessle/PyFRAP',
-	author='Alexander Blaessle',
-	author_email='alexander.blaessle@tuebingen.mpg.de',
-	license='GNU GPL Version 3',
-	packages=['pyfrp','pyfrp.modules','pyfrp.subclasses','pyfrp.gui'],
-	package_dir={'pyfrp': 'pyfrp',
-			'pyfrp.modules': 'pyfrp/modules',
-			'pyfrp.gui' : 'pyfrp/gui'
-			},
-	#package_data = {'pyfrp':['meshfiles','configurations']},
-	include_package_data=True,
-	classifiers= [
-		'Operating System :: OS Independent',
-		'Programming Language :: Python :: 2.7',
-		'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
-		'Intended Audience :: Science/Research'
-		],
-	platforms=['ALL'],
-	keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
-		],
-	zip_safe=False,
-	cmdclass={'install': OverrideInstall} #Need this here to overwrite our install
-	)
+#Define setup
+
+import os
+
+if os.environ.get('READTHEDOCS', None) == 'True':
+	
+	print "Installing on RTD, will not overwrite install command."
+	
+	setup(name='pyfrp',
+		version='1.0',
+		description='PyFRAP: A Python based FRAP analysis tool box',
+		url='https://github.com/alexblaessle/PyFRAP',
+		author='Alexander Blaessle',
+		author_email='alexander.blaessle@tuebingen.mpg.de',
+		license='GNU GPL Version 3',
+		packages=['pyfrp','pyfrp.modules','pyfrp.subclasses','pyfrp.gui'],
+		package_dir={'pyfrp': 'pyfrp',
+				'pyfrp.modules': 'pyfrp/modules',
+				'pyfrp.gui' : 'pyfrp/gui'
+				},
+		#package_data = {'pyfrp':['meshfiles','configurations']},
+		include_package_data=True,
+		classifiers= [
+			'Operating System :: OS Independent',
+			'Programming Language :: Python :: 2.7',
+			'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
+			'Intended Audience :: Science/Research'
+			],
+		platforms=['ALL'],
+		keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
+			],
+		zip_safe=False
+		)
+
+else:
+
+	setup(name='pyfrp',
+		version='1.0',
+		description='PyFRAP: A Python based FRAP analysis tool box',
+		url='https://github.com/alexblaessle/PyFRAP',
+		author='Alexander Blaessle',
+		author_email='alexander.blaessle@tuebingen.mpg.de',
+		license='GNU GPL Version 3',
+		packages=['pyfrp','pyfrp.modules','pyfrp.subclasses','pyfrp.gui'],
+		package_dir={'pyfrp': 'pyfrp',
+				'pyfrp.modules': 'pyfrp/modules',
+				'pyfrp.gui' : 'pyfrp/gui'
+				},
+		#package_data = {'pyfrp':['meshfiles','configurations']},
+		include_package_data=True,
+		classifiers= [
+			'Operating System :: OS Independent',
+			'Programming Language :: Python :: 2.7',
+			'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
+			'Intended Audience :: Science/Research'
+			],
+		platforms=['ALL'],
+		keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
+			],
+		zip_safe=False,
+		cmdclass={'install': OverrideInstall} #Need this here to overwrite our install
+		)
