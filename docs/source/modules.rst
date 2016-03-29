@@ -4,4 +4,5 @@ pyfrp
 .. toctree::
    :maxdepth: 4
 
-   pyfrp
+   pyfrp.modules.rst
+   pyfrp.subclasses.rst
