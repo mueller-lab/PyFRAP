@@ -1032,6 +1032,211 @@ def findMinOffset(fnFolder,fileList,dataEnc,oldOffset=None,defaultAdd=1.,debug=F
 			return oldOffset
 
 	return abs(minVal)+defaultAdd
+
+def otsuImageJ(img,maxVal,minVal,debug=False):
+	
+	"""Python implementation of Fiji's Otsu algorithm. 
+	
+	See also http://imagej.nih.gov/ij/source/ij/process/AutoThresholder.java.
+
+	Args:
+		img (numpy.ndarray): Image as 2D-array.
+		maxVal (int): Value assigned to pixels above threshhold.
+		minVal (int): Value assigned to pixels below threshhold.
+		
+	Keyword Args:
+		debug (bool): Show debugging outputs and plots.
+		
+	Returns:
+		{
+		int: Optimal threshhold
+		np.ndarray: Binary image
+		}
+	"""
+	
+	#Initialize values
+	#L = img.max()
+	L = 256
+	S = 0 
+	N = 0
+	
+	#Compute histogram
+	data,binEdges=np.histogram(img,bins=L)
+	binWidth=np.diff(binEdges)[0]
+	
+	#Debugging plot for histogram
+	if debug:
+		binVec=arange(L)
+		fig=plt.figure()
+		fig.show()
+		ax=fig.add_subplot(121)
+		ax.bar(binVec,data)
+		plt.draw()
+			
+	for k in range(L):
+		#Total histogram intensity
+		S = S+ k * data[k]
+		#Total number of data points
+		N = N + data[k]		
+	
+	#Temporary variables
+	Sk = 0
+	BCV = 0
+	BCVmax=0
+	kStar = 0
+	
+	#The entry for zero intensity
+	N1 = data[0] 
+	
+	#Look at each possible threshold value,
+	#calculate the between-class variance, and decide if it's a max
+	for k in range (1,L-1): 
+		#No need to check endpoints k = 0 or k = L-1
+		Sk = Sk + k * data[k]
+		N1 = N1 + data[k]
+
+		#The float casting here is to avoid compiler warning about loss of precision and
+		#will prevent overflow in the case of large saturated images
+		denom = float(N1 * (N - N1)) 
+
+		if denom != 0:
+			#Float here is to avoid loss of precision when dividing
+			num = ( float(N1) / float(N) ) * S - Sk 
+			BCV = (num * num) / denom
+		
+		else:
+			BCV = 0
+
+		if BCV >= BCVmax: 
+			#Assign the best threshold found so far
+			BCVmax = BCV
+			kStar = k
+	
+	kStar=binEdges[0]+kStar*binWidth
+	
+	#Now manipulate the image
+	binImg=np.zeros(np.shape(img))
+	for i in range(np.shape(img)[0]):
+		for j in range(np.shape(img)[1]):
+			if img[i,j]<=kStar:
+				binImg[i,j]=minVal
+			else:				
+				binImg[i,j]=maxVal
+	
+	if debug:
+		print "Optimal threshold = ", kStar
+		print "#Pixels above threshold = ", sum(binImg)/float(maxVal)
+		print "#Pixels below threshold = ", np.shape(img)[0]**2-sum(binImg)/float(maxVal)
+		
+		ax2=fig.add_subplot(122)
+		ax2.contourf(binImg)
+		plt.draw()
+		raw_input()
+			
+	return kStar,binImg	
+
+def extractMicroscope(folder,ftype,fijiBin=None,macroPath=None):
+	
+	"""Converts all microscopy files of type ftype in folder to files using Fiji.
+
+	Args:
+		folder (str): Path to folder containing czi files
+		ftype (str): Type of microscopy file, such as lsm or czi
+	
+	Keyword Args:
+		fijiBin (str): Path to fiji binary
+		macroPath (str): Path to fiji macro
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+
+	"""
+	
+	if ftype=='lsm':
+		r=extractLSM(folder,fijiBin=fijiBin,macroPath=macroPath)
+	elif ftype=='czi':
+		r=extractCZI(folder,fijiBin=fijiBin,macroPath=macroPath)
+	else:
+		printError("Unknown filetype "+ftype)
+		return -1
+	return r
+
+def extractLSM(folder,fijiBin=None,macroPath=None):
+	
+	"""Converts all lsm files in folder to tif files using Fiji.
+
+	Args:
+		folder (str): Path to folder containing lsm files
+	
+	Keyword Args:
+		fijiBin (str): Path to fiji binary
+		macroPath (str): Path to fiji macro
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+
+	"""
+
+	if macroPath==None:
+		macroPath=pyfrp_misc_module.getMacroDir()+'lsm2tif.ijm'
+	
+	return runFijiMacro(macroPath,folder,fijiBin=fijiBin)
+	
+def extractCZI(folder,fijiBin=None,macroPath=None):
+	
+	"""Converts all czi files in folder to tif files using Fiji.
+
+	Args:
+		folder (str): Path to folder containing czi files
+		
+	Keyword Args:	
+		fijiBin (str): Path to fiji binary
+		macroPath (str): Path to fiji macro
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+
+	"""
+	
+	if macroPath==None:
+		macroPath=pyfrp_misc_module.getMacroDir()+'czi2tif.ijm'
+	
+	return runFijiMacro(macroPath,folder,fijiBin=fijiBin)
+	
+	
+def runFijiMacro(macroPath,macroArgs,fijiBin=None):
+	
+	"""Runs Fiji Macro.
+
+	Args:
+		macroPath (str): Path to fiji macro
+		macroArgs (str): Arguments being passed to Fiji macro
+		
+	Keyword Args:	
+		fijiBin (str): Path to fiji binary
+			
+	Returns:
+		int: Returns 0 if success, -1 if error
+
+	"""
+	
+	if fijiBin==None:
+		fijiBin=pyfrp_misc_module.getFijiBin()
+		
+	#Define Command to run
+	cmd=fijiBin+" -macro "+ macroPath + " '"+macroArgs +"'"+ " -batch " 
+	
+	#Run
+	try:
+		os.system(cmd)
+		return 0
+	except:
+		printError("Something went wrong executing:" )
+		print cmd
+		return -1	
+	
+	
+	
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Functions that still need testing
@@ -1295,213 +1500,4 @@ def findMinOffset(fnFolder,fileList,dataEnc,oldOffset=None,defaultAdd=1.,debug=F
 	
 	#embryo.slides=slides
 			
-	#return embryo		
-	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#otsu algorithm of imagej
-
-def otsuImageJ(img,maxVal,minVal,debug=False):
-	
-	"""Python implementation of Fiji's Otsu algorithm. 
-	
-	See also http://imagej.nih.gov/ij/source/ij/process/AutoThresholder.java.
-
-	Args:
-		img (numpy.ndarray): Image as 2D-array.
-		maxVal (int): Image as 2D-array.
-		minVal (int): 
-		debug (bool)
-	
-	Keyword Args:
-		fijiBin (str): Path to fiji binary
-		macroPath (str): Path to fiji macro
-		
-	Returns:
-		int: Returns 0 if success, -1 if error
-
-	"""
-	
-	#Initialize values
-	#L = img.max()
-	L = 256
-	S = 0 
-	N = 0
-	
-	#Compute histogram
-	data,binEdges=np.histogram(img,bins=L)
-	binWidth=np.diff(binEdges)[0]
-	
-	#Debugging plot for histogram
-	if debug:
-		binVec=arange(L)
-		fig=plt.figure()
-		fig.show()
-		ax=fig.add_subplot(121)
-		ax.bar(binVec,data)
-		plt.draw()
-			
-	for k in range(L):
-		#Total histogram intensity
-		S = S+ k * data[k]
-		#Total number of data points
-		N = N + data[k]		
-	
-	#Temporary variables
-	Sk = 0
-	BCV = 0
-	BCVmax=0
-	kStar = 0
-	
-	#The entry for zero intensity
-	N1 = data[0] 
-	
-	#Look at each possible threshold value,
-	#calculate the between-class variance, and decide if it's a max
-	for k in range (1,L-1): 
-		#No need to check endpoints k = 0 or k = L-1
-		Sk = Sk + k * data[k]
-		N1 = N1 + data[k]
-
-		#The float casting here is to avoid compiler warning about loss of precision and
-		#will prevent overflow in the case of large saturated images
-		denom = float(N1 * (N - N1)) 
-
-		if denom != 0:
-			#Float here is to avoid loss of precision when dividing
-			num = ( float(N1) / float(N) ) * S - Sk 
-			BCV = (num * num) / denom
-		
-		else:
-			BCV = 0
-
-		if BCV >= BCVmax: 
-			#Assign the best threshold found so far
-			BCVmax = BCV
-			kStar = k
-	
-	kStar=binEdges[0]+kStar*binWidth
-	
-	#Now manipulate the image
-	binImg=np.zeros(np.shape(img))
-	for i in range(np.shape(img)[0]):
-		for j in range(np.shape(img)[1]):
-			if img[i,j]<=kStar:
-				binImg[i,j]=minVal
-			else:				
-				binImg[i,j]=maxVal
-	
-	if debug:
-		print "Optimal threshold = ", kStar
-		print "#Pixels above threshold = ", sum(binImg)/float(maxVal)
-		print "#Pixels below threshold = ", np.shape(img)[0]**2-sum(binImg)/float(maxVal)
-		
-		ax2=fig.add_subplot(122)
-		ax2.contourf(binImg)
-		plt.draw()
-		raw_input()
-			
-	return kStar,binImg	
-
-def extractMicroscope(folder,ftype,fijiBin=None,macroPath=None):
-	
-	"""Converts all microscopy files of type ftype in folder to files using Fiji.
-
-	Args:
-		folder (str): Path to folder containing czi files
-		ftype (str): Type of microscopy file, such as lsm or czi
-	
-	Keyword Args:
-		fijiBin (str): Path to fiji binary
-		macroPath (str): Path to fiji macro
-		
-	Returns:
-		int: Returns 0 if success, -1 if error
-
-	"""
-	
-	if ftype=='lsm':
-		r=extractLSM(folder,fijiBin=fijiBin,macroPath=macroPath)
-	elif ftype=='czi':
-		r=extractCZI(folder,fijiBin=fijiBin,macroPath=macroPath)
-	else:
-		printError("Unknown filetype "+ftype)
-		return -1
-	return r
-
-def extractLSM(folder,fijiBin=None,macroPath=None):
-	
-	"""Converts all lsm files in folder to tif files using Fiji.
-
-	Args:
-		folder (str): Path to folder containing lsm files
-	
-	Keyword Args:
-		fijiBin (str): Path to fiji binary
-		macroPath (str): Path to fiji macro
-		
-	Returns:
-		int: Returns 0 if success, -1 if error
-
-	"""
-
-	if macroPath==None:
-		macroPath=pyfrp_misc_module.getMacroDir()+'lsm2tif.ijm'
-	
-	return runFijiMacro(macroPath,folder,fijiBin=fijiBin)
-	
-def extractCZI(folder,fijiBin=None,macroPath=None):
-	
-	"""Converts all czi files in folder to tif files using Fiji.
-
-	Args:
-		folder (str): Path to folder containing czi files
-		
-	Keyword Args:	
-		fijiBin (str): Path to fiji binary
-		macroPath (str): Path to fiji macro
-		
-	Returns:
-		int: Returns 0 if success, -1 if error
-
-	"""
-	
-	if macroPath==None:
-		macroPath=pyfrp_misc_module.getMacroDir()+'czi2tif.ijm'
-	
-	return runFijiMacro(macroPath,folder,fijiBin=fijiBin)
-	
-	
-def runFijiMacro(macroPath,macroArgs,fijiBin=None):
-	
-	"""Runs Fiji Macro.
-
-	Args:
-		macroPath (str): Path to fiji macro
-		macroArgs (str): Arguments being passed to Fiji macro
-		
-	Keyword Args:	
-		fijiBin (str): Path to fiji binary
-			
-	Returns:
-		int: Returns 0 if success, -1 if error
-
-	"""
-	
-	if fijiBin==None:
-		fijiBin=pyfrp_misc_module.getFijiBin()
-		
-	#Define Command to run
-	cmd=fijiBin+" -macro "+ macroPath + " '"+macroArgs +"'"+ " -batch " 
-	
-	#Run
-	try:
-		os.system(cmd)
-		return 0
-	except:
-		printError("Something went wrong executing:" )
-		print cmd
-		return -1	
-	
-	
-	
-	
+	#return embryo			
