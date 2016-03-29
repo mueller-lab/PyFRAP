@@ -13,11 +13,7 @@ Contents:
    
    pyfrp.modules.rst
    pyfrp.subclasses.rst
-   pyfrp.gui.rst
    
-
-
-
 Indices and tables
 ==================
 
