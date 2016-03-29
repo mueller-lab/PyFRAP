@@ -954,10 +954,25 @@ def computeRadialProfile(img,center):
 def dist(p1,p2):
 	return np.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
 	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks which pixels are problematic for norming
+
 		
 def findProblematicNormingPixels(img,imgPre,dataOffset,axes=None,debug=False):
+	
+	"""Checks which pixels are problematic for norming.
+	
+	Args:
+		img (numpy.ndarray): Path to folder containing files.
+		fileList (list): List of file names in fnFolder.
+		dataEnc (str): Encoding of images, e.g. uint16.
+		
+	Keyword Args:
+		oldOffset (int): Take some other offset into account.
+		defaultAdd (int): Default value added to minimal offset.
+		debug (bool): Show debugging outputs.
+		
+	Returns:
+		int: Minimal Offset
+	"""
 	
 	pxs=np.zeros(np.shape(img))
 	
@@ -989,9 +1004,6 @@ def findProblematicNormingPixels(img,imgPre,dataOffset,axes=None,debug=False):
 		showImgAndHist(pxs*imgPre,axes=[axes[3],axes[7]])
 		
 	return pxs	
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#
 		
 def findMinOffset(fnFolder,fileList,dataEnc,oldOffset=None,defaultAdd=1.,debug=False):
 	
@@ -1004,15 +1016,12 @@ def findMinOffset(fnFolder,fileList,dataEnc,oldOffset=None,defaultAdd=1.,debug=F
 		dataEnc (str): Encoding of images, e.g. uint16.
 		
 	Keyword Args:
-		oldOffset (int): 
-		defaultAdd (int): Show debugging outputs and plots.
-		debug (bool): Show debugging outputs and plots.
+		oldOffset (int): Take some other offset into account.
+		defaultAdd (int): Default value added to minimal offset.
+		debug (bool): Show debugging outputs.
 		
 	Returns:
-		{
-		int: Optimal threshhold
-		np.ndarray: Binary image
-		}
+		int: Minimal Offset
 	"""
 	
 	#Check if there are images
