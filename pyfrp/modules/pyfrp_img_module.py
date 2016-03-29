@@ -1302,6 +1302,22 @@ def findMinOffset(fnFolder,fileList,dataEnc,oldOffset=None,defaultAdd=1.,debug=F
 
 def otsuImageJ(img,maxVal,minVal,debug):
 	
+	"""Python implementation of Fiji's Otsu algorithm. 
+	
+	See also http://imagej.nih.gov/ij/source/ij/process/AutoThresholder.java.
+
+	Args:
+		folder (str): Path to folder containing lsm files
+	
+	Keyword Args:
+		fijiBin (str): Path to fiji binary
+		macroPath (str): Path to fiji macro
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+
+	"""
+	
 	#Initialize values
 	#L = img.max()
 	L = 256
