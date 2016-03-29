@@ -72,13 +72,14 @@ Note that in the latter method PyFRAP's stdout might get redirected to the pytho
 
 Check out the PyFRAP wiki's [First Steps Section](https://github.com/alexblaessle/PyFRAP/wiki/FirstSteps).
 
-<!--## API
+## API
 
-The API of PyFRAP can be found [here](http://pyfrp.readthedocs.org/en/latest/pyrw.html#submodules "toAPI") .-->
+The API of PyFRAP can be found [here](http://pyfrap.readthedocs.org/en/latest/) .
 
 ## Documentation
 
 To learn more about PyFRAP, check out the PyFRAP [wiki](https://github.com/alexblaessle/PyFRAP/wiki)
+
 
 
 
