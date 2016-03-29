@@ -242,8 +242,7 @@ class OverrideInstall(install):
 			
 #Define setup
 
-import os
-
+#Check if setup.py is used to build RTD, then don't overwrite install command
 if os.environ.get('READTHEDOCS', None) == 'True':
 	
 	print "Installing on RTD, will not overwrite install command."

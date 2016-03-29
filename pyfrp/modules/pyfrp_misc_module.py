@@ -56,10 +56,18 @@ import platform
 #Module Functions
 #===========================================================================================================================================================================
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Gets sorted file list from folder for files of type f_type
-
 def getSortedFileList(fnFolder,fType):
+	
+	"""Gets sorted file list from folder for files of type fType
+	
+	Args:
+		fnFolder (str): Folder path.
+		fType (str): File type.
+		
+	Returns:
+		list: list of filenames.
+		
+	"""
 	
 	#Getting files in datafolder
 	try:
@@ -81,140 +89,52 @@ def getSortedFileList(fnFolder,fType):
 	fileList=fileListNew
 	
 	return fileList
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#saves array of data in csv file
-	
-def save_to_csv(vars_data_names,vars_data_values,fn_save):
-	
-	#Get timestamp
-	ts = time.time()
-	timestamp=datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d%H:%M:%S')
-	
-	fn_save=fn_save+"_"+timestamp+".csv"
-	
-	#Open file for writing
-	wfile=csv.writer(open(fn_save,'wb'), delimiter=';')
-	
-	#Creating type_vecs
-	vars_data_types=build_type_array(vars_data_values)
-	
-	#Writing current settings
-	wfile.writerow(vars_data_names)
-	wfile.writerow(vars_data_types)
-	wfile.writerow(vars_data_values)
-	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks filenames in object and adjusts them to work on the respective operating system
-
-def adjust_filepaths(mol,newbase,osold="",osnew="",basefolder_old="",embs=[],mode='auto',gui=None,debug=False):
-	
-	if debug:
-		print "======= adjust_filepaths debugging output ======="
-	
-	if embs==[]:
-		embs=range(len(mol.embryos))
-
-	for i,emb in enumerate(mol.embryos):
-		if i in embs:
-			
-			#Dump all 
-			data_old=emb.fn_datafolder
-			res_old=emb.fn_resultfolder
-			pre_old=emb.fn_preimage
-			
-			#Set adjust flag True
-			adjust=True
-			
-			
-			#Make sure to convert 
-			if os.path.exists(data_old):
-				if gui==None:
-					if mode!="auto":
-						ans=raw_input("Data path in embryo " + emb.name + "already exists on this machine, are you sure to change names? [Y/N]")
-						if ans=="N":
-							adjust=False
-					else:
-						adjust=False
-			
-			###NOTE: Not sure if I need this: will need to fix
-			#if newbase in data_old:
-				#if gui==None:
-					#ans=raw_input("Newbase seems to be already in fn_datafolder of embryo " + emb.name + ". Are you sure to change names? [Y/N]")
-					#if mode!="auto":
-						#if ans=="N":
-							#return mol
-					#else:
-						#return mol
-			
-			if adjust:
-			
-				#Change filepathing system
-				if osold!=osnew:
-					if osold in ["win","Win","Windows"] and osnew in ["lin","Linux","osx","OSX"]:	
-						emb.fn_datafolder=win2lin_path(emb.fn_datafolder)
-						emb.fn_resultfolder=win2lin_path(emb.fn_resultfolder)
-						emb.fn_preimage=win2lin_path(emb.fn_preimage)	
-					elif osnew in ["win","Win","Windows"] and osold in ["lin","Linux","osx","OSX"]:	
-						emb.fn_datafolder=lin2win_path(emb.fn_datafolder)
-						emb.fn_resultfolder=lin2win_path(emb.fn_resultfolder)
-						emb.fn_preimage=lin2win_path(emb.fn_preimage)
-					else:
-						print "Warning, can't convert filepaths from os=", osold, " to os=", osnew, " ."
 				
-				#Adjust basefolder	
-				emb.fn_datafolder=subst_basepath(emb.fn_datafolder,basefolder_old,newbase)
-				emb.fn_resultfolder=subst_basepath(emb.fn_resultfolder,basefolder_old,newbase)
-				emb.fn_preimage=subst_basepath(emb.fn_preimage,basefolder_old,newbase)
-					
-				if debug:
-					print data_old, " --> " , emb.fn_datafolder
-					print res_old, " --> " ,emb.fn_resultfolder
-					print pre_old, " --> " ,emb.fn_preimage
-					
-	return mol		
-			
-				
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Converts Linux Path to Win path (/ -> \\)
-
-def lin2win_path(p):
+def lin2winPath(p):
+	
+	"""Converts Linux Path to Win path (/ -> \\)
+	
+	Args:
+		p (str): Path.
+		
+	Returns:
+		str: Converted path.
+		
+	"""
+	
 	r=p.replace("/","\\")
 	return r
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Converts Win Path to Linux path (\\ -> /)
-
-def win2lin_path(p):
+def win2linPath(p):
+	
+	"""Converts Win Path to Linux path (\\ -> /)
+	
+	Args:
+		p (str): Path.
+		
+	Returns:
+		str: Converted path.
+		
+	"""
+	
 	r=p.replace("\\","/")
 	return r
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Substitute basefolder of filepath
-
-def subst_basepath(p,basefolder_old,newbase):
+def leastCommonSubstring(S,T):
 	
-	if basefolder_old=='':
-		basefolder_old=lcs(p,newbase)
+	"""Find longest common substring.
+	
+	Taken from http://www.bogotobogo.com/python/python_longest_common_substring_lcs_algorithm_generalized_suffix_tree.php
+
+	Args:
+		S (str): String to find substring in.
+		T (str): Substring.
 		
-
-	if p!="":
-		if basefolder_old in p and basefolder_old!="":
-			base,end=p.split(basefolder_old)
-		else:
-			end=""
-			base=""
-	else:
-		end=""
-		base=""
+	Returns:
+		str: Least common substring.
+		
+	"""
 	
-	pnew=newbase+end
-	return pnew
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Find longest common substring, taken from http://www.bogotobogo.com/python/python_longest_common_substring_lcs_algorithm_generalized_suffix_tree.php
-
-def lcs(S,T):
 	m = len(S)
 	n = len(T)
 	counter = [[0]*(n+1) for x in range(m+1)]
@@ -239,11 +159,32 @@ def lcs(S,T):
 		
 	return lcs_abs
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#String with lists/sublists to list filled with integers
-
 def str2list(l,dtype="int",openDelim="[",closeDelim="]",sep=","):
-
+	
+	"""String with lists/sublists to list filled with integers.
+	
+	Example:
+	
+	>>> l="[1,2,[3,4]]"
+	>>> str2list(l)
+	>>> [1,2,[3,4]]
+	
+	Args:
+		l (str): A list or tuple as a string.
+		
+	Keyword Args:
+		dtype (str): Data type (float,int,str)
+		openDelim (str): Opening delimiter.
+		closeDelim (str): Closing delimiter.
+		sep (str): Seperator between values.
+		
+	Returns:
+		{
+		list: Converted string.
+		int: Last character visited.
+		}
+	"""
+	
 	#New list
 	lnew=[]
 	op=False
@@ -287,11 +228,22 @@ def str2list(l,dtype="int",openDelim="[",closeDelim="]",sep=","):
 			s=s+x
 	
 	return lnew,i
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Append to list and convert to right dtype
-				
+			
 def appDtype(l,s,dtype='int'):
+	
+	"""Appends string to list and convert to right dtype.
+	
+	Args:
+		l (list): A list.
+		s (str): String to append.
+		
+	Keyword Args:
+		dtype (str): Data type (float,int,str)
+		
+	Returns:
+		list: List with appended value.
+	"""
+	
 	if s!="":
 		if dtype=="int":
 			l.append(int(s))
@@ -303,11 +255,18 @@ def appDtype(l,s,dtype='int'):
 			printWarning("Not understanding dtype = "+ dtype)
 		
 	return l	
-		
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns complimentary values of two lists
 
 def complValsSimple(l1,l2):
+	
+	"""Returns complimentary values of two lists.
+	
+	Args:
+		l1 (list): A list.
+		l2 (list): Another list.
+		
+	Returns:
+		list: List with complimentary values.
+	"""
 	
 	l=[]
 	for i in l1:
@@ -316,10 +275,17 @@ def complValsSimple(l1,l2):
 	
 	return l
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns complimentary values of two lists, faster version
-
 def complValsFast(l1,l2):
+	
+	"""Returns complimentary values of two lists, faster version.
+	
+	Args:
+		l1 (list): A list.
+		l2 (list): Another list.
+		
+	Returns:
+		list: List with complimentary values.
+	"""
 	
 	matches=matchVals(l1,l2)
 	
@@ -328,27 +294,51 @@ def complValsFast(l1,l2):
 	
 	return l1
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns complimentary values of two lists, faster version
-
 def removeAllOccFromList(l, val):
+	
+	"""Removes all occurences of value in list.
+	
+	Args:
+		l (list): A list.
+		val (value): Value to remove.
+		
+	Returns:
+		list: List without removed values.
+	"""
+	
 	return [value for value in l if value != val]
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Returns matching values of two lists
 
 def matchVals(l1,l2):
+	
+	"""Returns matching values of two lists.
+	
+	Args:
+		l1 (list): A list.
+		l2 (list): Another list.
+		
+	Returns:
+		list: List of matching values.
+	"""
 
 	l1=list(l1)
 	l2=list(l2)
 	
 	return list(set(l1).intersection(l2))
 
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Builds dict of list of variables (only works if vars are in locals())
-
 def vars2dict(var,loc):	
+
+	"""Builds dict of list of variables (only works if vars are in locals()).
+	
+	Args:
+		var (list): List of variable names.
+		loc (dict): Handle to locals().
+		
+	Returns:
+		dict: Built dictionary.
+	"""
 	
 	dic={}
 	for name in var:
@@ -356,12 +346,23 @@ def vars2dict(var,loc):
 		
 	return {name: loc[name] for name, val in var.iteritems()}
 	
-	return dic
-	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Build string with variable name and its value from dict
+#
 
 def dict2string(dic,sep="=",newline=False):
+	
+	"""Build string with variable name and its value from dict.
+	
+	Args:
+		dic (dict): Dictionary.
+		
+	Keyword Args:
+		sep (list): Seperator between variable and value.
+		newline (bool): Start newline after each variable.
+	
+	Returns:
+		str: Built string.
+	"""
 	
 	s=""
 	
@@ -373,94 +374,20 @@ def dict2string(dic,sep="=",newline=False):
 			
 	return s		
 		
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Fixes file name 
-
-def fix_fn_digits(fn,ndigits=3,op="lin",mode='auto',debug=False):
+def findIntString(s,idxvec=[],debug=False):			
 	
-	if debug:
-		print "======= fix_fn_digits debugging output ======="
+	"""Finds integers in string.
 	
-	#Check if path exists
-	if os.path.isfile(fn):
-		if debug:
-			print fn + "already exists, not going to do anything."
-		return fn		
-	else:
-		if debug:
-			print fn + "does not exist."
+	Args:
+		s (str): String
 		
-		if mode!='auto':
-			ans=raw_input("Do you want me to fix it? [Y/N]")
-			if ans!="Y":
-				return fn
-		
-		if debug:
-			print "Will try to fix digits in "+ fn 
-		
-		#Grab filename and ending
-		if op in ["lin","osx"]:
-			s=fn.split("/")
-		else:
-			s.fn.split("\\")
-		
-		base="/".join(s[:-1])
-		
-		#Check if containing folder exists
-		if not os.path.exists(base):
-			if debug:
-				print "Folder ", base, " does not exist, going to return original filename!"
-			return fn
-		
-		#Grab filename
-		s=s[-1]
-		
-		#Grab file extension
-		s=s.split(".")
-		ending=s[-1]
-		
-		#Grab name
-		n=s[-2]
-		
-		#Find last digits in name
-		b=range(-len(n),0)
-		b.reverse()
-		
-		idx=find_int_str(n,idxvec=b)[0]
-		
-		#Grab String of integers
-		if max(idx)==-1:
-			intstr=n[min(idx):]
-		else:
-			intstr=n[min(idx):max(idx)]
-		
-		#Convert string to list 
-		n=list(n)
-		
-		#Insert enough zeros into list n to match digits
-		for i in range(ndigits-len(intstr)):
-			n.insert(min(idx),'0')
-		
-		#Join to string again
-		a="".join(n)
-		
-		#New filename
-		fn_new=base+"/"+a+"."+ending	
-		
-		#Check if new file actually exists
-		if os.path.isfile(fn_new):
-			print "Successfully fixed filename to ", fn_new, " !"
-			return fn_new
-		else:
-			if debug:
-				print "Fixed filename ", fn_new, "does not exist either, going to return original filename!"
-			return fn
-						
-		
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Finds integers in str
-
-def find_int_str(s,idxvec=[],debug=False):			
+	Keyword Args:
+		idxvec (list): List of already found indices.
+		debug (bool): Show debugging output.
+	
+	Returns:
+		list: List of indices if integers in string.
+	"""
 	
 	if idxvec==[]:
 		idxvec=range(len(s))
@@ -486,24 +413,39 @@ def find_int_str(s,idxvec=[],debug=False):
 		
 	return idxs	
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Finds date in str
-
-def find_date_str(s,sep='',lendate=8,yearreq='',monthreq='',debug=False):
+def findDateString(s,sep='',lendate=8,yearreq='',monthreq='',debug=False):
 	
-	idxs=find_int_str(s)
+	"""Finds date in string. 
+	
+	Useful for example to find date a filename.
+	
+	Args:
+		s (str): String
+		
+	Keyword Args:
+		sep (str): Separator between date parts.
+		lendate (int): Length of dates in characters.
+		yearreq (str): Date must contain year, for example ("16").
+		monthreq (str): Date must cotain month, for example ("03").
+	
+	Returns:
+		str: Date found, or empty string if date was not found.
+		
+	"""
+	
+	idxs=findIntString(s)
 	
 	for i,idx in enumerate(idxs):
 		d=""
 		f=False
 		if len(sep)>0:
 			if i+2<=len(idxs)-1:
-				if len_range(idx)+len_range(idxs[i+1])+len_range(idxs[i+2])+3==lendate:
+				if lenRange(idx)+lenRange(idxs[i+1])+lenRange(idxs[i+2])+3==lendate:
 					if s[max(idx):min(idxs[i+1])]==sep and s[max(idx):min(idxs[i+1])]==sep:
 						lmin,lmax=range_lists([idx,idxs[i+1],idxs[i+2]])
 						f=True
 		else:
-			if len_range(idx)+1==lendate:
+			if lenRange(idx)+1==lendate:
 				lmin,lmax=range_lists([idx])
 				f=True
 		if f:		
@@ -517,97 +459,160 @@ def find_date_str(s,sep='',lendate=8,yearreq='',monthreq='',debug=False):
 				return d		
 	return ""
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Return the range of values in list
 	
-def len_range(l):
+def lenRange(l):
+	
+	"""Return the range of values in list
+	
+	Args:
+		l (list): List
+	
+	Returns:
+		float: Range of values of list
+		
+	"""
+	
 	return abs(max(l)-min(l))
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Return the range of values in list of lists
-
-def range_lists(ls):
+def rangeLists(ls):
+	
+	"""Return the range of values in list of lists
+	
+	Args:
+		ls (list): List of lists
+	
+	Returns:
+		{
+		float: Minimum value over all lists
+		float: Maximum value over all lists
+		}
+		
+	"""
+	
 	lnew=[]
 	for l in ls:
 		lnew=lnew+l
 		
 	return min(lnew),max(lnew)
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Finds file
-
-def find_fn(fn,base,lvls_up=3,folder=False,debug=False):
+def findFn(fn,base,lvlsUp=3,folder=False,debug=False):
+	
+	"""Finds filename within folder structure
+	
+	Args:
+		fn (str): File name to look for
+		base (str): Base path to look in
+	
+	Keyword Args:
+		lvlsUp (int): How many levels to go up
+		debug (bool): Debugging flag
+		folder (bool): Look for folder
+	
+	Returns:
+		str: Path to preimage
+	
+	Raises:
+		OSError: If file cannot be found
+	"""
 	
 	cwd=os.getcwd()
 	
 	os.chdir(base)
 		
-	for i in range(lvls_up):
+	for i in range(lvlsUp):
 		os.chdir('../')
 	
-	fn_found=""
+	fnFound=""
 
 	for f in os.walk(os.getcwd()):
 		f=list(f)
 		for k in f:
 			if fn in k:
 				f.remove([])
-				fn_found="".join(f[:-1])+"/"+fn
+				fnFound="".join(f[:-1])+"/"+fn
 				if folder:
-					if os.path.isdir(fn_found):
+					if os.path.isdir(fnFound):
 						os.chdir(cwd)
-						return fn_found
+						return fnFound
 				else:	
 					os.chdir(cwd)
-					return fn_found
+					return fnFound
 	
 	os.chdir(cwd)
 	
 	if debug:
 		print "======= find_folder debugging output ======="
 		print "Could not find file ", fn ," . Going to return False"
-		print "Closest path found:", fn_found
+		print "Closest path found:", fnFound
 		
-	return False
+	return OSError
 	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Finds preiamge
-
-def find_preimage(key,base,lvls_up=1,f_type='tif',debug=False):
+def findPreimage(key,base,lvlsUp=1,fType='tif',debug=False):
 	
-	#find folder
-	folder_pre=find_fn('pre',base,lvls_up=lvls_up,folder=True,debug=debug)
+	"""Finds preimage automatically
+	
+	Args:
+		key (str): Key pattern to look for, e.g. "_pre"
+		base (str): Base path to look in
+	
+	Keyword Args:
+		lvlsUp (int): How many levels to go up.
+		fType (str): Filetype of preimage
+		debug (bool): Debugging flag
+	
+	Returns:
+		str: Path to preimage
+	
+	Raises:
+		OSError: If preimage cannot be found
+	"""
+	
+	folderPre=find_fn('pre',base,lvlsUp=lvlsUp,folder=True,debug=debug)
 
 	if debug:
 		print "======= find_preimage debugging output ======="
 	
-	if not folder_pre:
+	if not folderPre:
 		if debug:
 			print "Could not find prefolder with key = ", key ," . Going to return False"
-		return folder_pre
+		return folderPre
 	else:
-		files=get_sorted_folder_list(folder_pre,f_type)
+		files=get_sorted_folder_list(folderPre,fType)
 		if len(files)==0:
 			if debug:
 				print "Prefolder with key = ", key ," seems to be empty. Going to return False"
-			return False
+			raise OSError("Cannot find preimage")
 		else:
-			print "Found preimage = ", folder_pre+"/"+files[0],  " ."
-			return folder_pre+"/"+files[0]
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Updates object with respect to blank object		
+			print "Found preimage = ", folderPre+"/"+files[0],  " ."
+			return folderPre+"/"+files[0]
 		
-def updateObj(obj_blank,obj,debug=False):
+def updateObj(objBlank,obj,debug=False):
+	
+	"""Updates object with respect to blank object.
+	
+	If object does not have attribute, will add 
+	attribute from objBlank with value of objBlank.
+	
+	Args:
+		objBlank (object): Object Template
+		obj (object): Object to be updated
+	
+	Keyword Args:
+		debug (bool): Print debugging output.
+	
+	Returns:
+		object: Updated object.
+
+	"""
 	
 	if debug:
 		print "======update_obj: updated properties======"
 	
 	#Going through all attributes blank object
-	for item in vars(obj_blank):
+	for item in vars(objBlank):
 		
 		if not hasattr(obj,str(item)):
-			setattr(obj, str(item), vars(obj_blank)[str(item)])
+			setattr(obj, str(item), vars(objBlank)[str(item)])
 			
 			if debug:
 				print item, " = ", vars(self)[str(item)]
@@ -617,15 +622,22 @@ def updateObj(obj_blank,obj,debug=False):
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Remove multiple entries from list	
 		
-def remRepeatsList(l,debug=False):
+def remRepeatsList(l):
 	
+	"""Removes repeated entries from list. 
 	
+	Similar to numpy.unique.
+	
+	Args:
+		l (list): List
+		
+	Returns:
+		list: Filtered list.
+
+	"""
 	
 	return list(set(l))
-	 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#unzips into two different lists	
-		
+	 		
 def unzipLists(l):
 	
 	"""Unzips two zipped lists into seperate lists.
@@ -642,9 +654,6 @@ def unzipLists(l):
 	
 	l1,l2=zip(*l)
 	return list(l1),list(l2)
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Assigns value if not value	
 		
 def assignIfVal(var,val,valCheck):
 	
@@ -665,7 +674,9 @@ def assignIfVal(var,val,valCheck):
 def enumeratedName(baseName,listOfNames,sep="_"):
 	
 	"""Generates a new name given a list of names.
+	
 	Example:
+	
 	>>> baseName=embryo
 	>>> listOfNames=[embryo_1,embryo_5]
 	>>> enumeratedName(baseNamem,listOfNames)
@@ -742,8 +753,9 @@ def sortListsWithKey(l,keyList):
 	"""Sorts two lists according to key list.
 	
 	Example:
-	>>>l=[1,3,5]
-	>>>keyList=[2,5,1]
+	
+	>>> l=[1,3,5]
+	>>> keyList=[2,5,1]
 	
 	would result in 
 	
@@ -1020,11 +1032,11 @@ def moveImageFiles(fn,fnTarget,ftype,ident,isMulti,fnDest=None,debug=False,color
 	"""Moves all image files fullfilling *ident*(isMulti*colorPrefix)* to fnDest+fnTarget.
 	
 	Args:
-		fn (str): Path to folder containing images
-		fnTarget (str): Name of folder files should go in, for example "recover"
-		ftype (str): Type of file, for example "tif"
-		indent (list): List of identifiers, for example ["recover","post"]
-		isMulti (bool): Flag if images are multichannel or not
+		fn (str): Path to folder containing images.\n
+		fnTarget (str): Name of folder files should go in, for example "recover".
+		ftype (str): Type of file, for example "tif".
+		indent (list): List of identifiers, for example ["recover","post"].
+		isMulti (bool): Flag if images are multichannel or not.
 
 	Keyword Args:
 		fnDest (str): Path containing fnTarget
@@ -1114,12 +1126,12 @@ def makeEmbryoFolderStruct(fn):
 	
 	"""Creates default folder structure for embryo object.
 	
-	fn
-	|--recover
-	|--pre
-	|--bleach
-	|--lsm
-	|--meshfiles
+	 fn \n
+	 \|--recover \n
+         \|--pre \n
+	 \|--bleach \n
+	 \|--lsm \n
+	 \|--meshfiles \n
 	
 	Args:
 		fn (str): Path to embryo folder
@@ -1165,9 +1177,9 @@ def makeEmbryoFolderStruct(fn):
 def translateNPFloat(x):
 	
 	"""Translates string into numpy float.
-	If string==+/-'inf', will return +/- numpy.inf,
-	otherwise will leave x unchanged.
 	
+	If string==+/-'inf', will return +/- numpy.inf,
+	otherwise will leave x unchanged. \n
 	This function is necessary to prevent Sphinx from
 	not being able to import modules because np.inf is an 
 	default value for an keyword arg, but numpy is mocked.

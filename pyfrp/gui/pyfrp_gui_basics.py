@@ -279,8 +279,12 @@ class basicSelectorDialog(QtGui.QDialog):
 
 class listSelectorDialog(QtGui.QDialog):
 	
-	def __init__(self,List,parent,leftTitle="",rightTitle="",itemsRight=[]):
+	def __init__(self,parent,List,leftTitle="",rightTitle="",itemsRight=[]):
 		super(listSelectorDialog,self).__init__(parent)
+		#print type(self), type(parent)
+		
+		#QtGui.QDialog.__init__()
+		
 		
 		self.itemsRight=itemsRight
 		self.itemsLeft=list(List)
@@ -333,7 +337,7 @@ class listSelectorDialog(QtGui.QDialog):
 		
 		self.resize(400,500)
 		self.setLayout(self.vbox2)
-		self.setWindowTitle("listSelectorDialog")
+		self.setWindowTitle("list Selector Dialog")
 		
 		self.show()
 	
@@ -403,8 +407,13 @@ class listSelectorDialog(QtGui.QDialog):
 
 class advancedListSelectorDialog(listSelectorDialog):
 	
-	def __init__(self,List,parent,leftTitle="",rightTitle="",itemsRight=[]):
-		super(advancedListSelectorDialog,self).__init__(parent)
+	def __init__(self,parent,List,leftTitle="",rightTitle="",itemsRight=[]):
+		
+		super(advancedListSelectorDialog,self).__init__(parent,List,leftTitle=leftTitle,rightTitle=rightTitle)
+		#print type(self),type(parent)
+		#raw_input()
+		
+		#listSelectorDialog.__init__(parent,List,leftTitle=leftTitle,rightTitle=rightTitle,itemsRight=itemsRight)
 		
 		self.btnUp=QtGui.QToolButton()
 		self.btnUp.connect(self.btnUp, QtCore.SIGNAL('clicked()'), self.upItem)
@@ -417,7 +426,7 @@ class advancedListSelectorDialog(listSelectorDialog):
 		self.vbox.addWidget(self.btnUp)
 		self.vbox.addWidget(self.btnDown)
 		
-		self.setWindowTitle("advancedListSelectorDialog")
+		self.setWindowTitle("advanced List Selector Dialog")
 		
 	def upItem(self):
 		

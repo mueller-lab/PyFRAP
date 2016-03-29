@@ -17,6 +17,19 @@ import os
 import sphinx_rtd_theme
 
 
+# -- Managing paths ------------------------------------------------
+
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+#sys.path.insert(0, os.path.abspath('.'))
+
+sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../../pyfrp/'))
+sys.path.insert(0, os.path.abspath('../../pyfrp/modules/'))
+sys.path.insert(0, os.path.abspath('../../pyfrp/gui/'))
+sys.path.insert(0, os.path.abspath('../../pyfrp/subclasses/'))
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.

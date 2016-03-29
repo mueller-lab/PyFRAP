@@ -37,14 +37,14 @@ import sys
 import code
 import colorama
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+from PyQt4 import QtGui, QtCore
+
 
 #===========================================================================================================================================================================
 #Module classes
 #===========================================================================================================================================================================
 
-class PyInterp(QTextEdit):
+class PyInterp(QtGui.QTextEdit):
 
 	class InteractiveInterpreter(code.InteractiveInterpreter):
 
@@ -76,11 +76,11 @@ class PyInterp(QTextEdit):
 		
 		
 		# setting the color for bg and text
-		palette = QPalette()
-		palette.setColor(QPalette.Base, QColor(255, 255, 255))
-		palette.setColor(QPalette.Text, QColor(0, 0, 0))
+		palette = QtGui.QPalette()
+		palette.setColor(QtGui.QPalette.Base, QtGui.QColor(255, 255, 255))
+		palette.setColor(QtGui.QPalette.Text, QtGui.QColor(0, 0, 0))
 		self.setPalette(palette)
-		self.setFont(QFont('Courier', 12))
+		self.setFont(QtGui.QFont('Courier', 12))
 	
 		# initilize interpreter with self locals
 		self.initInterpreter(locals())
@@ -102,7 +102,7 @@ class PyInterp(QTextEdit):
 	def printBanner(self):
 		self.write(sys.version)
 		self.write(' on ' + sys.platform + '\n')
-		self.write('PyQt4 ' + PYQT_VERSION_STR + '\n')
+		self.write('PyQt4 ' + QtCore.PYQT_VERSION_STR + '\n')
         
         
 		#self.write('PyFrap Version' + pyfrp_version + '\n')
@@ -257,11 +257,11 @@ class PyInterp(QTextEdit):
 
 	def keyPressEvent(self, event):
 
-		if event.key() == Qt.Key_Escape:
+		if event.key() == QtCore.Qt.Key_Escape:
 			# proper exit
 			self.interpreter.runIt('exit()')
 
-		if event.key() == Qt.Key_Down:
+		if event.key() == QtCore.Qt.Key_Down:
 			if self.historyIndex == len(self.history):
 				self.historyIndex -= 1
 			try:
@@ -274,7 +274,7 @@ class PyInterp(QTextEdit):
 				pass
 			return None
 
-		if event.key() == Qt.Key_Up:
+		if event.key() == QtCore.Qt.Key_Up:
 			try:
 				if len(self.history) - 1 > self.historyIndex:
 					self.historyIndex += 1
@@ -285,7 +285,7 @@ class PyInterp(QTextEdit):
 				pass
 			return None
 
-		if event.key() == Qt.Key_Home:
+		if event.key() == QtCore.Qt.Key_Home:
 			# set cursor to position 4 in current block. 4 because that's where
 			# the marker stops
 			blockLength = len(self.document().lastBlock().text()[4:])
@@ -296,12 +296,12 @@ class PyInterp(QTextEdit):
 			self.setTextCursor(textCursor)
 			return None
 
-		if event.key() in [Qt.Key_Left, Qt.Key_Backspace]:
+		if event.key() in [QtCore.Qt.Key_Left, QtCore.Qt.Key_Backspace]:
 			# don't allow deletion of marker
 			if self.textCursor().positionInBlock() == 4:
 				return None
 
-		if event.key() in [Qt.Key_Return, Qt.Key_Enter]:
+		if event.key() in [QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter]:
 			# set cursor to end of line to avoid line splitting
 			textCursor = self.textCursor()
 			position   = len(self.document().toPlainText())

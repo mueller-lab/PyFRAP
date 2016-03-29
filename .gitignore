@@ -5,6 +5,7 @@ TestDataset/
 # Don't push older versions
 oldversions/
 misc/
+docs_bu/
 
 # Don't push build folders
 build/
