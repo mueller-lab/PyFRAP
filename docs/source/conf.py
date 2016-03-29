@@ -63,7 +63,7 @@ if os.environ.get('READTHEDOCS', None) == 'True':
 			#Skimage 
 			'skimage','skimage.io','skimage.morphology','scipy.signal','skimage.measure','skimage.filters',
 			#PyQT
-			#'PyQt4','PyQt4.QtGui','PyQt4.QtCore',
+			'PyQt4','PyQt4.QtGui','PyQt4.QtCore',
 			#MeshIO
 			'meshio']
 
