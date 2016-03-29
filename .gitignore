@@ -18,7 +18,7 @@ dist/
 *.sh
 
 # Don't push any .txt files
-*.txt
+
 
 # Don't push built docs
 docs/build/
