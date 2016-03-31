@@ -21,6 +21,15 @@ analyzing FRAP datasets, such as
 
 I have tried to keep the API short but clear. If it unclear, don't hesitate to mail.
 
+
+Installation (setup.py)
+-----------------------
+
+.. toctree::
+   :maxdepth: 2
+   
+   setup.rst
+
 The modules package
 -------------------
 

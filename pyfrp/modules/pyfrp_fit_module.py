@@ -1,3 +1,25 @@
+#=====================================================================================================================================
+#Copyright
+#=====================================================================================================================================
+
+#Copyright (C) 2014 Alexander Blaessle, Patrick Mueller and the Friedrich Miescher Laboratory of the Max Planck Society
+#This software is distributed under the terms of the GNU General Public License.
+
+#This file is part of PyFRAP.
+
+#PyFRAP is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #===========================================================================================================================================================================
 #Module Description
 #===========================================================================================================================================================================
@@ -39,8 +61,24 @@ import matplotlib.pyplot as plt
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Fits scaling solution to data
 
-def FRAPFitting(fit,debug=False,gui=None,ax=None):
+def FRAPFitting(fit,debug=False,ax=None):
+	
+	"""Main fitting function.
+	
+	Fits simulation result to analyzed data.
+	
+	Args:
+		fit (pyfrp.subclasses.pyfrp_fit): Fit object containing all important information needed.
+	
+	Keyword Args:
+		debug (bool): Display debugging output and plots.
+		ax (matplotlib.axes): Axes to display plots in.
 		
+	returns:
+		pyfrp.subclasses.pyfrp_fit: Performed fit.
+	"""
+	
+	
 	#Counter for function calls
 	global iterations
 	iterations=0

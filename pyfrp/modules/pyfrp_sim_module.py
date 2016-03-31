@@ -1,16 +1,31 @@
+#=====================================================================================================================================
+#Copyright
+#=====================================================================================================================================
+
+#Copyright (C) 2014 Alexander Blaessle, Patrick Mueller and the Friedrich Miescher Laboratory of the Max Planck Society
+#This software is distributed under the terms of the GNU General Public License.
+
+#This file is part of PyFRAP.
+
+#PyFRAP is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #===========================================================================================================================================================================
 #Module Description
 #===========================================================================================================================================================================
 
 #Simulaton module for PyFRAP toolbox, including following functions:
 
-#(1)  simulate_diff_react: Simulates diffusion reaction system in given geometry. If necessary, generates necessary mesh and returns debugging outputs.
-#(2)  mimic_imperfect_bleaching: Applies original initial condition image onto mesh and mimics imperfect bleaching in both z- and x/y- direction via sigmoid functions.
-#(3)  apply_data_ics: Simplifies original image either in 2-level or radial level approximation which is then applied to mesh in simulate_diff_react.
-#(4)  apply_inter_ICs: Applies original initial condition image onto mesh via interpolation in x/y-direction, no matter which z-depth.
-#(5)  get_squ_region_indices: Returns mesh node indices in and outside of given square region for bleaching.
-#(6)  get_slice_indices: Returns mesh node indices in all given slices.
-#(7)  get_slice_range: Computes range in which the slice should be given in.
 
 #===========================================================================================================================================================================
 #Improting necessary modules

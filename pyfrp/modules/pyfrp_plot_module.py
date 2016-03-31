@@ -1,17 +1,31 @@
+#=====================================================================================================================================
+#Copyright
+#=====================================================================================================================================
+
+#Copyright (C) 2014 Alexander Blaessle, Patrick Mueller and the Friedrich Miescher Laboratory of the Max Planck Society
+#This software is distributed under the terms of the GNU General Public License.
+
+#This file is part of PyFRAP.
+
+#PyFRAP is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #===========================================================================================================================================================================
 #Module Description
 #===========================================================================================================================================================================
 
 #Plotting module for image analysis and simulation for PyFRAP toolbox, including following functions:
-#(1)  geom_wire_plot: Produces wireframe plot of embryo geometry.
-#(2)  surf_plot: Produces surface plot of given slice values.
-#(3)  cont_plot: Produces contour plot of given slice values.
-#(4)  conc_plot: Plots concentration profiles until step=step.
-#(5)  all_plot: Produces figure with surf_plot, cont_plot and conc_plot as subfigures
-#(6)  plot3Dmesh: Plot mesh in given region. Can also highlight given regions of the mesh. (slow)
-#(7)  plot3Dtet: Plots a list of given tetrahedrons from a list of mesh nodes.
-#(8)  plot3Dnodes: Plots nodes in given region similarly to plot3Dmesh.
-#(9)  gen_masks: Generates masks of slice, square and out for plotting. Fills values out of region with fill_value (preferably 0 or NaN).
+
 
 #===========================================================================================================================================================================
 #Improting necessary modules

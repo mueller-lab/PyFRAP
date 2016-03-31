@@ -26,10 +26,6 @@
 
 #Misc module for PyFRAP toolbox, including following functions:
 
-#save_settings: Saves settings
-#build_type_array: Builds array of types of list of variables
-#conv_str_to_float_list: Converts list read out as string back into a list
-
 
 #===========================================================================================================================================================================
 #Importing necessary modules
@@ -179,10 +175,11 @@ def str2list(l,dtype="int",openDelim="[",closeDelim="]",sep=","):
 		sep (str): Seperator between values.
 		
 	Returns:
-		{
-		list: Converted string.
-		int: Last character visited.
-		}
+		tuple: Tuple containing:
+		
+			* lnew (list): Converted string.
+			* i (int): Last character visited.
+		
 	"""
 	
 	#New list
@@ -482,18 +479,21 @@ def rangeLists(ls):
 		ls (list): List of lists
 	
 	Returns:
-		{
-		float: Minimum value over all lists
-		float: Maximum value over all lists
-		}
+		tuple: Tuple containing:
 		
+			* minL (float): Minimum value over all lists
+			* maxL (float): Maximum value over all lists
+			
 	"""
 	
 	lnew=[]
 	for l in ls:
 		lnew=lnew+l
-		
-	return min(lnew),max(lnew)
+	
+	minL=min(lnew)
+	maxL=max(lnew)
+	
+	return minL, maxL
 
 def findFn(fn,base,lvlsUp=3,folder=False,debug=False):
 	
@@ -646,10 +646,11 @@ def unzipLists(l):
 		l (list): Zipped lists
 		
 	Returns:
-		{
-		list: Unzipped list 1.
-		list: Unzipped list 2.
-		}
+		tuple: Tuple containing:
+		
+		* l1 (list): Unzipped list 1.
+		* l2 (list): Unzipped list 2.
+		
 	"""
 	
 	l1,l2=zip(*l)
@@ -759,17 +760,18 @@ def sortListsWithKey(l,keyList):
 	
 	would result in 
 	
-	>>>[5,1,3],[1,2,5]
+	>>> [5,1,3],[1,2,5]
 	
 	Args:
 		l (list): list to be sorted.
 		keyList (list): list after which is being sorted.
 		
 	Returns:
-		{
-		list: Sorted list
-		list: Sorted keys
-		}
+		tuple: Tuple containing:
+		
+			* sortedList (list): Sorted list
+			* sortedKeys (list): Sorted keys
+			
 	"""
 	
 	s=sorted(zip(keyList, l), key=lambda keyList:keyList[0])
@@ -792,11 +794,11 @@ def compareObjAttr(obj1,obj2):
 		object2 (object): Second object.
 		
 	Returns:
-		{
-		dict: Dictionary of attributes with same values
-		dict: Dictionary of attributes with different values
-		dict: Dictionary of attributes that are not in both objects
-		}
+		tuple: Tuple containing:
+		
+			* same (dict): Dictionary of attributes with same values
+			* different (dict): Dictionary of attributes with different values
+			* notInBoth (dict): Dictionary of attributes that are not in both objects
 
 	"""
 	
@@ -824,15 +826,16 @@ def simpleHist(x,y,bins):
 	"""Performs a simple histogram onto x-array.
 	
 	Args:
-		x (numpy.array): x coordinates of data
-		y (numpy.array): y coordinates of data
+		x (numpy.ndarray): x coordinates of data
+		y (numpy.ndarray): y coordinates of data
 		bins (int):  number of bins
 	
 	Returns:
-		{
-		np.array: Center of bins
-		np.array: Bin Values
-		}
+		tuple: Tuple containing:
+		
+			* xBin (numpy.ndarray): Center of bins
+			* yBin (numpy.ndarray): Bin Values
+		
 
 	"""
 	
@@ -1081,11 +1084,12 @@ def checkDataMultiChannel(fn,recoverIdent=['recover','post'],bleachIdent=['bleac
 		colorPrefix (str): Defines how to detect if multichannel or not
 				
 	Returns:
-		{
-		bool: True if recover is multichannel
-		bool: True if pre is multichannel
-		bool: True if bleach is multichannel
-		}
+		tuple: Tuple containing:
+		
+			* recoverMulti (bool): True if recover is multichannel
+			* preMulti (bool): True if pre is multichannel
+			* bleachMulti (bool): True if bleach is multichannel
+		
 	"""
 	
 	l=getSortedFileList(fn,'.tif')
