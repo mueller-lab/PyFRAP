@@ -37,6 +37,8 @@ pyfrp/meshfiles/experimental/
 
 # Don't push executables
 pyfrp/executables/gmsh
+pyfrp/executables/Fiji.app
+
 
 
 # Don't push temp
