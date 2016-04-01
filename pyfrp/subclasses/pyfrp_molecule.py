@@ -50,6 +50,16 @@ import os
 
 class molecule:
 	
+	"""Molecule class, collecting information about a series of FRAP experiments.
+	
+	The main purpose of the molecule class is to gather and summarize multiple FRAP experiments.
+	Embryo objects are stored in a ``embryos`` list. From those embryo objects, fit objects can be
+	added to the ``selFits`` list to then be summarized to calculate measurement statistics.
+	Fits can be forced to overlap in a set of parameters defined in ``crucialParameters``.
+	
+	"""
+	
+	
 	#Creates new molecule object
 	def __init__(self,name):
 		
@@ -77,40 +87,204 @@ class molecule:
 		self.crucialParameters=["equOn","fitPinned","fitProd","fitDegr","LBD","LBProd","LBDegr","UBD","UBProd","UBDegr"]
 					
 	def addEmbryo(self,embryo):
+		
+		"""Appends embryo object to ``embryos`` list.
+		
+		Args:
+			embryo (pyfrp.subclasses.pyfrp_embryo): Embryo to append.
+		
+		Returns:
+			list: Updated pyfrp.subclasses.pyfrp_molecule.embryos list
+		
+		"""
+		
 		self.embryos.append(embryo)
 		return self.embryos
 	
 	def newEmbryo(self,name):
+		
+		"""Creates new embryo and appends it to ``embryos`` list.
+		
+		Args:
+			name (str): Name of new embryo.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_embryo: New embryo object.
+		
+		"""
+		
 		emb=pyfrp_embryo.embryo(name)
 		self.embryos.append(emb)
 		return self.embryos[-1]
 		
 	def removeEmbryo(self,embryo):
+			
+		"""Removes embryo object from ``embryos`` list.
+		
+		Args:
+			embryo (pyfrp.subclasses.pyfrp_embryo): Embryo object.
+		
+		Returns:
+			list: Updated pyfrp.subclasses.pyfrp_molecule.embryos list
+		
+		"""
+		
 		self.embryos.remove(embryo)
 		return self.embryos		
 	
 	def save(self,fn=None):
 		
+		"""Saves molecule to pickle file.
+		
+		.. note:: If ``fn`` is not specified, will assume ``fn=self.name``.
+		
+		Keyword Args:
+			fn (str): Molecule file name.
+		
+		Returns:
+			str: Filename of molecule file.
+		
+		"""
+		
 		if fn==None:
-			fn=self.name+".pk"
+			fn=self.name+".mol"
 		
 		pyfrp_IO_module.saveToPickle(self,fn=fn)	
 		
 		return fn
 	
+	def saveExtract(self,fn=None):
+		
+		"""Saves molecule to pickle file in compressed version by doing:
+		
+			* Extracts embryos in ``embryos`` list into seperate pickled files.
+			* Clears all attributes of embryo objects
+			* Saves molecule file
+			
+		This function is really useful if molecule file size gets out-of-hand.	
+		
+		.. note:: Embryo files will be saved in path/to/moculefile/moleculename/ .
+		
+		.. note:: If ``fn`` is not specified, will assume ``fn=self.name``.
+		
+		Keyword Args:
+			fn (str): Molecule file name.
+		
+		Returns:
+			bool: True if success, False else.
+		
+		"""
+		
+		if not self.checkEmbryoNames():
+			printError("Embryo names are not distinct, will not save.")
+			return False
+		
+		if fn==None:
+			fn=self.name+".mol"
+		
+		
+		b=self.extractEmbryos2Files(fn=fn.replace('.mol','')+"_embryos")
+		
+		if not b:
+			printError("Something went wrong extracting embryos, will not continue saving.")
+			return False
+		
+		self.clearAllEmbryos()
+		self.save(fn=fn)
+		
+		return True
+		
+		
+	
 	def extractEmbryos2Files(self,fn=""):
+		
+		"""Extracts embryos in ``embryos`` list into seperate pickled files.
+		
+		..note:: Will create folder ``fn`` if non-existent. If ``fn`` is not specified,
+		will assume ``fn="embryoFiles/"``.
+		
+		Keyword Args:
+			fn (str): Path of folder where to save embryo files.
+		
+		Returns:
+			bool: True if success, False else.
+		
+		"""
 		
 		if fn=="":
 			try:
+				printWarning('fn not specified, will assume fn=embryoFiles/')
 				os.system("mkdir -v embryoFiles/")
 				fn="embryoFiles/"
 			except OSError:
 				pass
 		
+		if not os.path.isdir(fn):
+			printWarning(fn+" does not  exist, will try to create it.")
+			try:
+				os.system("mkdir -v " +fn)
+			except OSError:
+				printError("Could not create " + fn+ ". Will not extract." )
+				return False
+				
 		for embryo in self.embryos:
 			embryo.save(fn+embryo.getName()+".emb")
 		
+		return True
+		
+	def clearAllEmbryos(self):
+		
+		"""Replaces all attribute values of each embryo in `embryos` list with ``None``, except ``name``.
+		
+		Useful if embryos are seperated and molecule file needs to be compressed.
+		
+		.. note:: Embryos should have all different names, so there will not be any missassignment when
+		reimporting embryo files.
+		
+		Returns:
+			bool: True if success, False else.
+		
+		"""
+		
+		b=True
+		for embryo in self.embryos:
+			bnew=embryo.clearAllAttributes()
+			b=b+bnew
+		
+		return b
+	
+	def checkEmbryoNames(self):
+		
+		"""Check if all embryos in ``embryos`` list have different names.
+		
+		Returns:
+			bool: True if all different, False else.	
+		"""
+		
+		names=pyfrp_misc_module.objAttrToList(self.embryos,'name')
+		b=True
+		for name in names:
+			if names.count(name)>1:
+				printWarning('There is more than one embryo called '+ name + ' in molecule ' + self.name)
+				b=False
+		return b		
+		
 	def updateVersion(self):
+		
+		"""Updates molecule file to current version, making sure that it possesses
+		all attributes.
+		
+		Creates a new molecule object and compares ``self`` with the new molecule file.
+		If the new molecule object has a attribute that ``self`` does not have, will
+		add attribute with default value from the new molecle file.
+		
+		.. note:: Will also update all subobject, making sure that embryo and fit objects are
+		up-to-date.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_molecule: ``self``
+			
+		"""
 		
 		#Create temporarly a blank molecule file
 		moltemp=molecule("temp")
@@ -130,6 +304,9 @@ class molecule:
 		
 	def getEmbryoByName(self,s):
 		
+		"""Returns embryo with name ``s`` from ``embryos`` list, otherwise ``False``. 
+		"""
+		
 		for emb in self.embryos:
 			if str(s) == emb.name:
 				return emb
@@ -144,6 +321,15 @@ class molecule:
 	
 	def sumUpResults(self,sameSettings=False):
 		
+		"""Sums up results from all fits in ``selFits`` list.
+		
+		Keyword Args:
+			sameSettings (bool): Fits must overlap in parameters defined in ``crucialParameters``.
+		
+		Returns:
+			bool: True if success, False else.	
+		"""
+		
 		if sameSettings:
 			
 			lastFit=self.selFits[0]
@@ -156,7 +342,7 @@ class molecule:
 					printError("Cannot average fits, since fits " + fit.name + "has not been fitted yet.")
 					return False
 				
-				same,different,notInBoth=compareObjAttr(lastFit,fit)
+				same,different,notInBoth=pyfrp_misc_module.compareObjAttr(lastFit,fit)
 				
 				for item in self.crucialParameters:   
 					if item in different.keys():

@@ -587,7 +587,7 @@ class embryo:
 	
 	def plotAllData(self,ax=None,legend=True):
 		for r in self.ROIs:
-			ax=r.plotData(ax=ax)
+			ax=r.plotData(ax=ax,legend=legend)
 		
 		#if legend:
 			#ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
@@ -605,16 +605,16 @@ class embryo:
 	
 	def plotAllDataPinned(self,ax=None,legend=True):
 		for r in self.ROIs:
-			ax=r.plotDataPinned(ax=ax)
+			ax=r.plotDataPinned(ax=ax,legend=legend)
 		
-		if legend:
-			ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+		#if legend:
+			#ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 		
 		return ax	
 	
 	def plotAllSimPinned(self,ax=None,legend=True):
 		for r in self.ROIs:
-			ax=r.plotSimPinned(ax=ax)
+			ax=r.plotSimPinned(ax=ax,legend=legend)
 		
 		if legend:
 			ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
@@ -817,7 +817,29 @@ class embryo:
 		
 		
 		
+	
+	
+	def clearAllAttributes(self):
+		
+		"""Replaces all attribute values of embryo object with ``None``, except ``name``.
+		
+		Useful if embryos are seperated and molecule file needs to be compressed.
+		
+		Returns:
+			bool: True if success, False else.
+		
+		"""
+		
+		try:
+			for item in vars(self):
+				if item!="name":
+					vars(self)[str(item)]=None
+			return True				
+		except:
+			printError("Failed to clearAllAttributes in embryo" + self.name +" .")
+			return False
+				
+				
+				
 	#def grabDataDetails(self):
-	###NOTE make a function that automatically grabs filetype and what not
-	
-	
+	###NOTE make a function that automatically grabs filetype and what not			

@@ -466,7 +466,7 @@ class ROI(object):
 			color=self.color
 		
 		ax = pyfrp_plot_module.plotTS(self.embryo.tvecData,self.dataVec,ax=ax,linewidth=linewidth,color=color,label=self.name + ' data',
-		title="Data",sup=self.name+" data",linestyle=linestyle)
+		title="Data",sup=self.name+" data",linestyle=linestyle,legend=legend)
 		
 		return ax
 	
@@ -476,7 +476,7 @@ class ROI(object):
 			color=self.color
 		
 		ax = pyfrp_plot_module.plotTS(self.embryo.tvecData,self.dataVecPinned,ax=ax,linewidth=linewidth,color=color,label=self.name + ' data',
-		title="Data Pinned",sup=self.name+" data",linestyle=linestyle)
+		title="Data Pinned",sup=self.name+" data",linestyle=linestyle,legend=legend)
 		
 		return ax
 	
@@ -486,7 +486,7 @@ class ROI(object):
 			color=self.color
 		
 		ax = pyfrp_plot_module.plotTS(self.embryo.simulation.tvecSim,self.simVec,ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' simulated',title="Simulation",sup=self.name+" simulation",linestyle=linestyle)
+		label=self.name + ' simulated',title="Simulation",sup=self.name+" simulation",linestyle=linestyle,legend=legend)
 			
 		return ax
 	
@@ -496,7 +496,7 @@ class ROI(object):
 			color=self.color
 		
 		ax = pyfrp_plot_module.plotTS(self.embryo.simulation.tvecSim,self.simVecPinned,ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' ' + ' simulated',title="Simulation Pinned",sup=self.name+" simulation",linestyle=linestyle)
+		label=self.name + ' ' + ' simulated',title="Simulation Pinned",sup=self.name+" simulation",linestyle=linestyle,legend=legend)
 			
 		return ax
 

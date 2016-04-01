@@ -282,11 +282,10 @@ class pyfrp(QtGui.QMainWindow):
 		self.mbStatistics = self.menubar.addMenu('&Statistics')
 		
 		return 
-	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Initiates file toolbar
-	
 	def initFileMenubar(self):
+		
+		"""Creates entries of file menubar and connects actions with gui methods.
+		"""
 		
 		newMoleculeButton = QtGui.QAction('New Molecule', self)
 		self.connect(newMoleculeButton, QtCore.SIGNAL('triggered()'), self.newMolecule)
@@ -311,25 +310,28 @@ class pyfrp(QtGui.QMainWindow):
 		
 		return
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Initiates edit toolbar
-	
 	def initEditMenubar(self):
+		
+		"""Creates entries of edit menubar and connects actions with gui methods.
+		"""
 		
 		editMoleculeButton = QtGui.QAction('Edit Molecule', self)
 		self.connect(editMoleculeButton, QtCore.SIGNAL('triggered()'), self.editMolecule)
 		
+		removeMoleculeButton = QtGui.QAction('Remove Molecule', self)
+		self.connect(removeMoleculeButton, QtCore.SIGNAL('triggered()'), self.removeMolecule)
+		
 		openWizardButton = QtGui.QAction('PyFRAP Wizard', self)
 		self.connect(openWizardButton, QtCore.SIGNAL('triggered()'), self.openWizard)
 		
-		
 		self.mbEdit.addAction(editMoleculeButton)
+		self.mbEdit.addAction(removeMoleculeButton)
 		self.mbEdit.addAction(openWizardButton)
 		
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Initiates embryo toolbar
-	
 	def initEmbryoMenubar(self):
+		
+		"""Creates entries of embryo menubar and connects actions with gui methods.
+		"""
 		
 		newEmbryoButton = QtGui.QAction('New Embryo', self)
 		self.connect(newEmbryoButton, QtCore.SIGNAL('triggered()'), self.newEmbryo)
@@ -339,6 +341,9 @@ class pyfrp(QtGui.QMainWindow):
 		
 		editEmbryoButton = QtGui.QAction('Edit Embryo', self)
 		self.connect(editEmbryoButton, QtCore.SIGNAL('triggered()'), self.editEmbryo)
+		
+		loadEmbryoButton = QtGui.QAction('Edit Embryo', self)
+		self.connect(loadEmbryoButton, QtCore.SIGNAL('triggered()'), self.loadEmbryo)
 		
 		selectGeometryButton = QtGui.QAction('Select Geometry', self)
 		self.connect(selectGeometryButton, QtCore.SIGNAL('triggered()'), self.selectGeometry)
@@ -363,6 +368,7 @@ class pyfrp(QtGui.QMainWindow):
 		
 		self.mbEmbryo.addAction(newEmbryoButton)
 		self.mbEmbryo.addAction(editEmbryoButton)
+		self.mbEmbryo.addAction(loadEmbryoButton)
 		self.mbEmbryo.addAction(removeEmbryoButton)
 		
 		self.geometryMB=self.mbEmbryo.addMenu('&Geometry')
@@ -377,11 +383,11 @@ class pyfrp(QtGui.QMainWindow):
 		self.roiMB.addAction(indexROIButton)
 		
 		return 
-	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Initiates analysis toolbar
-	
+		
 	def initAnalysisMenubar(self):
+		
+		"""Creates entries of analysis menubar and connects actions with gui methods.
+		"""
 		
 		editAnalysisButton = QtGui.QAction('Analysis Settings', self)
 		self.connect(editAnalysisButton, QtCore.SIGNAL('triggered()'), self.editAnalysis)
@@ -402,10 +408,10 @@ class pyfrp(QtGui.QMainWindow):
 		
 		return
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Initiates embryo toolbar
-	
 	def initSimulationMenubar(self):
+		
+		"""Creates entries of simulation menubar and connects actions with gui methods.
+		"""
 		
 		editSimulationButton = QtGui.QAction('Simulation Settings', self)
 		self.connect(editSimulationButton, QtCore.SIGNAL('triggered()'), self.editSimulation)
@@ -463,11 +469,11 @@ class pyfrp(QtGui.QMainWindow):
 		self.plotSimulationMB=self.mbSimulation.addMenu('&Plotting')
 		self.plotSimulationMB.addAction(plotSimButton)
 		self.plotSimulationMB.addAction(plotSimAndDataButton)
-	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Initiates pinning toolbar
-	
+
 	def initPinningMenubar(self):
+		
+		"""Creates entries of pinning menubar and connects actions with gui methods.
+		"""
 		
 		defaultPinButton = QtGui.QAction('Default Pinning', self)
 		self.connect(defaultPinButton, QtCore.SIGNAL('triggered()'), self.defaultPinEmbryo)
@@ -478,10 +484,10 @@ class pyfrp(QtGui.QMainWindow):
 		self.mbPinning.addAction(defaultPinButton)
 		self.mbPinning.addAction(idealPinButton)
 		
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Initiates fitting toolbar
-	
 	def initFittingMenubar(self):
+		
+		"""Creates entries of fitting menubar and connects actions with gui methods.
+		"""
 		
 		newFitButton = QtGui.QAction('New fit', self)
 		self.connect(newFitButton, QtCore.SIGNAL('triggered()'), self.newFit)
@@ -529,11 +535,11 @@ class pyfrp(QtGui.QMainWindow):
 		self.plotFittingMB.addAction(plotFitButton)
 		
 		return
-	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Initiates Statistics toolbar
-	
+		
 	def initStatsMenubar(self):
+		
+		"""Creates entries of statistics menubar and connects actions with gui methods.
+		"""
 		
 		selectFitsButton = QtGui.QAction('Select Fits', self)
 		self.connect(selectFitsButton, QtCore.SIGNAL('triggered()'), self.selectFits)
@@ -550,11 +556,15 @@ class pyfrp(QtGui.QMainWindow):
 		self.mbStatistics.addAction(selectCrucialParametersButton)
 		self.mbStatistics.addAction(summarizeMoleculeButton)
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Closes GUI and saves configuration
-	
 	def closeEvent(self, event):
-			
+		
+		"""Closes GUI and saves configuration.
+		
+		Args:
+			event (QtCore.closeEvent): Close event triggered by close signal.
+		
+		"""
+		
 		reply = QtGui.QMessageBox.question(self, 'Message',"Are you sure you want to quit?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
 	
 		if reply == QtGui.QMessageBox.Yes:
@@ -570,12 +580,20 @@ class pyfrp(QtGui.QMainWindow):
 	#def show_about(self):
 		
 		#ret=pyfrp_subwin.about_dialog(self).exec_()
-		
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Create frame
+	
 	
 	def createEmptyFrame(self,frame):
 		
+		"""Creates frame around widget.
+		
+		Args:
+			frame (QtGui.QWidget): Widget to be framed
+		
+		Returns: 
+			QtGui.QWidget: Framed Widget
+		
+		"""
+			
 		frame.setFrameStyle(QtGui.QFrame.StyledPanel)
 		frame.setBackgroundRole(QtGui.QPalette.Light)
 		frame.setAutoFillBackground(True)        
@@ -1052,8 +1070,8 @@ class pyfrp(QtGui.QMainWindow):
 		#Remember folder
 		self.lastopen=os.path.dirname(str(fn))
 			
-		#Ask if slim save
-		#reply = QtGui.QMessageBox.question(self, 'Message',"Do you also want to save the molecule file in slim format (Will only keep essential results and delete everything else)?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+		#Ask if extract save
+		reply = QtGui.QMessageBox.question(self, 'Message',"Do you want to save  (Will only keep essential results and delete everything else)?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
 		
 		#No slim save
 		#if reply == QtGui.QMessageBox.No:
@@ -1137,10 +1155,14 @@ class pyfrp(QtGui.QMainWindow):
 	#Embryo handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Add embryo to molecule
-	
 	def newEmbryo(self):
+		
+		"""Creates new embryo object and adds it to molecule.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_embryo: New embryo object.
+		
+		"""
 		
 		#Check if molecule or subnode selected
 		if not self.checkSelectedNode():
@@ -1167,10 +1189,41 @@ class pyfrp(QtGui.QMainWindow):
 		
 		return newEmbryo
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Edit embryo dataset
-	
+	def loadEmbryo(self):
+		
+		"""Loads saved embryo object and adds it to currently selected molecule file.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_embryo: Loaded embryo object.
+		
+		"""
+		
+		#Check if molecule or subnode selected
+		if not self.checkSelectedNode():
+			return 
+		
+		#Get filename
+		fnLoad=QtGui.QFileDialog.getOpenFileName(self, 'Open file', self.lastopen,"*.emb",)
+		
+		#Load and add to molecule
+		newEmbryo=pyfrp_misc_module.loadFromPickle(fnLoad)
+		self.currMolecule.addEmbryo(newEmbryo)
+		
+		#Append to object bar
+		newNode=self.embryo2ObjectBar(newEmbryo,self.currMoleculeNode)
+		self.objectBar.setCurrentItem(newNode)
+		self.getCurrentObj()
+		
+		return newEmbryo
+		
 	def editEmbryo(self):
+		
+		"""Opens main embryo editing dialog.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_embryo: Edited embryo object.
+		
+		"""
 		
 		currEmbryoNode=self.getCurrentEmbryoNode()
 		currEmbryo=self.getCurrentEmbryo()
@@ -1185,11 +1238,16 @@ class pyfrp(QtGui.QMainWindow):
 		self.updatePropBar()
 			
 		return currEmbryo
-			
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Remove embryo
-		
+				
 	def removeEmbryo(self):
+		
+		"""Removes selected embryo object both from molecule object as well as 
+		main GUI.
+		
+		Returns:
+			list: Updated pyfrp.subclasses.pyfrp_molecule.embryos list
+		
+		"""
 		
 		currEmbryoNode=self.getCurrentEmbryoNode()
 		currEmbryo=self.getCurrentEmbryo()
