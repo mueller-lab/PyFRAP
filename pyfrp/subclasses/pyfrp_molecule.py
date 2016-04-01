@@ -200,7 +200,7 @@ class molecule:
 		
 		"""Extracts embryos in ``embryos`` list into seperate pickled files.
 		
-		..note:: Will create folder ``fn`` if non-existent. If ``fn`` is not specified,
+		.. note:: Will create folder ``fn`` if non-existent. If ``fn`` is not specified,
 		will assume ``fn="embryoFiles/"``.
 		
 		Keyword Args:
@@ -238,8 +238,7 @@ class molecule:
 		
 		Useful if embryos are seperated and molecule file needs to be compressed.
 		
-		.. note:: Embryos should have all different names, so there will not be any missassignment when
-		reimporting embryo files.
+		.. note:: Embryos should have all different names, so there will not be any missassignment when reimporting embryo files.
 		
 		Returns:
 			bool: True if success, False else.
@@ -278,8 +277,7 @@ class molecule:
 		If the new molecule object has a attribute that ``self`` does not have, will
 		add attribute with default value from the new molecle file.
 		
-		.. note:: Will also update all subobject, making sure that embryo and fit objects are
-		up-to-date.
+		.. note:: Will also update all subobject, making sure that embryo and fit objects are up-to-date.
 		
 		Returns:
 			pyfrp.subclasses.pyfrp_molecule: ``self``
