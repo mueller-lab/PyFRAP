@@ -24,10 +24,7 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Parameter fitting module for PyFRAP toolbox, including following functions:
-
-#(1)  parm_fitting: Checks parameter fitting parameters, calls optimization algorithm and writes results into embryo object 
-
+#Optimization module for PyFRAP toolbox, including following functions:
 
 #===========================================================================================================================================================================
 #Importing necessary modules
@@ -46,16 +43,46 @@ from pyfrp_term_module import *
 
 def constrObjFunc(x,fit,debug,ax,returnFit):
 	
+	"""Objective function when using Constrained Nelder-Mead.
+	
+	Calls :py:func:`pyfrp.modules.pyfrp_optimization_module.xTransform` to transform x into
+	constrained version, then uses :py:func:`pyfrp.modules.pyfrp_fit_module.FRAPObjFunc` to 
+	find SSD.
+	
+	Args:
+		x (list): Input vector, consiting of [D,(prod),(degr)].
+		fit (pyfrp.subclasses.pyfrp_fit): Fit object.
+		debug (bool): Display debugging output and plots.
+		ax (matplotlib.axes): Axes to display plots in.
+		returnFit (bool): Return fit instead of SSD.
+	
+	Returns:
+		 float: SSD of fit. Except ``returnFit==True``, then will return fit itself. 
+	"""
+	
 	x=xTransform(x,[fit.LBD,fit.LBProd,fit.LBDegr],[fit.UBD,fit.UBProd,fit.UBDegr])
 
 	ssd=pyfrp_fit_module.FRAPObjFunc(x,fit,debug,ax,returnFit)
 	
 	return ssd
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Transforms unconstrained problem into constrained problem
-	
 def xTransform(x,LB,UB):
+	
+	"""Transforms ``x`` into constrained form, obeying upper 
+	bounds ``UB`` and lower bounds ``LB``.
+	
+	.. note:: Will add tiny offset to LB(D), to avoid singularities.
+	
+	Idea taken from http://www.mathworks.com/matlabcentral/fileexchange/8277-fminsearchbnd--fminsearchcon
+	
+	Args:
+		x (list): Input vector, consiting of [D,(prod),(degr)].
+		LB (list): List of lower bounds for ``D,prod,degr``.
+		UB (list): List of upper bounds for ``D,prod,degr``.
+	
+	Returns:
+		list: Transformed x-values. 
+	"""
 	
 	#Make sure everything is float
 	x=np.asarray(x,dtype=np.float64)
@@ -106,13 +133,23 @@ def xTransform(x,LB,UB):
 		#Note: The original file has here another case for fixed variable, but since we made the decision earlier which when we call frap_fitting, we don't need this here.
 	
 	return xtrans	
-
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#transform x0 from unconstrained to constrained problem
 		
 def transformX0(x0,LB,UB):
-
-	# transform starting values into their unconstrained surrogates. Check for infeasible starting guesses.
+	
+	"""Transforms ``x0`` into constrained form, obeying upper 
+	bounds ``UB`` and lower bounds ``LB``.
+	
+	Idea taken from http://www.mathworks.com/matlabcentral/fileexchange/8277-fminsearchbnd--fminsearchcon
+	
+	Args:
+		x0 (list): Input initial vector, consiting of [D,(prod),(degr)].
+		LB (list): List of lower bounds for ``D,prod,degr``.
+		UB (list): List of upper bounds for ``D,prod,degr``.
+	
+	Returns:
+		list: Transformed x-values. 
+	"""
+	
 	x0u = list(x0)
 	
 	nparams=len(x0)

@@ -200,8 +200,7 @@ class molecule:
 		
 		"""Extracts embryos in ``embryos`` list into seperate pickled files.
 		
-		.. note:: Will create folder ``fn`` if non-existent. If ``fn`` is not specified,
-		will assume ``fn="embryoFiles/"``.
+		.. note:: Will create folder ``fn`` if non-existent. If ``fn`` is not specified, will assume ``fn='embryoFiles/'`` .
 		
 		Keyword Args:
 			fn (str): Path of folder where to save embryo files.

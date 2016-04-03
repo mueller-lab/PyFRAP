@@ -26,10 +26,6 @@
 
 #Parameter fitting module for PyFRAP toolbox, including following functions:
 
-#(1)  parm_fitting: Checks parameter fitting parameters, calls optimization algorithm and writes results into embryo object 
-#(2)  calc_ssd: Objective function for minimization of SSD. Includes equalization steps, debugging plots and cut_off possibility. 
-#(3)  pin_conc: Pins simulation results and dataseries between 0 and 1.
-
 #===========================================================================================================================================================================
 #Improting necessary modules
 #===========================================================================================================================================================================
@@ -74,7 +70,7 @@ def FRAPFitting(fit,debug=False,ax=None):
 		debug (bool): Display debugging output and plots.
 		ax (matplotlib.axes): Axes to display plots in.
 		
-	returns:
+	Returns:
 		pyfrp.subclasses.pyfrp_fit: Performed fit.
 	"""
 	
@@ -161,21 +157,59 @@ def FRAPFitting(fit,debug=False,ax=None):
 
 	return fit
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def scaleTime(tvec,D,Dnew):
+	
+	"""Scales time vector with D/Dnew.
+	
+	Args:
+		tvec (numpy.ndarray): Time vector.
+		D (float): Relative diffusion rate.
+		Dnew (float): Scaling diffusion rate.
+			
+	Returns:
+		numpy.ndarray: Scaled time vector.
+	"""
+	
 	return D/Dnew*tvec
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def interpolateSolution(tvecData,tvecScaled,yvec):
+
+	"""Interpolates scaled simulation vector onto data time vector.
+	
+	Args:
+		tvecData (numpy.ndarray): Data time vector.
+		tvecScaled (numpy.ndarray): Scaled simulation time vector.
+		yvec (numpy.ndarray): Simulation values.
+			
+	Returns:
+		numpy.ndarray: Scaled simulation vector.
+	"""
+
 	fscal=interpolate.interp1d(tvecScaled,yvec)
 	yvecScaled=fscal(tvecData)
 	return yvecScaled
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def assignInputVariables(x,fit):
+	
+	"""Decodes array given to objective function to suit
+	fitting options.
+	
+	If ``fit.fitProd`` or ``fit.fitDegr`` are selected, will
+	use ``x[1]`` or ``x[2]`` as input values for degradation and
+	production rate.
+	
+	Args:
+		x (list): Input vector of objective function.
+		fit (pyfrp.subclasses.pyfrp_fit): Fit object.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* Dnew (float): Diffusion rate.
+			* prod (float): Production rate.
+			* degr (float): Degredation rate.
+	"""
+	
 	Dnew=x[0]
 	if fit.fitProd and fit.fitDegr:
 		prod=x[1]
@@ -195,9 +229,19 @@ def assignInputVariables(x,fit):
 	
 	return Dnew,prod,degr
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def checkInput(x,iteration,fit):
+	
+	"""Checks if input vector ``x`` is non-negative.
+	
+	Args:
+		x (list): Input vector of objective function.
+		iteration (int): Number of iteration.
+		fit (pyfrp.subclasses.pyfrp_fit): Fit object.
+		
+	Returns:
+		bool: ``True`` if everythings positive, ``False`` else.
+	"""
+	
 	x=np.array([1,fit.fitProd,fit.fitDegr])*x
 	if min(x)<0:
 		if iteration==0:
@@ -208,25 +252,76 @@ def checkInput(x,iteration,fit):
 			print printWarning("One of the values of x is negative")
 			return False
 	return True
-		
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+	
 def downscaleKinetics(prod,degr,rate):
+	
+	"""Adjusts time-scale of kinetics so prod/degr 
+	will have same weight as diffusion rate.
+	
+	Args:
+		prod (float): Production rate.
+		degr (float): Degredation rate.
+		rate (float): Scaling rate.
+		
+	Returns:
+		tuple: Tuple containing:
+	
+			* prod (float): Scaled production rate.
+			* degr (float): Scaled degredation rate.
+	"""
+	
 	return float(prod)/rate, float(degr)/rate
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def getTvecCutIndex(tvec,tCut):
+	
+	"""Finds last index of time vector before time vector
+	exceeds tCut.
+	
+	Args:
+		tvec (numpy.ndarray): Time vector.
+		tCut (float): Time to cut at.
+		
+	Returns:
+		 int: Last index.
+		
+	"""
+	
 	return max(np.where(tvec<tCut)[0])
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def cutTvec(tvec,tCutIndex):
+	
+	"""Cuts time vector as index.
+	
+	Args:
+		tvec (numpy.ndarray): Time vector.
+		tCutIndex (int): Index to cut at.
+		
+	Returns:
+		 numpy.ndarray: Cut time vector.
+		
+	"""
+
 	return tvec[:tCutIndex]
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def scaleROIs(fit,Dnew):
+	
+	"""Scales all simulation vectors of all ROIs defined in 
+	``fit.ROIsFitted``.
+	
+	Args:
+		fit (pyfrp.subclasses.pyfrp_fit): Fit object.
+		Dnew (float): Scaling diffusion rate.
+	
+	Returns:
+		tuple: Tuple containing:
+			
+			* fit (pyfrp.subclasses.pyfrp_fit): Updated fit object.
+			* tvecScaled (numpy.ndarray): Scaled time vector.
+			* tvecData (numpy.ndarray): Data time vector.
+			* scaledSimVecs (list): List of scaled simulation vectors by ROI.
+			* dataVecs (list): List of data vectors by ROI.
+	
+	"""
 	
 	scaledSimVecs=[]
 	dataVecs=[]
@@ -261,9 +356,20 @@ def scaleROIs(fit,Dnew):
 	
 	return fit,tvecScaled,tvecData,scaledSimVecs,dataVecs
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def addKineticsToSolution(scaledSimVecs,tvec,prod,degr):
+	
+	"""Adds reaction kinetics to simulation solution.
+	
+	Args:
+		scaledSimVecs (list): List of scaled simulation vectors by ROI.
+		tvec (numpy.ndarray): Data time vector.
+		prod (float): Production rate.
+		degr (float): Degredation rate.
+	
+	Returns:
+		(list): List of rescaled simulation vectors by ROI.
+
+	"""
 	
 	rescaledSimVecs=[]
 	
@@ -288,10 +394,29 @@ def addKineticsToSolution(scaledSimVecs,tvec,prod,degr):
 		
 	return rescaledSimVecs	
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def computeEquFactors(dataVec,simVec):
-			
+	
+	"""Computes equalization factors per ROI.
+	
+	The purpose of equalization factors is to account for immobile 
+	fractions, adjusting the level of the simulation vector to the data
+	vector. 
+	
+	**Check requirements**: 
+	Checks if ``0.1<=dataVec[i]/simVec[i]<=3``, if not, sets = 1.
+	In practical terms, this means that the volume fraction is not allowed to increase by
+	more than 3fold (>3), and that the immobile fraction cannot be more than 90% (< 0.1)
+	
+	
+	Args:
+		dataVec (numpy.ndarray): Data vector of ROI.
+		simVec (numpy.ndarray): Scaled simulation vector of ROI.
+		
+	Returns:
+		numpy.ndarray: Array of equalization factors.
+
+	"""
+	
 	#Add little Noise to concentration profiles so we don't get singularities
 	simVec=simVec+1E-10
 	
@@ -309,9 +434,26 @@ def computeEquFactors(dataVec,simVec):
 	
 	return equFacts
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def equalize(dataVecs,simVecs):
+	
+	"""Equalizes all simulation vectors of all ROIs defined in 
+	``fit.ROIsFitted``.
+	
+	Does this by:
+	
+		* Computing equalization factors per ROI.
+		* Computing SSD for each equalization factor per ROI.
+		* Selecting equalization factor per ROI that minimizes SSD.
+	
+	Args:
+		scaledSimVecs (list): List of scaled simulation vectors by ROI.
+		dataVecs (list): List of data vectors by ROI.
+	
+	Returns:
+		 list: List of optimal equalization factors by ROI.
+
+	"""
 	
 	equSimVecs=[]
 	equFacts=[]
@@ -339,10 +481,31 @@ def equalize(dataVecs,simVecs):
 		
 	return equSimVecs
 	
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Objective function for fitting
-	
 def FRAPObjFunc(x,fit,debug,ax,returnFit):
+	
+	"""Objective function for fitting FRAP experiments.
+	
+	Does the following.
+	
+		* Checks input using :py:func:`pyfrp.modules.pyfrp_fit_module.checkInput` .
+		* Assigns input variables using :py:func:`pyfrp.modules.pyfrp_fit_module.assignInputVariables` .
+		* Adjust kinetic scales using :py:func:`pyfrp.modules.pyfrp_fit_module.downscaleKinetics` .
+		* Scales simulation vector using :py:func:`pyfrp.modules.pyfrp_fit_module.scaleROIs` .
+		* Adds reaction kinetics using using :py:func:`pyfrp.modules.pyfrp_fit_module.addKineticsToSolution` .
+		* Equalizes simulation vector using :py:func:`pyfrp.modules.pyfrp_fit_module.equalize` .
+		* Computes and returns SSD.
+	     
+	Args:
+		x (list): Input vector, consiting of [D,(prod),(degr)].
+		fit (pyfrp.subclasses.pyfrp_fit): Fit object.
+		debug (bool): Display debugging output and plots.
+		ax (matplotlib.axes): Axes to display plots in.
+		returnFit (bool): Return fit instead of SSD.
+	
+	Returns:
+		 float: SSD of fit. Except ``returnFit==True``, then will return fit itself. 
+
+	"""
 	
 	#Counting function calls
 	global iterations
@@ -418,9 +581,27 @@ def FRAPObjFunc(x,fit,debug,ax,returnFit):
 	else:
 		return SSD
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def computePinVals(vec,useMin=False,useMax=False,bkgdVal=None,debug=False):
+	
+	"""Computes pinning values of vector.
+	
+	Args:
+		vec (numpy.ndarray): Vector to be pinned.
+		
+	Keyword Args:
+		useMin (bool): Use minimum value for background computation.
+		useMax (bool): Use maximum value for norm value computation.
+		bkgdVal (float): Use this background value instead of newly computing it.
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		tuple: Tuple containing:
+			
+			* bkgdVal (float): Background value.
+			* normVal (float): Norming value.
+
+	"""
+	
 	if bkgdVal==None:
 		bkgdVal = computeBkgd(vec,useMin=useMin,debug=debug)
 	vec2=np.asarray(vec)-bkgdVal
@@ -428,9 +609,23 @@ def computePinVals(vec,useMin=False,useMax=False,bkgdVal=None,debug=False):
 	
 	return bkgdVal,normVal
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	
 def computeBkgd(vec,useMin=False,debug=False):
+	
+	"""Computes background value of vector.
+	
+	Args:
+		vec (numpy.ndarray): Vector to be pinned.
+		
+	Keyword Args:
+		useMin (bool): Use minimum value for background computation.
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		float: Background value. 
+		
+	
+	"""
+	
 	minVal=min(vec)
 	if debug and not useMin:
 		if minVal<vec[0]:
@@ -440,9 +635,22 @@ def computeBkgd(vec,useMin=False,debug=False):
 	else:
 		return vec[0]
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def computeNorm(vec,useMax=False,debug=False):
+	
+	"""Computes norming value of vector.
+	
+	Args:
+		vec (numpy.ndarray): Vector to be pinned.
+		
+	Keyword Args:
+		useMax (bool): Use maximum value for norm value computation.
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		float: Norming value. 
+		
+	"""
+	
 	maxVal=max(vec)
 	if debug and not useMax:
 		if maxVal<vec[-1]:
@@ -452,10 +660,25 @@ def computeNorm(vec,useMax=False,debug=False):
 	else:
 		return vec[-1]
 	
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Substract background and normalize: Pin concentrations between 0 and 1:
-
-def pinConc(vec,bkgdVal,normVal,switch_thresh=0.95,axes=None,debug=False,tvec=None,color='b'):
+def pinConc(vec,bkgdVal,normVal,axes=None,debug=False,tvec=None,color='b'):
+	
+	"""Substract background and normalize: Pin concentrations between 0 and 1.
+	
+	Args:
+		vec (numpy.ndarray): Vector to be pinned.
+		bkgdVal (float): Background value.
+		normVal (float): Norming value.
+		
+	Keyword Args:
+		axes (list): List of matplotlib.axes for debugging plots.
+		tvec (numpy.ndarray): Time vector (only necessay when plotting).
+		debug (bool): Print debugging messages.
+		color (str): Color of plots.
+	
+	Returns:
+		numpy.ndarray: Pinned vector. 
+		
+	"""
 	
 	#Copying unpinned timeseries
 	vecPinned=list(vec)

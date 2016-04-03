@@ -43,6 +43,19 @@ from pyfrp.modules import pyfrp_misc_module
 #===========================================================================================================================================================================
 
 def saveToPickle(obj,fn=None):
+	
+	"""Saves obj into pickled format.
+	
+	.. note:: If ``fn==Non``, will try to save to ``obj.name``, otherwise unnamed.pk
+	
+	Keyword Args:
+		fn (str): Output file name.	
+	
+	Returns: 
+		str: Output filename.
+	
+	"""
+	
 	cleanUp()
         if fn==None:
                 if hasattr(obj,"name"):
@@ -56,6 +69,16 @@ def saveToPickle(obj,fn=None):
         return fn
 
 def loadFromPickle(fn):
+	
+	"""Loads obj from pickled format.
+	
+	Args:
+		fn (str): Filename.	
+	
+	Returns: 
+		str: Output filename.
+	
+	"""
 	
 	cleanUp()
 	
@@ -73,18 +96,51 @@ def loadFromPickle(fn):
         return loadedFile
 
 def loadMolecule(fn,update=True):
+	
+	"""Loads molecule object from pickle file
+	and brings it up-to-date.
+	
+	Args:
+		fn (str): Filename.	
+	
+	Keyword Args: 
+		update (bool): Update to current version.
+	
+	Returns: 
+		pyfrp.subclasses.pyfrp_molecule: Molecule file.
+	
+	"""
+	
 	mol=loadFromPickle(fn)
 	if update:
 		mol.update_version()
 	return mol
 
 def loadEmbryo(fn,update=True):
+	
+	"""Loads embryo object from pickle file
+	and brings it up-to-date.
+	
+	Args:
+		fn (str): Filename.	
+	
+	Keyword Args: 
+		update (bool): Update to current version.
+	
+	Returns: 
+		pyfrp.subclasses.pyfrp_embryo: Embryo file.
+	
+	"""
+	
 	emb=loadFromPickle(fn)
 	if update:
 		emb.update_version()
 	return emb
 
 def cleanUp():
+	"""Calls garbage collector to clean up.
+	"""
+	
 	gc.collect()
 	return None
 
