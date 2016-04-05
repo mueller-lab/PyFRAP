@@ -318,5 +318,14 @@ class simulation(object):
 	def getDegr(self):
 		return self.degr
 	
-	
+	def isLogTimeScale(self):
+		
+		"""Returns if time spacing of simulation is logarithmic.
+		
+		Returns:
+			bool: Time spacing is logarithmic.
+		
+		"""
+		
+		return not np.diff(self.tvecSim)[0]==np.diff(self.tvecSim)[-1]
 	

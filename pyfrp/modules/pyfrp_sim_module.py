@@ -48,6 +48,7 @@ import sys
 #PyFRAP Modules
 import pyfrp_plot_module 
 import pyfrp_integration_module
+import pyfrp_misc_module
 from pyfrp_term_module import *
 import pyfrp_idx_module
 

@@ -454,28 +454,81 @@ class embryo:
 		return self.tvecData
 	
 	def setSliceDepthMu(self,d):
+		
+		"""Sets resolution of data in :math:`\mu m` and then updates all dimensions of
+		embryo object data rely on ``sliceDepthMu``.
+		
+		"""
+		
 		self.sliceDepthMu=d
 		self.updatePxDimensions()
 		return self.sliceDepthMu
 	
-	def setMasterROIIdx(self,r):
-		self.masterROI=r
-		return self.masterROI
+	def setMasterROIIdx(self,idx):
+		
+		"""Define ROI with index ``idx`` as master ROI.
+		"""
+		
+		self.masterROIIdx=idx
+		return self.masterROIIdx
 	
 	def setSideLengthBleachedMu(self,s):
+		
+		"""Sets sidelength of bleached square in :math:`\mu m`, will then 
+		update bleached region parameters by calling :py:func:`updateBleachedRegion`.
+		
+		.. warning:: Attributes ``sideLengthBleachedMu`` and ``offsetBleachedPx`` will 
+		   deprecated in further versions. Bleached region definition will then solely rely 
+		   on ROI definitions. 
+		
+		"""
+		
 		self.sideLengthBleachedMu=s
 		self.updateBleachedRegion()
 		return self.sideLengthBleachedMu
 		
 	def updateBleachedRegion(self):
+		
+		"""Updates sidelength and offset of bleached square in px.
+		
+		.. warning:: Attributes ``sideLengthBleachedMu`` and ``offsetBleachedPx`` will 
+		   deprecated in further versions. Bleached region definition will then solely rely 
+		   on ROI definitions. 
+		
+		"""
+		
 		self.sideLengthBleachedPx=self.sideLengthBleachedMu/self.convFact
 		self.offsetBleachedPx=[self.dataResPx/2-self.sideLengthBleachedPx/2, self.dataResPx/2-self.sideLengthBleachedPx/2]
 		return self.sideLengthBleachedPx, self.offsetBleachedPx
 		
 	def getMasterROIIdx(self):
+		
+		"""Returns index of master ROI"""
+		
 		return self.masterROIIdx
 	
 	def newROI(self,name,Id,zmin='-inf',zmax='inf',color='b',asMaster=False):
+		
+		"""Creates new simple :py:class:`pyfrp.subclasses.pyfrp_ROI.ROI` object
+		and adds it to the ``ROIs`` list of embryo object.
+		
+		.. note:: You can use :py:meth:`getFreeROIId` to find a unused ID for the newROI.
+		
+		Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			
+		Keyword Args:
+			zmin (float): Lower boundary in z-direction.
+			zmax (float): upper boundary in z-direction.
+			color (str): Color of ROI.
+			asMaster (bool): Set ROI as master ROI?
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.ROI: Newly created ROI object.
+		
+		"""
+		
 		roi=pyfrp_ROI.ROI(self,name,Id,zmin=zmin.inf,zmax=zmax,color=color)
 		self.ROIs.append(roi)
 		if asMaster:
@@ -483,6 +536,27 @@ class embryo:
 		return roi
 		
 	def newRadialROI(self,name,Id,center,radius,color='b',asMaster=False):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_ROI.radialROI` object
+		and adds it to the ``ROIs`` list of embryo object.
+		
+		.. note:: You can use :py:meth:`getFreeROIId` to find a unused ID for the newROI.
+		
+		Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			center (list): Center of radial ROI.
+			radius (float): Radius of radial ROI.
+			
+		Keyword Args:
+			color (str): Color of ROI.
+			asMaster (bool): Set ROI as master ROI?
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.radialROI: Newly created ROI object.
+		
+		"""
+		
 		roi=pyfrp_ROI.radialROI(self,name,Id,center,radius,color=color)
 		self.ROIs.append(roi)
 		if asMaster:
@@ -490,6 +564,31 @@ class embryo:
 		return roi
 		
 	def newSliceROI(self,name,Id,height,width,sliceBottom,color='b',asMaster=False):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_ROI.sliceROI` object
+		and adds it to the ``ROIs`` list of embryo object.
+		
+		.. note:: You can use :py:meth:`getFreeROIId` to find a unused ID for the newROI.
+		
+		.. note:: If ``sliceBottom==True``, slice ranges from ``height<=z<=height+width``, otherwise
+		   from ``height-width/2<=z<=height+width/2``.
+		
+		Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			height (float): z-coordinate of slice.
+			width (float): width in z-direction of slice.
+			sliceBottom (bool): Put origin of slice at botton of slice.
+			
+		Keyword Args:
+			color (str): Color of ROI.
+			asMaster (bool): Set ROI as master ROI?
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.sliceROI: Newly created ROI object.
+		
+		"""
+		
 		roi=pyfrp_ROI.sliceROI(self,name,Id,height,width,sliceBottom,color=color)
 		self.ROIs.append(roi)
 		if asMaster:
@@ -497,6 +596,33 @@ class embryo:
 		return roi
 	
 	def newRadialSliceROI(self,name,Id,center,radius,height,width,sliceBottom,color='b',asMaster=False):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_ROI.radialSliceROI` object
+		and adds it to the ``ROIs`` list of embryo object.
+		
+		.. note:: You can use :py:meth:`getFreeROIId` to find a unused ID for the newROI.
+		
+		.. note:: If ``sliceBottom==True``, slice ranges from ``height<=z<=height+width``, otherwise
+		   from ``height-width/2<=z<=height+width/2``.
+		
+		Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			center (list): Center of radial ROI.
+			radius (float): Radius of radial ROI.
+			height (float): z-coordinate of slice.
+			width (float): width in z-direction of slice.
+			sliceBottom (bool): Put origin of slice at botton of slice.
+			
+		Keyword Args:
+			color (str): Color of ROI.
+			asMaster (bool): Set ROI as master ROI?
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.radialSliceROI: Newly created ROI object.
+		
+		"""
+		
 		roi=pyfrp_ROI.radialSliceROI(self,name,Id,center,radius,height,width,sliceBottom,color=color)
 		self.ROIs.append(roi)
 		if asMaster:
@@ -504,6 +630,31 @@ class embryo:
 		return roi
 	
 	def newSquareROI(self,name,Id,offset,sidelength,color='b',asMaster=False):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_ROI.squareROI` object
+		and adds it to the ``ROIs`` list of embryo object.
+		
+		.. note:: Offset is set to be left-bottom corner of square.
+		
+		.. note:: You can use :py:meth:`getFreeROIId` to find a unused ID for the newROI.
+		
+		
+		Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			offset (list): Offset of of square.
+			sidelength (float): Sidelength of square.
+			
+		Keyword Args:
+			color (str): Color of ROI.
+			asMaster (bool): Set ROI as master ROI?
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.squareROI: Newly created ROI object.
+		
+		"""
+		
+		
 		roi=pyfrp_ROI.squareROI(self,name,Id,offset,sidelength)
 		self.ROIs.append(roi)
 		if asMaster:
@@ -511,6 +662,35 @@ class embryo:
 		return roi
 	
 	def newSquareSliceROI(self,name,Id,offset,sidelength,height,width,sliceBottom,color='b',asMaster=False):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_ROI.squareSliceROI` object
+		and adds it to the ``ROIs`` list of embryo object.
+		
+		.. note:: Offset is set to be left-bottom corner of square.
+		
+		.. note:: You can use :py:meth:`getFreeROIId` to find a unused ID for the newROI.
+		
+		.. note:: If ``sliceBottom==True``, slice ranges from ``height<=z<=height+width``, otherwise
+		   from ``height-width/2<=z<=height+width/2``.
+		
+		Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			center (list): Center of radial ROI.
+			offset (list): Offset of of square.
+			sidelength (float): Sidelength of square.
+			width (float): width in z-direction of slice.
+			sliceBottom (bool): Put origin of slice at botton of slice.
+			
+		Keyword Args:
+			color (str): Color of ROI.
+			asMaster (bool): Set ROI as master ROI?
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.squareSliceROI: Newly created ROI object.
+		
+		"""
+		
 		roi=pyfrp_ROI.squareSliceROI(self,name,Id,offset,sidelength,height,width,sliceBottom,color=color)
 		self.ROIs.append(roi)
 		if asMaster:
@@ -518,6 +698,30 @@ class embryo:
 		return roi
 	
 	def newRectangleROI(self,name,Id,offset,sidelengthX,sidelengthY,color='b',asMaster=False):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_ROI.rectangleROI` object
+		and adds it to the ``ROIs`` list of embryo object.
+		
+		.. note:: Offset is set to be left-bottom corner of rectangle.
+		
+		.. note:: You can use :py:meth:`getFreeROIId` to find a unused ID for the newROI.
+		
+		Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			offset (list): Offset of of square.
+			sidelengthX (float): Sidelength of rectangle in x-direction.
+			sidelengthY (float): Sidelength of rectangle in y-direction.
+				
+		Keyword Args:
+			color (str): Color of ROI.
+			asMaster (bool): Set ROI as master ROI?
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.rectangleROI: Newly created ROI object.
+		
+		"""
+		
 		roi=pyfrp_ROI.rectangleROI(self,name,Id,offset,sidelengthX,sidelengthY,color=color)
 		self.ROIs.append(roi)
 		if asMaster:
@@ -525,6 +729,36 @@ class embryo:
 		return roi
 	
 	def newRectangleSliceROI(self,name,Id,offset,sidelength,height,width,sliceBottom,color='b',asMaster=False):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_ROI.rectangleSliceROI` object
+		and adds it to the ``ROIs`` list of embryo object.
+		
+		.. note:: Offset is set to be left-bottom corner of rectangle.
+		
+		.. note:: You can use :py:meth:`getFreeROIId` to find a unused ID for the newROI.
+		
+		.. note:: If ``sliceBottom==True``, slice ranges from ``height<=z<=height+width``, otherwise
+		   from ``height-width/2<=z<=height+width/2``.
+		
+		Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			center (list): Center of radial ROI.
+			offset (list): Offset of of rectangle.
+			sidelengthX (float): Sidelength of rectangle in x-direction.
+			sidelengthY (float): Sidelength of rectangle in y-direction.
+			width (float): width in z-direction of slice.
+			sliceBottom (bool): Put origin of slice at botton of slice.
+			
+		Keyword Args:
+			color (str): Color of ROI.
+			asMaster (bool): Set ROI as master ROI?
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.rectangleSliceROI: Newly created ROI object.
+		
+		"""
+		
 		roi=pyfrp_ROI.rectangleSliceROI(self,name,Id,offset,sidelength,height,width,sliceBottom,color=color)
 		self.ROIs.append(roi)
 		if asMaster:
@@ -532,6 +766,30 @@ class embryo:
 		return roi
 	
 	def newPolyROI(self,name,Id,corners,color='b',asMaster=False):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_ROI.polyROI` object
+		and adds it to the ``ROIs`` list of embryo object.
+		
+		Each corner given in ``corners`` list must be a list of form ``[x,y]``.
+		
+		.. note:: Polygon is automatically closed.
+		
+		.. note:: You can use :py:meth:`getFreeROIId` to find a unused ID for the newROI.
+		
+		Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			corners (list): List of ``[x,y]`` coordinates describing corners.
+				
+		Keyword Args:
+			color (str): Color of ROI.
+			asMaster (bool): Set ROI as master ROI?
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.polyROI: Newly created ROI object.
+		
+		"""
+		
 		roi=pyfrp_ROI.polyROI(self,name,Id,corners,color=color)
 		self.ROIs.append(roi)
 		if asMaster:
@@ -539,6 +797,36 @@ class embryo:
 		return roi
 	
 	def newPolySliceROI(self,name,Id,corners,height,width,sliceBottom,color='b',asMaster=False):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_ROI.polySliceROI` object
+		and adds it to the ``ROIs`` list of embryo object.
+		
+		Each corner given in ``corners`` list must be a list of form ``[x,y]``.
+		
+		.. note:: Polygon is automatically closed.
+		
+		.. note:: You can use :py:meth:`getFreeROIId` to find a unused ID for the newROI.
+		
+		.. note:: If ``sliceBottom==True``, slice ranges from ``height<=z<=height+width``, otherwise
+		   from ``height-width/2<=z<=height+width/2``.
+		
+		Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			center (list): Center of radial ROI.
+			corners (list): List of ``[x,y]`` coordinates describing corners.
+			width (float): width in z-direction of slice.
+			sliceBottom (bool): Put origin of slice at botton of slice.
+			
+		Keyword Args:
+			color (str): Color of ROI.
+			asMaster (bool): Set ROI as master ROI?
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.polySliceROI: Newly created ROI object.
+		
+		"""
+		
 		roi=pyfrp_ROI.polySliceROI(self,name,Id,corners,height,width,sliceBottom,color=color)
 		self.ROIs.append(roi)
 		if asMaster:
@@ -546,6 +834,25 @@ class embryo:
 		return roi
 	
 	def newCustomROI(self,name,Id,color='b',asMaster=False):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_ROI.customROI` object
+		and adds it to the ``ROIs`` list of embryo object.
+		
+		.. note:: You can use :py:meth:`getFreeROIId` to find a unused ID for the newROI.
+		
+		Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			
+		Keyword Args:
+			color (str): Color of ROI.
+			asMaster (bool): Set ROI as master ROI?
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.customROI: Newly created ROI object.
+		
+		"""
+		
 		roi=pyfrp_ROI.customROI(self,name,Id,color=color)
 		self.ROIs.append(roi)
 		if asMaster:
@@ -553,6 +860,10 @@ class embryo:
 		return roi
 	
 	def getFreeROIId(self):
+		
+		"""Returns first free ID of ROIs.
+		"""
+		
 		IdList=pyfrp_misc_module.objAttrToList(self.ROIs,'Id')
 		notFound=True
 		i=0
@@ -562,12 +873,19 @@ class embryo:
 			i=i+1
 			
 	def removeROI(self,i):
+		
+		"""Removes ROI of index ``i``.
+		"""
+		
 		self.ROIs.pop(i)
 		if i==self.masterROIIdx:
 			printWarning('You are deleting the masterROI. You need to select a new one before you can analyze or simulate.')
 		return self.ROIs
 	
 	def listROIs(self):
+		
+		"""Prints out all ROIs and their respective type."""
+		
 		for r in self.ROIs:
 			print r.name , type(r)
 		return True
@@ -590,7 +908,7 @@ class embryo:
 			* Bleached Square: ROI covering all pixels and mesh nodes inside bleached region and imaging slice. :py:class:`pyfrp.subclasses.pyfrp_ROI.squareSliceROI`
 			* Bleached Square: ROI covering all pixels and mesh nodes outside bleached region but inside imaging slice. :py:class:`pyfrp.subclasses.pyfrp_ROI.customROI`
 			
-		.. note:: Will automatically set ``All`` as ``masterROI``.
+		.. note:: Will automatically set ``Slice`` as ``masterROI``.
 			
 		Args:	
 			center (list): Center of circle defining imaging slice.
@@ -631,9 +949,18 @@ class embryo:
 		return self.ROIs
 	
 	def getROIs(self):
+		
+		"""Returns ``ROIs`` list."""
+		
 		return self.ROIs
 	
 	def getROIByName(self,name):
+		
+		"""Returns ROI in ``ROIs`` list with specified name.
+		
+		If ROI with ``name`` does not exist, returns ``None``.
+		"""
+		
 		for r in self.ROIs:
 			if r.name==name:
 				return r
@@ -643,6 +970,12 @@ class embryo:
 		return None
 
 	def getROIById(self,Id):
+		
+		"""Returns ROI in ``ROIs`` list with specified ID.
+		
+		If ROI with ``Id`` does not exist, returns ``None``.
+		"""
+		
 		for r in self.ROIs:
 			if r.Id==Id:
 				return r
@@ -653,6 +986,17 @@ class embryo:
 		return None
 	
 	def updateFileList(self):
+		
+		"""Updates file list containing all names of recovery images.
+		
+		If new ``fileList`` is not empty, will update number of frames
+		to match number of files in ``fileList`` by calling :py:meth:`updateNFrames`.
+		
+		Returns:
+			list: Updated file list.
+		
+		"""
+		
 		self.fileList=pyfrp_misc_module.getSortedFileList(self.fnDatafolder,self.dataFT)
 		if len(self.fileList)==0:
 			printWarning("There are no files of type " + self.dataFT + " in " + self.fnDatafolder +" . This can lead to problems.")
@@ -661,24 +1005,69 @@ class embryo:
 		return self.fileList
 	
 	def setFileList(self,l):
+		
+		"""Sets file list to ``l``."""
+		
 		self.fileList=l
 		return self.fileList
 	
 	def getFileList(self):
+		
+		"""Returns list of recovery data files."""
+		
 		return self.fileList
 	
 	def setDataFolder(self,fn):
+		
+		"""Set folder containing recovery data files.
+		
+		Will automatically try to update ``fileList`` by calling
+		:py:meth:`updateFileList`.
+		
+		Args:
+			fn (str): Path to folder containing data files.
+		
+		Returns:
+			str: New data folder path.
+		
+		"""
+		
 		fn=fn.replace('//','/')
 		self.fnDatafolder=fn
+		self.updateFileList()
 		return self.fnDatafolder
 	
 	def getDataFolder(self):
+		
+		"""Returns folder containing recovery data files."""
+		
 		return self.fnDatafolder
 	
 	def getGeometry(self):
+		
+		"""Returns embryo's geometry object.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_geometry.geometry: PyFRAP geometry object.
+		"""
+		
 		return self.geometry
 	
 	def setGeometry2ZebraFishDomeStage(self,center,imagingRadius,radiusScale=1.1):
+		
+		"""Sets embryo's geometry to :py:class:`pyfrp.subclasses.pyfrp_geometry.zebrafishDomeStage`.
+		
+		Args:
+			center (list): Center of geometry.
+			imagingRadius (float): Radius of embryo at imaging slice.
+			
+		Keyword Args:
+			radiusScale (float): Scaling factor defining how much bigger outer radius is to inner radius.
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_geometry.zebrafishDomeStage: New zebrafish geometry.
+		"""
+		
 		self.geometry=pyfrp_geometry.zebrafishDomeStage(self,center,imagingRadius,radiusScale=radiusScale)
 		return self.geometry
 	
