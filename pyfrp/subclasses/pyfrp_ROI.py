@@ -166,10 +166,76 @@ class ROI(object):
 		return self.imgMask.sum()+self.extMask.sum()
 		
 	def getMeshIdxZExtend(self):
+		
+		"""Returns extend of ROI's ``meshIdx`` in z-coordinate.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* (float): Minimum z-coordinate.
+				* (float): Maximum z-coordinate.
+				
+		"""
+		
 		mesh=self.embryo.simulation.mesh.mesh
 		z=np.asarray(mesh.z)[self.meshIdx]	
 		
 		return min(z) , max(z)
+	
+	def getMeshIdxYExtend(self):
+		
+		"""Returns extend of ROI's ``meshIdx`` in y-coordinate.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* (float): Minimum y-coordinate.
+				* (float): Maximum y-coordinate.
+				
+		"""
+		
+		mesh=self.embryo.simulation.mesh.mesh
+		y=np.asarray(mesh.y)[self.meshIdx]	
+		
+		return min(y) , max(y)
+	
+	def getMeshIdxXExtend(self):
+		
+		"""Returns extend of ROI's ``meshIdx`` in x-coordinate.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* (float): Minimum x-coordinate.
+				* (float): Maximum x-coordinate.
+				
+		"""
+		
+		mesh=self.embryo.simulation.mesh.mesh
+		x=np.asarray(mesh.x)[self.meshIdx]	
+		
+		return min(x) , max(x)
+	
+	def getMeshIdxExtend(self):
+		
+		"""Returns extend of ROI's ``meshIdx``.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* (float): Minimum x-coordinate.
+				* (float): Maximum x-coordinate.
+				* (float): Minimum y-coordinate.
+				* (float): Maximum y-coordinate.
+				* (float): Minimum z-coordinate.
+				* (float): Maximum z-coordinate.
+		"""
+		
+		xmin,xmax=self.getMeshIdxXExtend()
+		ymin,ymax=self.getMeshIdxYExtend()
+		zmin,zmax=self.getMeshIdxZExtend()
+		
+		return xmin,xmax,ymin,ymax,zmin,zmax
 		
 	def getType(self):
 		typ=str(type(self))
@@ -342,7 +408,36 @@ class ROI(object):
 		return ax
 	
 	
-	def computeIdxs(self,debug=False):
+	def computeIdxs(self,matchMesh=False,debug=False):
+		
+		"""Computes image and mesh indices of ROI. 
+	
+		Will do this by:
+		
+			* Compute image indices.
+			* Match image indices with master ROI.
+			* Compute external indices.
+			* Compute mesh indices.
+			* Match mesh indices with the ones of master ROI.
+			
+		.. note:: If no master ROI is defined, will not do anything.
+		
+		.. note:: If master ROI has not been indexed yet, will first index it, then continue. 
+		
+		.. note:: Will skip mesh index computation if there is no mesh generated yet.
+		
+		Keyword Args:
+			matchMesh (bool): Match mesh indices with master ROI.
+			debug (bool): Print out debugging messages.
+			
+		Return:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x direction.
+				* imgIdxY (list): Image indices in y direction.
+				* meshIdx (list): Mesh indices.
+		
+		"""
 		
 		if self.embryo.getMasterROIIdx()==None:
 			printWarning("No Master ROI has been defined yet. Will not continue compute ROI indices.")
@@ -367,8 +462,14 @@ class ROI(object):
 				if self.embryo.simulation.mesh.mesh==None:
 					printWarning("Mesh has not been generated, will not compute meshIdxs")
 				else:
+				
 					self.computeMeshIdx(self.embryo.simulation.mesh.mesh)
-					self.matchMeshIdx(masterROI)
+				
+					if matchMesh:
+						if self!=masterROI:
+							self.matchMeshIdx(masterROI)
+						
+					raw_input()	
 			else:
 				printWarning("Simulation object does not exist yet, hence won't index for mesh.")
 		else:
@@ -385,12 +486,44 @@ class ROI(object):
 		return self.getAllIdxs()
 	
 	def computeExtIdx(self,debug=False):
+		
+		"""Computes indices of external pixels.
+		
+		Does this by comparing extended pixels of ``self`` with the one of the master ROI.
+		
+		Keyword Args:
+			debug (bool): Print out debugging messages.
+		
+		Return:
+			tuple: Tuple containing:
+			
+				* extImgIdxX (list): External image indices in x direction.
+				* extImgIdxY (list): External image indices in y direction.
+		
+		"""
+		
 		m=self.embryo.getMasterROI()
 		rois=[self,m]
 		[self.extImgIdxX,self.extImgIdxY]=pyfrp_idx_module.getCommonExtendedPixels(rois,self.embryo.dataResPx,debug=debug)
 		return self.extImgIdxX,self.extImgIdxY
 	
 	def matchImgIdx(self,r):
+		
+		"""Matches image indices of ``self`` with the ones of ROI ``r``.
+		
+		Does this by generating masks of both ROIs and multiplicating them.
+		
+		Args:
+			r (pyfrp.subclasses.pyfrp_ROI.ROI): ROI to match with.
+		
+		Return:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Matched image indices in x direction.
+				* imgIdxY (list): Matched image indices in y direction.
+		
+		"""
+		
 		self.computeImgMask()
 		self.imgMask=self.imgMask*r.computeImgMask()
 		self.imgIdxX,self.imgIdxY=pyfrp_idx_module.mask2ind(self.imgMask,self.embryo.dataResPx)	
@@ -660,7 +793,15 @@ class ROI(object):
 		print "Mesh Nodes in ROI after: ", len(self.meshIdx)
 			
 		return fnOut
+	
+	def printDetails(self):
 		
+		"""Prints out all attributes of ROI object."""
+		
+		print "ROI ", self.name, " details:"
+		printAllObjAttr(self)
+		print 
+	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Radial ROI class
 
@@ -808,8 +949,9 @@ class sliceROI(ROI):
 		return self.imgIdxX,self.imgIdxY
 	
 	def computeMeshIdx(self,mesh):
-		self.meshIdx=pyfrp_idx_module.getSliceIdxMesh(mesh,self.zmin,self.zmax)
-		return self.meshIdx	
+		x,y,z=mesh.cellCenters
+		self.meshIdx=pyfrp_idx_module.getSliceIdxMesh(z,self.zmin,self.zmax)
+		return self.meshIdx
 	
 	def checkXYInside(self,x,y):
 		return True

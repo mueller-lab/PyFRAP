@@ -323,7 +323,9 @@ class mesh(object):
 			print "Average sidelength of tetrahedron in self.mesh:", np.mean(slsVec)
 			print "Maximum sidelength of tetrahedron in self.mesh:", max(slsVec)
 			print "Minimum sidelength of tetrahedron in self.mesh:", min(slsVec)	
-			
+		
+		print
+		
 		return
 	
 	def calcAllTetSidelenghts(self):

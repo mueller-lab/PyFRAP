@@ -78,7 +78,7 @@ def getCircleIdxImg(center,radius,res,debug=False):
 	ind_circ_y=[]
 	
 	if debug:
-		ind_slice_debug=zeros((res,res))
+		ind_slice_debug=np.zeros((res,res))
 	
 	#Go through all pixels
 	for i in range(int(res)):
@@ -218,6 +218,11 @@ def getCircleIdxMesh(center,radius,mesh,zmin="-inf",zmax="inf",debug=False):
 	zmin=pyfrp_misc.translateNPFloat(zmin)
 	zmax=pyfrp_misc.translateNPFloat(zmax)
 	
+	print "z-dimensions in getcircleidxmesh"
+	print zmin, type(zmin)
+	print zmax, type(zmax)
+	#raw_input()
+	
 	#Grabbing cellCenters of mesh
 	x,y,z=mesh.cellCenters
 	
@@ -228,11 +233,24 @@ def getCircleIdxMesh(center,radius,mesh,zmin="-inf",zmax="inf",debug=False):
 	#Get indices in Circle
 	indCircle=np.where(np.abs(c-centerC)<radius)[0]
 	
+	print "xy-idx in getcircleidxmesh"
+	print len(indCircle)
+	#raw_input()
+	
 	#Get indices in Slice
 	indSlice=getSliceIdxMesh(z,zmin,zmax)
 	
+	print "z-idx in getcircleidxmesh"
+	print len(indSlice)
+	#raw_input()
+	
+	
 	#Get matches indices
 	indFinal=pyfrp_misc.matchVals(indSlice,indCircle)
+	
+	print "matched-idx in getcircleidxmesh"
+	print len(indSlice)
+	#raw_input()
 	
 	return indFinal
 
@@ -240,6 +258,16 @@ def getCircleIdxMesh(center,radius,mesh,zmin="-inf",zmax="inf",debug=False):
 #Returns all indices in mesh that lie within given slice
 	
 def getSliceIdxMesh(z,zmin,zmax,debug=False):
+	
+	#print z
+	#print type(z)
+	##print zmin,zmax
+	##print type(zmin)
+	##print type(zmax)
+	
+	
+	#raw_input()
+	
 	indSlice=np.where((z<zmax) & (z > zmin))[0]
 	return indSlice
 
@@ -624,8 +652,8 @@ def getCommonXYExtend(ROIs,debug=False):
 
 def remRepeatedImgIdxs(idxX,idxY,debug=False):
 	idx=zip(idxX,idxY)
-	idx=pyfrp_misc.remRepeatsList(idx,debug=debug)
-	idxX,idxY=pyfrp_misc.unzipLists(idx,debug=debug)
+	idx=pyfrp_misc.remRepeatsList(idx)
+	idxX,idxY=pyfrp_misc.unzipLists(idx)
 	return idxX,idxY
 
 	

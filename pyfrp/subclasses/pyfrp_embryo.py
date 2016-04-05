@@ -116,20 +116,65 @@ class embryo:
 		self.fits=[]
 
 	def addFit(self,fit):
+		
+		"""Appends fit object to list of fits
+		
+		Args:
+			fit (pyfrp.subclasses.pyfrp_fit.fit): fit object.
+			
+		Returns:
+			list: Updated ``fits`` list.
+		
+		"""
+		
 		self.fits.append(fit)
 		return self.fits
 	
 	def newFit(self,name):
+		
+		"""Creates new fit object and appends it to list of fits.
+		
+		Args:
+			name (str): Name of fit object.
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_fit.fit: Newly created fit.
+		
+		"""
+		
 		fit=pyfrp_fit.fit(self,name)
 		self.addFit(fit)
 		return fit
 		
 	def deleteFit(self,i):
+		
+		"""Deletes fit with index ``i`` from ``fits`` list.
+		
+		Args:
+			i (int): Index of fit to be deleted.
+			
+		Returns:
+			list: Updated ``fits`` list.
+		
+		"""
+		
 		self.fits.pop(i)
 		return self.fits
 	
 		
 	def save(self,fn=None):
+		
+		"""Saves embryo object to pickle file.
+		
+		If ``fn=None`` will save to ``self.name.emb``.
+		
+		Keyword Args:
+			fn (str): Output filename.
+			
+		Returns:
+			str: Output filename.
+		
+		"""
 		
 		if fn==None:
 			fn=self.name+".emb"
@@ -139,21 +184,71 @@ class embryo:
 		return fn
 		
 	def copy(self):
+		
+		"""Copies embryo, preserving all attributes and methods.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_embryo.embryo: Embryo copy.
+		
+		"""
+		
 		copiedEmbryo=cpy.deepcopy(self)
 		return copiedEmbryo
 	
 	def updateVersion(self):
+		
+		"""Updates embryo object to current version, making sure that it possesses
+		all attributes.
+		
+		Creates a new embyo object and compares ``self`` with the new embryo object.
+		If the new embryo object has a attribute that ``self`` does not have, will
+		add attribute with default value from the new embryo object.
+		
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_embryo.embryo: ``self``
+			
+		"""
+		
 		embtemp=embryo("temp")
 		pyfrp_misc_module.updateObj(embtemp,self)
 		return self
 	
 	def computeConvFact(self,updateDim=True):
+		
+		"""Computes conversion factor between um to px (unit=um/px).
+		
+		If ``updateDimensions`` is selected, will update all dimensions of
+		embryo object data rely on ``convFact``.
+		
+		Keyword Args:
+			updateDim (bool): Automatically updated all convFact relevant attributes.
+		
+		Returns:
+			float: New conversion factor.
+			
+		"""
+		
 		self.convFact = self.dataResMu/self.dataResPx
 		if updateDim:
 			self.updatePxDimensions()
 		return self.convFact
 	
 	def updatePxDimensions(self):
+		
+		"""Updates all all convFact relevant attributes.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* sliceWidthPx (float): Updated slice width in px.
+				* sliceDepthPx (float): Updated slice depth in px.
+				* sliceHeightPx (float): Updated slice height in px.
+				* sideLengthBleachedPx (float): Updated side length of bleached square in px.
+				* offsetBleachedPx (float): Updated offset if bleached square in px.
+				
+		"""
+		
 		
 		self.sliceWidthPx=self.sliceWidthMu/self.convFact
 		self.sliceDepthPx=self.sliceDepthMu/self.convFact
@@ -164,86 +259,198 @@ class embryo:
 		return self.sliceWidthPx,self.sliceDepthPx, self.sliceHeightPx, self.sideLengthBleachedPx, self.offsetBleachedPx
 	
 	def setName(self,n):
+		
+		"""Sets embryo name."""
+		
 		self.name=n
 		return self.name
 	
 	def getName(self):
+		
+		"""Returns embryo name."""
+		
 		return self.name
 	
 	def setDataResMu(self,res):
+		
+		"""Sets resolution of data in :math:`\mu m`."""
+		
 		self.dataResMu=res 
 		self.computeConvFact()
 		return self.dataResMu
 	
 	def setDataResPx(self,res):
+		
+		"""Sets resolution of data in px. """
+		
 		self.dataResPx=res 
 		self.computeConvFact()
 		return self.dataResPx
 	
 	def setDataFT(self,f):
+		
+		"""Sets data filetype of datasets, for example *.tif* ."""
+		
 		self.dataFT=f 
 		return self.dataFT
 	
 	def setDataEnc(self,e):
+		
+		"""Sets data encoding of datasets, for example ``uint16`` ."""
+		
 		self.dataEnc=e 
 		return self.dataEnc
 	
 	def getDataFT(self):
+		
+		"""Returns current data filetype."""
+		
 		return self.dataFT
 	
 	def getDataEnc(self):
+		
+		"""Returns current data encoding."""
+		
 		return self.dataEnc
 	
 	def setFrameInterval(self,dt):
+		
+		"""Sets interval between imaging frames, then updates all time vectors.
+		
+		Args: 
+			dt (float): New frame interval in seconds.
+		
+		Returns: 
+			float: Set frame interval.
+		
+		"""
+		
 		self.frameInterval=dt
 		self.updateTimeDimensions()
 		return self.frameInterval
 	
 	def setTStart(self,t):
+		
+		"""Sets start time of experiment, then updates all time vectors.
+		
+		Args: 
+			t (float): Start time in seconds.
+		
+		Returns: 
+			float: Set start time.
+		
+		"""
+		
 		self.tStart=t
 		self.updateTimeDimensions()
 		return self.tStart
 	
 	def setTEnd(self,t):
+		
+		"""Sets end time of experiment, then updates all time vectors.
+		
+		Args: 
+			t (float): End time in seconds.
+		
+		Returns: 
+			float: Set end time.
+		
+		"""
+		
 		self.tEnd=t
 		self.updateTimeDimensions()
 		return self.tEnd
 	
 	def updateNFrames(self):
+		
+		"""Updates number of frames, then updates all time vectors.
+		
+		.. note:: Gets number of frames by reading number of files of type ``dataFT`` in ``fnDatafolder``. 
+		   So you should make sure that there are no extra files in ``fnDatafolder``.
+		
+		
+		Returns: 
+			int: Updated number of frames.
+		
+		"""
+		
 		self.nFrames=len(self.fileList)
 		self.updateTimeDimensions()
 		return self.nFrames
 	
 	def getNFrames(self):
+		
+		"""Returns current number of frames."""
+		
 		return self.nFrames
 	
 	def setNFrames(self,n):
+		
+		"""Sets number of frames, then updates all time vectors. """
+		
 		self.nFrames=n
+		self.updateTimeDimensions()
 		return self.nFrames
 	
 	def getDataResPx(self):
+		
+		"""Returns resolution of data in px."""
+		
 		return self.dataResPx
 	
 	def getDataResMu(self):
+		
+		"""Returns resolution of data in :math:`\um m` ."""
+		
 		return self.dataResMu
 	
 	def getFrameInterval(self):
+		
+		"""Returns current frame interval."""
+		
 		return self.frameInterval
 	
 	def getTStart(self):
+		
+		"""Returns current exerpiment start time."""
+		
 		return self.tStart
 	
 	def getTEnd(self):
+		
+		"""Returns current exerpiment end time."""
+		
 		return self.tEnd
 	
 	def getTvecData(self):
+		
+		"""Returns current data time vector."""
+		
 		return self.tvecData
 	
-	def updateTimeDimensions(self):
+	def updateTimeDimensions(self,simUpdate=True):
+		
+		"""Updates time dimensions using information in ``frameInterval``, ``nFrames`` 
+		and ``tStart``.
+		
+		.. note:: If embryo object already possesses simulation object, will update simulation
+		   time dimensions using :py:func:`pyfrp.subclasses.pyfrp_simulation.simulation.toDefaultTvec` .
+		   If you have different settings in simulation vector that you want to preserve, select
+		   ``simUpdate=False``.
+		   
+		Keyword Args:
+			simUpdate (bool): Update simulation time dimensions.
+		
+		Returns:
+			numpy.ndarray: Updated data time vector.
+		
+		"""
+		
 		self.tEnd=self.tStart+self.frameInterval*(self.nFrames-1)
 		self.tvecData=np.linspace(self.tStart,self.tEnd,self.nFrames)
 		if self.simulation!=None:
-			self.simulation.toDefaultTvec()
+			if simUpdate:
+				self.simulation.toDefaultTvec()
 		return self.tvecData
 	
 	def setSliceDepthMu(self,d):
@@ -366,6 +573,37 @@ class embryo:
 		return True
 	
 	def genDefaultROIs(self,center,radius,rimFactor=0.66):
+		
+		"""Creates a standard set of ROI objects and adds them to ``ROIs`` list.
+		
+		The set of ROIs covers the generally most useful ROIs used for FRAP experiments, providing already all the settings
+		that PyFRAP uses for rim computation etc.
+		
+		ROIs contain:
+		
+			* All: ROI covering all pixels and mesh nodes. :py:class:`pyfrp.subclasses.pyfrp_ROI.sliceROI`
+			* All Square: ROI covering all pixels and mesh nodes inside bleached region. :py:class:`pyfrp.subclasses.pyfrp_ROI.squareROI`
+			* All Out: ROI covering all pixels and mesh nodes outside bleached region. :py:class:`pyfrp.subclasses.pyfrp_ROI.customROI`
+			* Slice: ROI covering all pixels and mesh nodes inside recorded field of view. :py:class:`pyfrp.subclasses.pyfrp_ROI.radialSliceROI`
+			* Slice rim: ROI covering all pixels that are not used for rim concentration computation. :py:class:`pyfrp.subclasses.pyfrp_ROI.radialSliceROI`
+			* Rim: ROI covering all pixels that are used for rim concentration computation. :py:class:`pyfrp.subclasses.pyfrp_ROI.customROI`
+			* Bleached Square: ROI covering all pixels and mesh nodes inside bleached region and imaging slice. :py:class:`pyfrp.subclasses.pyfrp_ROI.squareSliceROI`
+			* Bleached Square: ROI covering all pixels and mesh nodes outside bleached region but inside imaging slice. :py:class:`pyfrp.subclasses.pyfrp_ROI.customROI`
+			
+		.. note:: Will automatically set ``All`` as ``masterROI``.
+			
+		Args:	
+			center (list): Center of circle defining imaging slice.
+			radius (float): Radius of circle defining imaging slice.
+			
+		Keyword Args:	
+			rimFactor (float): Factor describing percentage of imaging slice excluded from rim computation.
+		
+		Returns:
+			list: Updated list of ROIs.
+		
+		
+		"""
 		
 		allsl=self.newSliceROI("All",0,-np.inf,np.inf,True,color=(0.5,0.3,0.4))
 		
@@ -491,7 +729,7 @@ class embryo:
 			if signal:
 				signal.emit(int(100.*i)/float(len(self.ROIs)))
 			
-		return self.ROIs	
+		return self.ROIs
 	
 	def geometry2Quad(self):
 	

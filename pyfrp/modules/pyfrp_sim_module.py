@@ -26,7 +26,6 @@
 
 #Simulaton module for PyFRAP toolbox, including following functions:
 
-
 #===========================================================================================================================================================================
 #Improting necessary modules
 #===========================================================================================================================================================================
@@ -56,29 +55,39 @@ import pyfrp_idx_module
 #Module Functions
 #===========================================================================================================================================================================
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-"""
-Simulates simple diffusion reaction system for given geometry
-INPUT: 
-embryo: Embryo object.
-signal (optional): PyQT signal to send current simulation process to PyQT GUI.
-embCount (optional): If multiple embryos get simulated, current index of embryo, so PyQT GUI knows what the overall progress is.
-gui (optional): Parenting PyQT GUI, if executed from GUI.
-OUTPUT:
-embryo: Simulated embryo object.
-"""
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,debug=False):
 	
-	#=====================================================================================================================================
-	#Parameters
-	#=====================================================================================================================================
-
-	#-----------------------------------------
-	#Stepping and timescale
-	#-----------------------------------------
+	r"""Simulates reaction diffusion equation goverining FRAP experiment.
 	
+	Performs the following steps:
+		
+		* Resets ``simVecs`` of all ROIs.
+		* If not generated yet, generates mesh (should never be the case!)
+		* Initializes PDE with Neumann boundary conditions resulting in the problem:
+		
+		  .. math::
+		     \partial_t c = D \nabla^2 c - k_1 c + k_2,
+	
+		  where :math:`k_1` is the degradation rate and :math:`k_2` the production rate.
+		
+		* Applies initial conditions defined in ``simulation.ICmode``.
+		* Simulates FRAP experimment.
+		
+	Args: 
+		simulation (pyfrp.subclasses.pyfrp_simulation.simulation): Simulation object.
+	
+	Keyword Args:
+		signal (PyQt4.QtCore.pyqtSignal): PyQT signal to send progress to GUI.
+		embCount (int): Counter of counter process if multiple datasets are analyzed. 
+		debug (bool): Print final debugging messages and show debugging plots.
+		showProgress (bool): Show simulation progress. 
+		
+	Returns: 
+		pyfrp.subclasses.pyfrp_simulation.simulation: Updated simulation object.
+	"""
+	
+
+	#Stepping and timescale
 	timeStepDuration = simulation.tvecSim[1]-simulation.tvecSim[0]
 	
 	#Reset simulation vecs
@@ -91,9 +100,9 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	
 	startTimeTotal=time.clock()
 	
-	#=====================================================================================================================================
+	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	#Mesh Generation
-	#=====================================================================================================================================
+	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	startTimeMesh=time.clock()
 	
@@ -111,19 +120,16 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 		
 	print "Mesh created after", time.clock()-startTimeTotal
 
-	#=====================================================================================================================================
+	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	#Initialization of PDE
-	#=====================================================================================================================================
+	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	
-	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	#Create solution variable
-	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	
 	phi = CellVariable(name = "solution variable",mesh = simulation.mesh.mesh,value = 0.) 
 	
-	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 	#Apply initial conditions
-	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	
 	if simulation.ICmode=='ideal':
 		for r in simulation.embryo.ROIs:
 			phi.value[r.meshIdx]=r.dataVec[0]
@@ -141,31 +147,23 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	#Remember ICs
 	simulation.IC=np.asarray(phi.value).copy()
 	
-	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 	#Defining Type of equation
-	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	
 	eq = TransientTerm() == DiffusionTerm(coeff=simulation.D)+simulation.prod-simulation.degr*phi
 
 	#Defining BCs
 	#Note: BCs are Neumann boundaries by default 
 	
-	#=====================================================================================================================================
-	#Calculating initial concentration in square and outside in slice
-	#=====================================================================================================================================
+	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	#Calculating initial concentrations 
+	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	
-	#r=simulation.embryo.getMasterROI()
-	#r=simulation.embryo.ROIs[0]
-	#ax=r.plotSolutionVariable(phi,nlevels=100)
-	#r.showMeshIdx2D(ax=ax)
-	#raw_input()
-
 	for r in simulation.embryo.ROIs:
 		r.getSimConc(phi,append=True)
 	
-	#=====================================================================================================================================
+	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	#Solving PDE
-	#=====================================================================================================================================
+	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	
 	#Keeping track of time
 	startTimeSim=time.clock()
@@ -182,18 +180,12 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 		#Compute timestep duration 
 		timeStepDuration=simulation.tvecSim[step+1]-simulation.tvecSim[step]
 		
-		#-------------------------------------------------------------------------------------------------------------------
 		#Solve PDE in this Step
-		#-------------------------------------------------------------------------------------------------------------------
-		
 		stepStart=time.clock()
 		eq.solve(var=phi,dt=timeStepDuration,solver=mySolver)
 		stepTime=stepTime+(time.clock()-stepStart)
 				
-		#-------------------------------------------------------------------------------------------------------------------
 		#Compute concentration
-		#-------------------------------------------------------------------------------------------------------------------
-		
 		avgStart=time.clock()
 		
 		for r in simulation.embryo.ROIs:
@@ -201,10 +193,7 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 		
 		avgTime=avgTime+(time.clock()-avgStart)
 			
-		#-------------------------------------------------------------------------------------------------------------------
 		#Print Progress
-		#-------------------------------------------------------------------------------------------------------------------
-		
 		if showProgress:
 			currPerc=int(100*step/float(simulation.stepsSim))
 			
@@ -224,10 +213,163 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	
 	return simulation
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Mimic imperfect bleaching through cone approximation, return phi
+def applyRadialICs(phi,simulation,radSteps=15,debug=False):
+	
+	"""Applies radially averaged image data to solution variable as IC.
+	
+	.. note:: Will use ``embryo.geometry.center`` as center circle and the maximum 
+	   distant pixel from the center as maximum radius.
+	
+	Args: 
+		phi (fipy.CellVariable): PDE solution variable.
+		simulation (pyfrp.subclasses.pyfrp_simulation.simulation): Simulation object.
+	
+	Keyword Args:
+		radSteps (int): Number of radial levels.
+		debug (bool): Print debugging messages.
+		
+	
+	
+	"""
+	
+	#Adjust center so histogram works for 'quad'
+	if 'quad' in simulation.embryo.analysis.process.keys():
+		center=[0,0]
+	else:
+		center=simulation.ICimg,simulation.embryo.geometry.getCenter()
+	
+	#Compute radial histogram of IC image
+	maxR=pyfrp_img_module.dist(center,[simulation.ICimg.shape[0],simulation.ICimg.shape[0]])
+	bins,binsMid,histY,binY=pyfrp_img_module.radialImgHist(simulation.ICimg,nbins=radSteps,byMean=True,maxR=maxR)
+	
+	#Set center to actual center of geometry
+	center=simulation.ICimg,simulation.embryo.geometry.getCenter()
+	
+	#Apply value of most outer bin to all nodes
+	phi.setValue(binY[-1])
+	
+	#Loop through all bins and apply values from outside to inside
+	binsY=binsY.reverse()
+	bins=bins.reverse()
+	for i in range(len(binY)):
+		
+		phi.setValue(binY[i], where=(x-center[0])**2+(y-center[1])**2 < bins[i]**2)
+			
+		if debug:
+			print "Applied concentration", binY[i], " to all nodes with radius <", bins[i] 
+	
+	return phi
+		
+
+def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False):
+	
+	"""Interpolates initial conditions onto mesh.
+	
+	Uses a bivarariate spline interpolation (http://docs.scipy.org/doc/scipy-0.16.1/reference/generated/scipy.interpolate.RectBivariateSpline.html)
+	to generate an interpolation function of the IC image. Then applies interpolated values to solution variable ``phi`` if mesh nodes are inside 
+	image and masterROI. If not, will apply rim concentration.
+	
+	.. note:: If no rim concentration has been calculated (for example through running the data analysis)
+	   applyInterpolatedICs will try to compute ``concRim`` by itself. For this it will take the mean concentration outside of bleached square but inside
+	   ``masterROI``. 
+	   
+	.. note:: The bleached square used here is not defined as a ``ROI`` object here, but rather through the properties 
+	   ``embryo.sideLengthBleachedPx`` and ``embryo.offsetBleachedPx``. This might change in future versions.
+	
+	Args: 
+		phi (fipy.CellVariable): PDE solution variable.
+		simulation (pyfrp.subclasses.pyfrp_simulation.simulation): Simulation object.
+	
+	Keyword Args:
+		matchWithMaster (bool): Match interpolation indices with ``masterROI`` indices.
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		fipy.CellVariable: Updated solution variable.
+	"""
+	
+	#Get image resolution and center of geometry
+	res=simulation.ICimg.shape[0]
+	center=simulation.embryo.geometry.getCenter()
+		
+	#Define x/y coordinates of interpolation
+	if 'quad' in simulation.embryo.analysis.process.keys():
+		#Shift everything by center to fit with the mesh
+		xInt = np.arange(center[0]+1, center[0]+res+1, 1)
+		yInt = np.arange(center[1]+1, center[1]+res+1, 1)		
+	else:
+		xInt = np.arange(1, res+1, 1)
+		yInt = np.arange(1, res+1, 1)
+	
+	#Generate interpolation function
+	f=interp.RectBivariateSpline(xInt, yInt, simulation.ICimg, bbox=[None, None, None, None], kx=3, ky=3, s=0)
+	
+	#Getting cell centers
+	x,y,z=simulation.mesh.mesh.getCellCenters()
+	
+	#Finding outer rim concentration
+	if simulation.embryo.analysis.concRim==None:
+		printWarning('concRim is not analyzed yet. Will use concentration outside of bleached region as approximation')
+		
+		#Grab offset and sidelength
+		offset=simulation.embryo.offsetBleachedPx
+		sidelength=simulation.embryo.sideLengthBleachedPx
+		
+		#Get indices outside of bleached square but inside masterROI
+		indXSqu,indYSqu=pyfrp_idx_module.getSquareIdxImg(simulation.embryo.offsetBleachedPx,simulation.embryo.sideLengthBleachedPx,simulation.embryo.dataResPx)
+		
+		indX=pyfrp_misc_module.complValsSimple(simulation.embryo.masterROI.imgIdxX,indXSqu)
+		indY=pyfrp_misc_module.complValsSimple(simulation.embryo.masterROI.imgIdxX,indYSqu)
+		
+		if 'quad' in simulation.embryo.analysis.process.keys():
+			img=pyfrp_img_module.unflipQuad(np.flipud(simulation.ICimg))
+		else:
+			img=simulation.ICimg
+		
+		concRim=pyfrp_img_module.meanConc(img[indX,indY])
+		
+		print 'Approximate concRim = ', concRim
+		
+	else:	
+		concRim=simulation.embryo.analysis.concRim
+		
+	#Set all values of solution variable to concRim
+	phi.setValue(concRim)
+	
+	#Get Offset of image and check which nodes are inside image
+	if 'quad' in simulation.embryo.analysis.process.keys():
+		offset=[simulation.embryo.dataResPx/2,simulation.embryo.dataResPx/2]
+		ins=pyfrp_idx_module.checkInsideImg(x,y,simulation.embryo.dataResPx/2,offset=offset)
+	else:
+		offset=[0,0]
+		ins=pyfrp_idx_module.checkInsideImg(x,y,simulation.embryo.dataResPx,offset=offset)
+		
+	#Convert into indices
+	ind=np.arange(len(x))
+	ind=ind[np.where(ins)[0]]
+
+	"""NOTE:  I think we need to match here indices inside image with the one of master ROI, so we don't apply
+	values outside of masterROI (generally just background) to nodes that lie INSIDE image, but OUTSIDE of masterROI.
+	"""
+	
+	if matchWithMaster:
+		masterROI=simulation.embryo.getMasterROI()	
+		ind=pyfrp_misc_module.matchVals(ind,masterROI.meshIdx)
+		
+	#Apply interpolation
+	phi.value[ind]=f.ev(x[ind],y[ind])
+
+	return phi
+
+	
 
 def mimic_imperfect_bleaching(slice_height,height,im_reg_ICs,conc_rim,rim,add_rim_from_radius,mesh,phi,sidelength,center,debug_opt):
+	
+	"""Mimic imperfect bleaching through cone approximation, return phi.
+	
+	 .. warning:: Not working in current version. Will be integrated in further versions again.
+	
+	"""
 	
 	#Making some variable names shorter
 	sh=-slice_height
@@ -384,112 +526,6 @@ def mimic_imperfect_bleaching(slice_height,height,im_reg_ICs,conc_rim,rim,add_ri
 		raw_input()
 	
 	return phi
-
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Applies radially averaged image data to solution variable as IC
-
-def applyRadialICs(phi,simulation,radSteps=15,debug=False):
-	
-	#Adjust center so histogram works for 'quad'
-	if 'quad' in simulation.embryo.analysis.process.keys():
-		center=[0,0]
-	else:
-		center=simulation.ICimg,simulation.embryo.geometry.getCenter()
-	
-	#Compute radial histogram of IC image
-	maxR=pyfrp_img_module.dist(center,[simulation.ICimg.shape[0],simulation.ICimg.shape[0]])
-	bins,binsMid,histY,binY=pyfrp_img_module.radialImgHist(simulation.ICimg,nbins=radSteps,byMean=True,maxR=maxR)
-	
-	#Set center to actual center of geometry
-	center=simulation.ICimg,simulation.embryo.geometry.getCenter()
-	
-	#Apply value of most outer bin to all nodes
-	phi.setValue(binY[-1])
-	
-	#Loop through all bins and apply values from outside to inside
-	binsY=binsY.reverse()
-	bins=bins.reverse()
-	for i in range(len(binY)):
-		
-		phi.setValue(binY[i], where=(x-center[0])**2+(y-center[1])**2 < bins[i]**2)
-			
-		if debug:
-			print "Applied concentration", binY[i], " to all nodes with radius <", bins[i] 
-	
-	return phi
-		
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Interplotates image data and applies it to mesh
-
-def applyInterpolatedICs(phi,simulation,debug=False):
-	
-	#Get image resolution and center of geometry
-	res=simulation.ICimg.shape[0]
-	center=simulation.embryo.geometry.getCenter()
-		
-	#Define x/y coordinates of interpolation
-	if 'quad' in simulation.embryo.analysis.process.keys():
-		#Shift everything by center to fit with the mesh
-		xInt = np.arange(center[0]+1, center[0]+res+1, 1)
-		yInt = np.arange(center[1]+1, center[1]+res+1, 1)		
-	else:
-		xInt = np.arange(1, res+1, 1)
-		yInt = np.arange(1, res+1, 1)
-	
-	#Generate interpolation function
-	f=interp.RectBivariateSpline(xInt, yInt, simulation.ICimg, bbox=[None, None, None, None], kx=3, ky=3, s=0)
-	
-	#Getting cell centers
-	x,y,z=simulation.mesh.mesh.getCellCenters()
-	
-	#Finding outer rim concentration
-	if simulation.embryo.analysis.concRim==None:
-		printWarning('concRim is not analyzed yet. Will use concentration outside of bleached region as approximation')
-		
-		#Grab offset and sidelength
-		offset=simulation.embryo.offsetBleachedPx
-		sidelength=simulation.embryo.sideLengthBleachedPx
-		
-		#Get indices outside of bleached square but inside masterROI
-		indXSqu,indYSqu=pyfrp_idx_module.getSquareIdxImg(simulation.embryo.offsetBleachedPx,simulation.embryo.sideLengthBleachedPx,simulation.embryo.dataResPx)
-		
-		indX=pyfrp_misc_module.complValsSimple(simulation.embryo.masterROI.imgIdxX,indXSqu)
-		indY=pyfrp_misc_module.complValsSimple(simulation.embryo.masterROI.imgIdxX,indYSqu)
-		
-		if 'quad' in simulation.embryo.analysis.process.keys():
-			img=pyfrp_img_module.unflipQuad(np.flipud(simulation.ICimg))
-		else:
-			img=simulation.ICimg
-		
-		concRim=pyfrp_img_module.meanConc(img[indX,indY])
-		
-		print 'Approximate concRim = ', concRim
-		
-	else:	
-		concRim=simulation.embryo.analysis.concRim
-		
-	#Set all values of solution variable to concRim
-	phi.setValue(concRim)
-	
-	#Get Offset of image and check which nodes are inside image
-	if 'quad' in simulation.embryo.analysis.process.keys():
-		offset=[simulation.embryo.dataResPx/2,simulation.embryo.dataResPx/2]
-		ins=pyfrp_idx_module.checkInsideImg(x,y,simulation.embryo.dataResPx/2,offset=offset)
-	else:
-		offset=[0,0]
-		ins=pyfrp_idx_module.checkInsideImg(x,y,simulation.embryo.dataResPx,offset=offset)
-	
-	#Convert into indices
-	ind=np.arange(len(x))
-	ind=ind[np.where(ins)[0]]
-
-	#Apply interpolation
-	phi.value[ind]=f.ev(x[ind],y[ind])
-
-	return phi
-
-	
 	
 
 

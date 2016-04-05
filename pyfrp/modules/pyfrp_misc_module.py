@@ -305,9 +305,6 @@ def removeAllOccFromList(l, val):
 	
 	return [value for value in l if value != val]
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns matching values of two lists
-
 def matchVals(l1,l2):
 	
 	"""Returns matching values of two lists.

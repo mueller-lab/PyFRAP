@@ -184,8 +184,8 @@ class fit:
 			
 		return self.bounds
 		
-	def run(self,debug=False,gui=None,ax=None):
-		self=pyfrp_fit_module.FRAPFitting(self,debug=debug,gui=gui,ax=ax)
+	def run(self,debug=False,ax=None):
+		self=pyfrp_fit_module.FRAPFitting(self,debug=debug,ax=ax)
 		return self
 	
 	def assignOptParms(self,res):

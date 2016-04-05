@@ -163,6 +163,15 @@ class geometry(object):
 		domain.draw(ax=ax,color=color,ann=ann)
 		
 		return ax
+	
+	def printDetails(self):
+		
+		"""Prints out all details of geometry object.
+		"""
+		
+		print "Geometry of embryo ", self.embryo.name, " Details."
+		printAllObjAttr(self)
+		print 
 		
 class zebrafishDomeStage(geometry):
 	
