@@ -468,8 +468,6 @@ class ROI(object):
 					if matchMesh:
 						if self!=masterROI:
 							self.matchMeshIdx(masterROI)
-						
-					raw_input()	
 			else:
 				printWarning("Simulation object does not exist yet, hence won't index for mesh.")
 		else:
