@@ -21,6 +21,13 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #===========================================================================================================================================================================
+#Module Description
+#===========================================================================================================================================================================
+
+"""Essential PyFRAP module containing :py:class:`embryo` class. 
+"""
+
+#===========================================================================================================================================================================
 #Importing necessary modules
 #===========================================================================================================================================================================
 
@@ -49,10 +56,35 @@ import matplotlib.pyplot as plt
 #Time 
 import time
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Embryo object
+
+#===========================================================================================================================================================================
+#Class definitions
+#===========================================================================================================================================================================
+
 
 class embryo:
+	
+	"""Main PyFRAP class, gathering all the data and parameters of FRAP experiment.
+	
+	The ``embryo`` class basically stores:
+	
+		* A minimum set of basic FRAP parameters.
+		* A list of :py:class:`pyfrp.subclasses.pyfrp_ROI.ROI` classes, describing all ROIs used for 
+		  for evaluating simulation and analysis results.
+		* A :py:class:`pyfrp.subclasses.pyfrp_geometry.geometry` class describing the 3-dimensional 
+		  geometry of the experiment.
+		* A :py:class:`pyfrp.subclasses.pyfrp_analysis.analysis` class describing how the dataset is 
+		  going to be analyzed.
+		* A :py:class:`pyfrp.subclasses.pyfrp_simulation.simulation` class describing how the dataset is 
+		  going to be simulated.
+		* A list of :py:class:`pyfrp.subclasses.pyfrp_fit.fit` classes, storing different fitting options
+		  and results.
+	
+	The ``embryo`` class comes with a comprehensive set of methods aimed at making it as powerful as possible,
+	while still keeping it simple. The hierarchical structure should make it easy to navigate through a FRAP
+	dataset.
+	
+	"""
 	
 	#Creates new embryo object
 	def __init__(self,name):
@@ -453,15 +485,35 @@ class embryo:
 				self.simulation.toDefaultTvec()
 		return self.tvecData
 	
-	def setSliceDepthMu(self,d):
+	def setSliceDepthMu(self,d,updateGeometry=True):
 		
 		"""Sets resolution of data in :math:`\mu m` and then updates all dimensions of
 		embryo object data rely on ``sliceDepthMu``.
 		
+		If ``updateGeometry`` is selected, will automatically update geometry.
+		
+		.. note:: Not every geometry depends on slice depth. If the geometry object has
+		   a method ``restoreDefault``, this will be called. Otherwise geometry is not updated.
+		
+		Args:
+			d (float): New slice depth in :math:`\mu m`.
+			
+		Keyword Args:
+			updateGeometry (bool): Update geometry.
+			
+		Returns:
+			float: New slice depth.
+			
 		"""
 		
 		self.sliceDepthMu=d
 		self.updatePxDimensions()
+		
+		if updateGeometry:
+			if hasattr(self.geometry,"restoreDefault"):
+				self.geometry.restoreDefault()
+			
+		
 		return self.sliceDepthMu
 	
 	def setMasterROIIdx(self,idx):
@@ -1072,42 +1124,160 @@ class embryo:
 		return self.geometry
 	
 	def setGeometry2Cylinder(self,center,radius,height):
+			
+		"""Sets embryo's geometry to :py:class:`pyfrp.subclasses.pyfrp_geometry.cylinder`.
+		
+		Args:
+			center (list): Center of geometry.
+			radius (float): Radius of cylinder.
+			height (float): Height of cylinder.
+				
+		Returns:
+			pyfrp.subclasses.pyfrp_geometry.cylinder: New cylinder geometry.
+		"""
+		
+		
 		self.geometry=pyfrp_geometry.cylinder(self,center,radius,height)
 		return self.geometry
 	
 	def setGeometry2Cone(self,center,upperRadius,lowerRadius,height):
+		
+		"""Sets embryo's geometry to :py:class:`pyfrp.subclasses.pyfrp_geometry.cone`.
+		
+		Args:
+			center (list): Center of geometry.
+			upperRadius (float): Radius at upper end of cone.
+			lowerRadius (float): Radius at lower end of cone.
+			height (float): Height of cylinder.
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_geometry.cone: New cone geometry.
+		"""
+		
 		self.geometry=pyfrp_geometry.cone(self,center,upperRadius,lowerRadius,height)
 		return self.geometry
 	
 	def setGeometry2Ball(self,center,imagingRadius):
+		
+		"""Sets embryo's geometry to :py:class:`pyfrp.subclasses.pyfrp_geometry.ball`.
+		
+		Args:
+			center (list): Center of geometry.
+			imagingRadius (float): Radius of embryo in imaging slice.
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_geometry.ball: New ball geometry.
+		"""
+		
 		self.geometry=pyfrp_geometry.xenopusBall(self,center,imagingRadius)
 		return self.geometry
 	
 	def setGeometry2ZebraFishDomeStageQuad(self,center,imagingRadius,radiusScale=1.1):
+		
+		"""Sets embryo's geometry to :py:class:`pyfrp.subclasses.pyfrp_geometry.zebrafishDomeStageQuad`.
+		
+		.. warning:: Quadrant reduction is still experimental.
+		
+		Args:
+			center (list): Center of geometry.
+			imagingRadius (float): Radius of embryo at imaging slice.
+			
+		Keyword Args:
+			radiusScale (float): Scaling factor defining how much bigger outer radius is to inner radius.
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_geometry.zebrafishDomeStageQuad: New zebrafish quadrant geometry.
+		"""
+		
+		
 		self.geometry=pyfrp_geometry.zebrafishDomeStageQuad(self,center,imagingRadius,radiusScale=radiusScale)
 		return self.geometry
 	
 	def setGeometry2CylinderQuad(self,center,radius,height):
+		
+		"""Sets embryo's geometry to :py:class:`pyfrp.subclasses.pyfrp_geometry.cylinderQuad`.
+		
+		.. warning:: Quadrant reduction is still experimental.
+		
+		Args:
+			center (list): Center of geometry.
+			radius (float): Radius of cylinder.
+			height (float): Height of cylinder.
+				
+		Returns:
+			pyfrp.subclasses.pyfrp_geometry.cylinder: New cylinder quadrant geometry.
+		"""
+		
 		self.geometry=pyfrp_geometry.cylinderQuad(self,center,radius,height)
 		return self.geometry
 	
 	def setGeometry2BallQuad(self,center,imagingRadius):
+		
+		"""Sets embryo's geometry to :py:class:`pyfrp.subclasses.pyfrp_geometry.ballQuad`.
+		
+		.. warning:: Quadrant reduction is still experimental.
+		
+		Args:
+			center (list): Center of geometry.
+			imagingRadius (float): Radius of embryo in imaging slice.
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_geometry.ball: New ball quadrant geometry.
+		"""
+		
 		self.geometry=pyfrp_geometry.xenopusBallQuad(self,center,imagingRadius)
 		return self.geometry
 	
 	def setGeometry2Custom(self,center,fnGeo=""):
+		
+		"""Sets embryo's geometry to :py:class:`pyfrp.subclasses.pyfrp_geometry.custom`.
+		
+		Args:
+			center (list): Center of geometry.
+			fnGeo (str): Path to geometry file.
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_geometry.custom: New custom geometry.
+		"""
+		
 		self.geometry=pyfrp_geometry.custom(self,center,fnGeo)
 		return self.geometry
 	
 	def newSimulation(self):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_simulation.simulation` object and sets it as
+		embryos's ``simulation``.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_simulation.simulation: New simulation object.
+		"""
+		
 		self.simulation=pyfrp_simulation.simulation(self)
 		return self.simulation
 	
 	def newAnalysis(self):
+		
+		"""Creates new :py:class:`pyfrp.subclasses.pyfrp_analysis.analysis` object and sets it as
+		embryos's ``analysis``.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_analysis.analysis: New analysis object.
+		"""
+		
 		self.analysis=pyfrp_analysis.analysis(self)
 		return self.analysis
 	
 	def computeROIIdxs(self,signal=None,debug=True):
+		
+		"""Computes image, extended and mesh indices of all ROIs in embryo's ``ROIs`` list.
+		
+		Keyword Args:
+			signal (PyQt4.QtCore.pyqtSignal): PyQT signal to send progress to GUI.
+			debug (bool): Print final debugging messages and show debugging plots.
+		
+		Returns:
+			list: Updated list of ROIs.
+		"""
 		
 		for i,r in enumerate(self.ROIs):
 			startInit=time.clock()
@@ -1121,14 +1291,28 @@ class embryo:
 		return self.ROIs
 	
 	def geometry2Quad(self):
+		
+		"""Converts current geometry to quadrant reduced version if available,
+		keeping essential parameters the same.
+		
+		If geometry is already reduced or there is no quadrant version of the geometry,
+		will do nothing and return unchanged geometry.
+		
+		.. warning:: Quadrant reduction is still experimental.
+		
+		.. note:: Will set ``fnGeo`` back to default value in ``meshfiles`` folder.
 	
+		Returns:
+			pyfrp.subclasses.pyfrp_geometry.geometry: Updated geometry.
+		"""
+		
 		if self.geometry==None:
 			printError("No geometry selected yet.")
-			return
+			return self.geometry	
 		
 		if 'Quad' in self.geometry.typ:
 			printError("Geometry already set to quad.")
-			return
+			return self.geometry	
 		
 		if self.geometry.typ=='zebrafishDomeStage':
 			self.setGeometry2BallQuad(self,self.geometry.getCenter(),self.geomtry.getImagingRadius())
@@ -1136,11 +1320,25 @@ class embryo:
 			self.setGeometry2CylinderQuad(self,self.geometry.getCenter(),self.geomtry.getRadius())
 		elif self.geometry.typ=='xenopusBall':
 			self.setGeometry2BallQuad(self,self.geometry.getCenter(),self.geomtry.getImagingRadius())
+		else:
+			printError("Geometry of type " + self.geometry.typ + " has no quadrant reduced version.") 
+		
 		
 		return self.geometry	
 			
 	
 	def geometry2Full(self):
+		
+		"""If current geometry was in quadrant reduced version, converts it to 
+		full version, keeping essential parameters the same.
+		
+		.. warning:: Quadrant reduction is still experimental.
+		
+		.. note:: Will set ``fnGeo`` back to default value in ``meshfiles`` folder.
+	
+		Returns:
+			pyfrp.subclasses.pyfrp_geometry.geometry: Updated geometry.
+		"""
 		
 		if self.geometry==None:
 			printError("No geometry selected yet.")
@@ -1159,36 +1357,117 @@ class embryo:
 		
 		return self.geometry	
 	
-	def setEmbryo2Quad(self):	
+	def setEmbryo2Quad(self):
+		
+		"""Reduces both geometry and ROIs of embryo to quadrant, such that 
+		embryo object is fully quadrant reduced.
+		
+		Returns:
+			tuple: Tuple Containing:
+			
+				* ``self.geometry`` (pyfrp.subclasses.pyfrp_geometry.geometry): Updated geometry.
+				* ``self.ROIs`` (list): Updated list of ROIs.
+		"""
+		
 		self.geometry2Quad()
 		self.ROIs2Quad()
 		return self.geometry,self.ROIs
 	
 	def setEmbryo2Full(self):	
+		
+		"""Sets both geometry and ROIs to full mode.
+		
+		Returns:
+			tuple: Tuple Containing:
+			
+				* ``self.geometry`` (pyfrp.subclasses.pyfrp_geometry.geometry): Updated geometry.
+				* ``self.ROIs`` (list): Updated list of ROIs.
+		"""
+		
 		self.geometry2Full()
 		self.ROIs2Full()
 		return self.geometry,self.ROIs
 	
 	def ROIs2Quad(self):
+		
+		"""Reduces ROIs to quadrant reduced mode, mapping all their indices in first quadrant.
+		
+		.. note:: Use :py:func:setEmbryo2Quad to make sure that both geometry and ROIs are reduced.
+		
+		.. warning:: Quadrant reduction is still experimental.
+		
+		Returns:
+			list: Updated list of ROIs.
+		"""
+		
 		for r in self.ROIs:
 			r.idxs2Quad()
 		return self.ROIs
 	
 	def ROIs2Full(self):
+		
+		"""Sets ROIs to full mode.
+
+		Returns:
+			list: Updated list of ROIs.
+		"""
+		
 		for r in self.ROIs:
 			r.idxs2Full()
 		return self.ROIs
 	
-	def showAllROIBoundaries(self,ax=None):
+	def showAllROIBoundaries(self,ax=None,withImg=False,idx=0):
+		
+		"""Shows boundaries of all ROIs in ``ROIs`` list.
+		
+		If no axes are given via ``ax``, will create new matplotlib axes.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Axes to be plotted in.
+			withImg (bool): Shows data image inside same axes.
+			idx (int): Index of data image to be shown.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
 		for r in self.ROIs:
 			if hasattr(r,'showBoundary'):
 				ax=r.showBoundary(ax=ax)
+		
+		if withImg:
+			ax=self.showDataImg(ax=ax,idx=idx)
+				
 		return ax
 	
 	def loadDataImg(self,idx):
+		
+		"""Loads data image in ``fnDatafolder`` of index ``idx``.
+	
+		Args:
+			idx (int): Index of data image to be loaded.
+			
+		Returns:
+			numpy.ndarray: Loaded image.
+		"""
+		
 		return pyfrp_img_module.loadImg(self.fnDatafolder+self.fileList[idx],self.dataEnc)
 	
 	def showDataImg(self,ax=None,idx=0):
+		
+		"""Shows data image in ``fnDatafolder`` of index ``idx``.
+		
+		If no axes are given via ``ax``, will create new matplotlib axes.
+		
+		Keyword Args:
+			idx (int): Index of data image to be shown.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
 		if ax==None:
 			fig,axes = pyfrp_plot_module.makeSubplot([1,1],sup=["Embryo" + self.name],titles=["DataImg "+str(idx)],tight=False)
 			ax=axes[0]
@@ -1199,6 +1478,23 @@ class embryo:
 		return ax
 		
 	def showAllROIIdxs(self,axes=None):
+		
+		"""Shows image, extended and mesh indices of all ROIs in ``ROIs`` list.
+		
+		If no axes are given via ``axes``, will create new list of matplotlib axes. 
+		If axes are given, they should have ``len(axes)=3*len(ROIs)``.
+		
+		.. note:: If the mesh has a large number of nodes, this can take up a lot
+		   of memory due to every node being plotted in a matplotlib scatter plot.
+		
+		Keyword Args:
+			axes (list): List of matplotlib.axes to be plotted in.
+			
+		Returns:
+			matplotlib.axes: List of axes used for plotting.
+		
+		"""
+		
 		
 		if axes==None:
 			proj=len(self.ROIs)*['3d']+len(self.ROIs)*[None]+len(self.ROIs)*[None]
@@ -1213,15 +1509,40 @@ class embryo:
 			
 	
 	def plotAllData(self,ax=None,legend=True):
+		
+		"""Plots all data timeseries for all ROIs in ``ROIs`` list.
+		
+		If no axes are given via ``ax``, will create new matplotlib axes.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Axes to be plotted in.
+			legend (bool): Show legend in plot.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
 		for r in self.ROIs:
 			ax=r.plotData(ax=ax,legend=legend)
-		
-		#if legend:
-			#ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-		
+	
 		return ax	
 	
 	def plotAllSim(self,ax=None,legend=True):
+		
+		"""Plots all simulation timeseries for all ROIs in ``ROIs`` list.
+		
+		If no axes are given via ``ax``, will create new matplotlib axes.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Axes to be plotted in.
+			legend (bool): Show legend in plot.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
 		for r in self.ROIs:
 			ax=r.plotSim(ax=ax)
 		
@@ -1231,15 +1552,40 @@ class embryo:
 		return ax	
 	
 	def plotAllDataPinned(self,ax=None,legend=True):
+	
+		"""Plots all pinned data timeseries for all ROIs in ``ROIs`` list.
+		
+		If no axes are given via ``ax``, will create new matplotlib axes.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Axes to be plotted in.
+			legend (bool): Show legend in plot.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
 		for r in self.ROIs:
 			ax=r.plotDataPinned(ax=ax,legend=legend)
-		
-		#if legend:
-			#ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 		
 		return ax	
 	
 	def plotAllSimPinned(self,ax=None,legend=True):
+		
+		"""Plots all pinned simulation timeseries for all ROIs in ``ROIs`` list.
+		
+		If no axes are given via ``ax``, will create new matplotlib axes.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Axes to be plotted in.
+			legend (bool): Show legend in plot.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
 		for r in self.ROIs:
 			ax=r.plotSimPinned(ax=ax,legend=legend)
 		
@@ -1250,6 +1596,26 @@ class embryo:
 	
 	
 	def checkQuadReducable(self,tryFix=False,auto=False,debug=False):
+		
+		"""Checks if embryo is reducable to quadrant by checking if all
+		ROIs are either point or axis symmetric around geometry center.
+		
+		.. note:: You want to call :py:meth:showAllROIBoundaries and 
+		   :py:meth:computeROIIdxs afterwards to make sure everything went
+		   properly.
+		   
+		.. warning:: Quadrant reduction is still experimental.   
+		   
+		Keyword Args:
+			tryFix (bool): Tries to readjust ROIs into reducable form.
+			auto (bool): Readjust ROIs automatically.
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			bool: True if embryo is reducable.
+		
+		"""
+		
 		reducable=True
 		for r in self.ROIs:
 			if not r.checkSymmetry(debug=debug):
@@ -1263,6 +1629,30 @@ class embryo:
 		return reducable		
 	
 	def makeQuadReducable(self,auto=False,debug=False):
+		
+		"""Makes embryo quadrant reducable by:
+		
+			* Checks if embryo is reducable to quadrant by checking if all
+			  ROIs are either point or axis symmetric around geometry center.
+			* Tries to readjust non-symmetric ROIs to make them quad-reducable.
+			* If ROIs are reducable, will center geometry at center of data image.
+		
+		.. note:: You want to call :py:meth:showAllROIBoundaries and 
+		   :py:meth:computeROIIdxs afterwards to make sure everything went
+		   properly.
+		   
+		.. warning:: Quadrant reduction is still experimental.   
+		   
+		Keyword Args:
+			tryFix (bool): Tries to readjust ROIs into reducable form.
+			auto (bool): Readjust ROIs automatically.
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			bool: True if embryo is reducable.
+		
+		"""
+		
 		reducable=self.checkQuadReducable(tryFix=True,auto=auto,debug=debug)
 
 		if reducable:
@@ -1270,12 +1660,34 @@ class embryo:
 		return reducable
 	
 	def getMasterROI(self):
+		
+		"""Returns master ROI."""
+		
 		return self.ROIs[self.masterROIIdx]
 	
 	def getOptimalAllROI(self,name='All',makeNew=False):
+		
+		"""Readjusts ROI with name *All*  (if existent) to cover whole geometry."""
+		
 		self.geometry.setAllROI(name=name,makeNew=makeNew)
 	
 	def computePinVals(self,useMin=True,useMax=True,bkgdVal=None,debug=False):
+		
+		"""Compute overall pinning values over all ROIs.
+		
+		Keyword Args:
+			useMin (bool): Use minimum value for background computation.
+			useMax (bool): Use maximum value for norm value computation.
+			bkgdVal (float): Use this background value instead of newly computing it.
+			debug (bool): Print debugging messages.
+	
+		Returns:
+			tuple: Tuple containing:
+				
+				* bkgdVal (float): Background value.
+				* normVal (float): Norming value.
+			
+		"""
 		
 		if bkgdVal==None:
 			bkgdVal=self.computeBkgd(useMin=useMin,debug=debug)
@@ -1284,6 +1696,26 @@ class embryo:
 		return bkgdVal,normVal
 	
 	def computeBkgd(self,useMin=False,fromTS='both',debug=False):
+		
+		"""Computes background value over all ROIs.
+		
+		If ``useMin==False``, will use value at first index of data/simulation
+		vectors as norming value.
+		
+		.. note:: Use ``fromTS='both'`` to use values from both simulation and 
+		   data for background computation. If ``fromTS='data'``, will only use 
+		   data, of ``fromTS='sim'`` will only use simulation vectors.
+		
+		Keyword Args:
+			useMin (bool): Use minimum value for background computation.
+			fromTS (bool): Which time series to use for background computation.
+			debug (bool): Print debugging messages.
+		
+		Returns:
+			float: Background value. 
+			
+		"""
+		
 		bkgds=[]
 		for r in self.ROIs:
 			if fromTS in ['data','both']:
@@ -1293,11 +1725,32 @@ class embryo:
 				bkgdTemp,norm=pyfrp_fit_module.computePinVals(r.simVec,useMin=useMin,useMax=False,debug=debug)
 				bkgds.append(bkgdTemp)
 			
-			print r.name,bkgds[-2:]
-				
 		return min(bkgds)	
 	
 	def computeNorm(self,bkgdVal,useMax=True,fromTS='both',debug=False):
+		
+		"""Computes background value over all ROIs.
+		
+		If ``useMax==False``, will use value at last index of data/simulation
+		vectors as norming value.
+	
+		.. note:: Use ``fromTS='both'`` to use values from both simulation and 
+		   data for background computation. If ``fromTS='data'``, will only use 
+		   data, of ``fromTS='sim'`` will only use simulation vectors.
+		
+		Args:
+			bkgdVal (float): Use this background value instead of newly computing it.
+		
+		Keyword Args:
+			useMax (bool): Use maximum value for norm value computation.
+			fromTS (bool): Which time series to use for background computation.
+			debug (bool): Print debugging messages.
+		
+		Returns:
+			float: Norming value. 
+			
+		"""
+		
 		norms=[]
 		for r in self.ROIs:
 			if fromTS in ['data','both']:
@@ -1309,7 +1762,54 @@ class embryo:
 		return max(norms)	
 			
 	def computeIdealFRAPPinVals(self,bkgdName='Bleached Square',normName='Slice',debug=False,useMin=False,useMax=False,sepSim=True,switchThresh=0.95):
+		
+		"""Computes background and norming value using optimized settings.
+		
+		Idea: Instead using values from all ROIs to compute pinning values, select 
+		two ROIs that should lead to optimal pinning values. In the default case, this
+		is the ROI describing the bleached region (here we expect the lowest intensities),
+		and the slice (here we expect the overall end concentration the experiment is converging to).
+		
+		If ``useMin==False``, will use value at first index of data/simulation
+		vectors as norming value.
+			
+		If ``useMax==False``, will use value at last index of data/simulation
+		vectors as norming value.
 	
+		.. note:: If ``bkgdName`` and ``normName`` are not set differently, will look for ROIs
+		   with these names for background and norming computation, respectively. If they don't exist,
+		   will return ``None``. 
+		   :py:meth:`genDefaultROIs` will make sure that both those ROIs exist.
+		   
+		.. warning:: Not all ROIs are suitable for pinning value computation. Generally ROIs that have the
+		   least extended volume proof most suitable.
+		
+		.. note:: ``switchThresh`` checks if recovery is complete. This is important if recovery curves are 
+		   very slow and bleached region does not reach full recovery. If this happens, we divide by a number 
+		   that is smaller than 1 and hence boost all timeseries way above one instead of limiting it below one
+		
+		.. warning:: ``sepSim==True`` makes sure that we never get negative intensities in the pinned simulation 
+		   vectors. Since interpolation is never perfect, this can happen if :math:`bkgdValue(data)>bkgdValue(sim)`.
+		
+		Keyword Args:
+			bkgdName (str): Name of ROI used for background computation.
+			normName (str): Name of ROI used for norming computation.
+			useMin (bool): Use minimum value for background computation.
+			useMax (bool): Use maximum value for norm value computation.
+			fromTS (bool): Which time series to use for background computation.
+			debug (bool): Print debugging messages.
+			sepSim (bool): Use seperate pinning values for simulation vectors.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* bkgdVal (float): Background value for data vectors.
+				* normVal (float): Norming value for data vectors.
+				* bkgdValSim (float): Background value for simulation vectors.
+				* normValSim (float): Norming value for simulation vectors.
+		
+		"""
+		
 		bkgdROI=self.getROIByName(bkgdName)
 		normROI=self.getROIByName(normName)
 		
@@ -1356,6 +1856,26 @@ class embryo:
 		
 	def pinAllROIs(self,bkgdVal=None,normVal=None,bkgdValSim=None,normValSim=None,useMin=False,useMax=False,debug=False):
 		
+		"""Pins both simulation and data vectors of all ROIs.
+		
+		.. note:: If no bkgdVal or normVal is giving, will try to compute it using
+		   :py:meth:`computePinVals`. Only then input of ``useMax`` and ``useMin``
+		   are relevant.
+		
+		Keyword Args:
+			bkgdVal (float): Background value used for data pinning.
+			normVal (float): Norming value used for data pinning.
+			bkgdValSim (float): Background value used for simulation pinning.
+			normValSim (float): Norming value used for simulation pinning.
+			useMin (bool): Use minimum value for background computation.
+			useMax (bool): Use maximum value for norm value computation.
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			list: Updated list of ROIs.
+		
+		"""
+		
 		bkgdValTemp,normValTemp = self.computePinVals(useMin=useMin,useMax=useMax,debug=debug)
 		
 		bkgdVal = pyfrp_misc_module.assignIfVal(bkgdVal,bkgdValTemp,None)
@@ -1367,36 +1887,44 @@ class embryo:
 			
 	def printAllAttr(self):
 		
-		#Going through all attributes of source embryo
-		for item in vars(self):
-			
-			#Dont print out large arrays
-			if isinstance(vars(self)[str(item)],(int,float,str)):
-				print item, " = ", vars(self)[str(item)]
-			elif isinstance(vars(self)[str(item)],(list,np.ndarray)) and max(np.shape(vars(self)[str(item)]))<5:
-				print item, " = ", vars(self)[str(item)]		
-	
-	
-	
+		"""Prints out all attributes of embryo object.""" 
+		
+		printAllObjAttr(self)
+		
 	def isAnalyzed(self):
+		
+		"""Returns ``True`` if all ROIs have been analyzed."""
+		
 		b=True
 		for r in self.ROIs:
 			b=b and r.isAnalyzed()
 		return b
 
 	def isSimulated(self):
+		
+		"""Returns ``True`` if all ROIs have been simulated."""
+		
 		b=True
 		for r in self.ROIs:
 			b=b and r.isSimulated()
 		return b
 	
 	def isFitted(self):
+		
+		"""Returns ``True`` if all fits are fitted."""
+		
 		b=True
 		for fit in self.fits:
 			b=b and fit.isFitted()
 		return b	
 			
 	def getFitByName(self,name):
+		
+		"""Returns fit in ``fits`` list with name ``name``. 
+		
+		If it doesn't exists, returns ``None``.
+		"""
+		
 		for fit in self.fits:
 			if fit.name==name:
 				return fit
@@ -1406,10 +1934,28 @@ class embryo:
 		return None
 	
 	def getInterpolationError(self):
+		
+		"""Prints out interpolation error by ROI.
+		"""
+		
+		
 		for r in self.ROIs:
 			print r.name, r.getInterpolationError()
 	
 	def checkROIIdxs(self,debug=False):
+		
+		"""Checks if all ROIs have their mesh and image indices computed.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* img (bool): True if all ROIs have up-to-date image indices.
+				* mesh (bool): True if all ROIs have up-to-date mesh indices.
+		"""
+		
 		img=True
 		mesh=True
 		for r in self.ROIs:
@@ -1423,7 +1969,21 @@ class embryo:
 				mesh=False
 		return img,mesh
 	
-	def quickAnalysis(self):
+	def quickAnalysis(self,maxDExpPx=150.):
+			
+		"""Performs complete FRAP analysis of embryo object including:
+		
+			* Finding ROI indices by calling :py:meth:`computeROIIdxs` .
+			* Running image analysis through :py:meth:`pyfrp.subclasses.pyfrp_analysis.analysis.run` .
+			* Generating optimal time simulation vector through  :py:meth:`pyfrp.subclasses.pyfrp_simulation.simulation.getOptTvecSim`
+			* Running simulation through :py:meth:`pyfrp.subclasses.pyfrp_simulation.simulation.run` .
+			* Pin simulation and data timeseries using :py:meth:`computeIdealFRAPPinVals` and :py:meth:`pinAllROIs`.
+			* Run all fits in ``fits`` list by calling :py:meth:`pyfrp.subclasses.pyfrp_fit.fit.run`
+			
+		Keyword Args:
+			maxDExpPx (float): Maximum expected diffusion coefficient.
+			
+		"""
 		
 		self.computeROIIdxs()
 
@@ -1431,7 +1991,7 @@ class embryo:
 		self.analysis.run(showProgress=True)
 
 		#Simulation
-		self.simulation.getOptTvecSim(150.)
+		self.simulation.getOptTvecSim(maxDExpPx)
 		self.simulation.run(showProgress=True)
 
 		#Pin Concentrations
@@ -1443,9 +2003,6 @@ class embryo:
 			fit.run(debug=False)
 		
 		
-		
-	
-	
 	def clearAllAttributes(self):
 		
 		"""Replaces all attribute values of embryo object with ``None``, except ``name``.
