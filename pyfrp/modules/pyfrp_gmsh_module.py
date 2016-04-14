@@ -24,7 +24,16 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Gmsh module for PyFRAP toolbox, including following functions:
+"""PyFRAP module for running Gmsh on .geo files. Module mainly has the following features:
+
+	* Functions for updating parameters in standard .geo files.
+	* Mesh refinement.
+	* Running Gmsh
+
+This module together with pyfrp.pyfrp_gmsh_geometry and pyfrp.pyfrp_gmsh_IO_module works partially as a python gmsh wrapper, however is incomplete.
+If you want to know more about gmsh, go to http://gmsh.info/doc/texinfo/gmsh.html .
+	
+"""
 
 #===========================================================================================================================================================================
 #Importing necessary modules
@@ -45,11 +54,39 @@ import shlex
 import pyfrp_gmsh_IO_module
 import pyfrp_misc_module
 from pyfrp_term_module import *
-		
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Updates cylinder .geo file and remeshes
+
+                   
+#===========================================================================================================================================================================
+#Module Functions
+#===========================================================================================================================================================================
 
 def updateCylinderGeo(fn,radius,height,center,run=True,debug=False):
+	
+	"""Upates parameters in default *cylinder.geo* file.
+	
+	.. note:: Debug will also activate full debugging output of gmsh. See also
+	   http://gmsh.info/doc/texinfo/gmsh.html#Command_002dline-options .
+	
+	.. note:: For function to work, parameters in geo file need to be defined as follows:
+	   
+		* radius -> radius
+		* height -> height
+		* center -> center_x , center_y
+	
+	Args:
+		fn (str): Filepath.
+		radius (float): New cylinder radius.
+		height (float): New cylinder height.
+		center (list): New cylinder center.
+	
+	Keyword Args:
+		run (bool): Run gmsh on updated file.
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		str: Path to mesh file.
+		
+	""" 
 	
 	v=5*int(debug)
 	
@@ -66,10 +103,35 @@ def updateCylinderGeo(fn,radius,height,center,run=True,debug=False):
 	
 	return fn_msh
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Updates cone .geo file and remeshes
-
 def updateConeGeo(fn,upperRadius,lowerRadius,height,center,run=True,debug=False):
+	
+	"""Upates parameters in default *cone.geo* file.
+	
+	.. note:: Debug will also activate full debugging output of gmsh. See also
+	   http://gmsh.info/doc/texinfo/gmsh.html#Command_002dline-options .
+	
+	.. note:: For function to work, parameters in geo file need to be defined as follows:
+	   
+		* upperRadius -> upper_radius
+		* lowerRadius -> lower_radius
+		* slice_height -> slice_height
+		* center -> center_x , center_y
+	
+	Args:
+		fn (str): Filepath.
+		upperRadius (float): New upper cone radius.
+		lowerRadius (float): New lower cone radius.
+		height (float): New cone height.
+		center (list): New cone center.
+	
+	Keyword Args:
+		run (bool): Run gmsh on updated file.
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		str: Path to mesh file.
+		
+	""" 
 	
 	v=5*int(debug)
 	
@@ -87,10 +149,33 @@ def updateConeGeo(fn,upperRadius,lowerRadius,height,center,run=True,debug=False)
 	
 	return fn_msh
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Updates cylinder .geo file and remeshes
 
 def updateBallGeo(fn,radius,center,run=True,debug=False):
+	
+	"""Upates parameters in default *ball.geo* file.
+	
+	.. note:: Debug will also activate full debugging output of gmsh. See also
+	   http://gmsh.info/doc/texinfo/gmsh.html#Command_002dline-options .
+	
+	.. note:: For function to work, parameters in geo file need to be defined as follows:
+	   
+		* radius -> radius
+		* center -> center_x , center_y
+	
+	Args:
+		fn (str): Filepath.
+		radius (float): New ball radius.
+		center (list): New ball center.
+	
+	Keyword Args:
+		run (bool): Run gmsh on updated file.
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		str: Path to mesh file.
+		
+	""" 
+	
 	
 	v=5*int(debug)
 		
@@ -107,64 +192,40 @@ def updateBallGeo(fn,radius,center,run=True,debug=False):
 	return fn_msh
 
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Updates slice properties in .geo file and remeshes
 
-def updateSliceGeo(fn,sl_height,sl_width,sl_extend,run=True,debug=False):
-	
-	v=5*int(debug)
-	
-	pyfrp_gmsh_IO_module.updateParmGeoFile(fn,"sl_refined",sl_extend)
-	pyfrp_gmsh_IO_module.updateParmGeoFile(fn,"sl_height",sl_height)
-	pyfrp_gmsh_IO_module.updateParmGeoFile(fn,"sl_width",sl_width)
-	
-	if run:
-		gmshBin=getGmshBin()
-		os.system(gmshBin + "  -v " + str(v) +" -3 " + fn)
-	
-	fn_msh=fn.replace(".geo",".msh")
-	
-	return fn_msh
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Updates refined volume in .geo file and remeshes
-
-def updateRefinedVol(fn,vol,run=True,debug=False):
-
-	v=5*int(debug)
-	
-	pyfrp_gmsh_IO_module.updateParmGeoFile(fn,"volSize_fine",vol)
-	
-	if run:
-		gmshBin=getGmshBin()
-		os.system(gmshBin + "  -v " + str(v) +" -3 " + fn)
-	
-	fn_msh=fn.replace(".geo",".msh")
-	
-	return fn_msh
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Updates cylinder .geo file with refined slice and remeshes
-
-def updateRefinedCylinderGeo(fn,radius,height,center,volSize_px,sl_height,sl_width,sl_extend,vol,run=True,debug=False):
-	
-	v=5*int(debug)
-	
-	UpdateCylinderGeo(fn,radius,height,center,volSize_px,run=False,debug=debug)
-	UpdateSliceGeo(fn,sl_height,sl_width,sl_extend,run=False,debug=debug)
-	updateRefinedVol(fn,vol,run=False,debug=debug)
-	
-	if run:
-		gmshBin=getGmshBin()
-		os.system(gmshBin + "  -v " + str(v) +" -3 " + fn)
-	
-	fn_msh=fn.replace(".geo",".msh")
-	
-	return fn_msh	
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Updates dome .geo file and remeshes
 
 def updateDomeGeo(fn,radius,slice_height,center,run=False,debug=False):
+	
+	"""Upates parameters in default *dome.geo* file.
+	
+	.. note:: Debug will also activate full debugging output of gmsh. See also
+	   http://gmsh.info/doc/texinfo/gmsh.html#Command_002dline-options .
+	
+	.. note:: The way that *dome.geo* is written, gmsh will automatically compute 
+	   the dome geometry from slice_height and radius.
+	
+	.. note:: For function to work, parameters in geo file need to be defined as follows:
+	   
+		* radius -> radius
+		* slice_height -> slice_height
+		* center -> center_x , center_y
+	
+	
+	Args:
+		fn (str): Filepath.
+		radius (float): New dome imaging radius.
+		slice_height (float): Height of imaging slice.
+		center (list): New dome center.
+	
+	Keyword Args:
+		run (bool): Run gmsh on updated file.
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		str: Path to mesh file.
+		
+	""" 
+	
 	
 	v=5*int(debug)
 	
@@ -181,10 +242,29 @@ def updateDomeGeo(fn,radius,slice_height,center,run=False,debug=False):
 	
 	return fn_msh
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Updates volSize in  .geo file and remeshes
-
 def updateVolSizeGeo(fn,volSize_px,run=False,debug=False):
+	
+	"""Upates parameter that defines mesh element volume in *.geo* file.
+	
+	.. note:: Debug will also activate full debugging output of gmsh. See also
+	   http://gmsh.info/doc/texinfo/gmsh.html#Command_002dline-options .
+	
+	.. note:: For function to work, parameters in geo file need to be defined as follows:
+	   
+		* volSize_px -> volSize_px
+	
+	Args:
+		fn (str): Filepath.
+		volSize_px (float): New mesh element size.
+	
+	Keyword Args:
+		run (bool): Run gmsh on updated file.
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		str: Path to mesh file.
+		
+	""" 
 	
 	v=5*int(debug)
 	pyfrp_gmsh_IO_module.updateParmGeoFile(fn,"volSize_px",volSize_px)
@@ -197,20 +277,57 @@ def updateVolSizeGeo(fn,volSize_px,run=False,debug=False):
 	
 	return fn_msh
 	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Refines gmsh mesh
+
 
 def refineMsh(fn,debug=False):
+	
+	"""Refines mesh by splitting elements.
+	
+	.. note:: Debug will also activate full debugging output of gmsh. See also
+	   http://gmsh.info/doc/texinfo/gmsh.html#Command_002dline-options .
+	
+	Args:
+		fn (str): Filepath.
+		
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		str: Path to mesh file.
+		
+	""" 
+	
 	v=5*int(debug)
 	
 	gmshBin=getGmshBin()
 	os.system(gmshBin+" -v "+ str(v) + " -refine " + fn)
 	return fn
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Run gmsh
-
 def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,volSizeMax=None):
+	
+	"""Runs Gmsh generating mesh from .geo file.
+	
+	.. note:: Debug will also activate full debugging output of gmsh. See also
+	   http://gmsh.info/doc/texinfo/gmsh.html#Command_002dline-options .
+	
+	.. note:: If ``redirect=True``, but ``fnStout`` or  ``fnSterr`` is not specified,
+	   will dump stout/sterr into ``meshfiles/gmshLogs/``.
+	
+	Args:
+		fn (str): Filepath.
+		
+	Keyword Args:
+		fnOut (str): Output filepath.
+		debug (bool): Print debugging messages.
+		redirect (bool): Redirect gmsh stout/sterr into seperate files.
+		fnStout (str): File for gmsh stout.
+		fnSterr (str): File for gmsh sterr.
+		volSizeMax (float): Maximum allowed mesh element size.
+		
+	Returns:
+		str: Path to mesh file.
+		
+	""" 
 	
 	#Define where to put log files if necessary
 	if fnStout==None:
@@ -256,6 +373,10 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 	return fn
 
 def getGmshBin(fnPath=None):
+	
+	"""Returns path to Gmsh binary defined in *path* file.	
+	""" 
+	
 	return pyfrp_misc_module.getPath("gmshBin",fnPath=fnPath)
 	
 	

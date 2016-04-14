@@ -60,7 +60,6 @@ class geometry(object):
 		
 		self.geoFileParameters={}
 		
-		
 	def getEmbryo(self):
 		return self.embryo
 	
@@ -164,6 +163,27 @@ class geometry(object):
 		
 		return ax
 	
+	def getZExtend(self):
+		
+		"""Returns extend in z-direction by reading out vertices from 
+		.geo file and returning maximum and minimum z-coordinates.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* zmin (float): Minimum z-coordinate.
+				* zmax (float): Maximum z-coordinate.
+				
+		"""
+		
+		domain=self.readGeoFile()
+		
+		z=[]
+		for v in domain.vertices:
+			z.append(v.x[2])	
+		
+		return min(zmin), max(zmin) 
+	
 	def printDetails(self):
 		
 		"""Prints out all details of geometry object.
@@ -238,7 +258,16 @@ class zebrafishDomeStage(geometry):
 		
 	def optimalAllROI(self,name='',Id=0,color='b',asMaster=False,roi=None):	
 		return self.embryo.newRadialSliceROI(name,Id,self.getCenter(),self.getOuterRadius(),0.,np.inf,False,color=color,asMaster=asMaster)
+	
+	def getZExtend(self):
 		
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.getZExtend`.
+		
+		By default, zebrafish geometry is set to range from ``-outerRadius`` to ``0``. 
+		"""
+		
+		return -self.outerRadius,0
+	
 class zebrafishDomeStageQuad(zebrafishDomeStage):
 	
 	def __init__(self,embryo,center,imagingRadius,radiusScale=1.1):
@@ -276,6 +305,15 @@ class cylinder(geometry):
 
 	def optimalAllROI(self,name='',Id=0,color='b',asMaster=False,roi=None):	
 		return self.embryo.newRadialSliceROI(name,Id,self.getCenter(),self.getRadius(),0.,np.inf,False,color=color,asMaster=asMaster)
+	
+	def getZExtend(self):
+		
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.getZExtend`.
+		
+		By default, cylinder geometry is set to range from ``-height`` to ``0``. 
+		"""
+		
+		return -self.height,0
 	
 class cylinderQuad(cylinder):
 	
@@ -328,6 +366,15 @@ class xenopusBall(geometry):
 	
 	def optimalAllROI(self,name='',Id=0,color='b',asMaster=False,roi=None):	
 		return self.embryo.newRadialSliceROI(name,Id,self.getCenter(),self.getRadius(),0.,np.inf,False,color=color,asMaster=asMaster)
+	
+	def getZExtend(self):
+		
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.getZExtend`.
+		
+		By default, ball geometry is set to range from ``-imagingRadius`` to ``0``. 
+		"""
+		
+		return -self.imagingRadius,0
 	
 class xenopusBallQuad(xenopusBall):
 	
@@ -383,7 +430,17 @@ class cone(geometry):
 
 	def optimalAllROI(self,name='',Id=0,color='b',asMaster=False,roi=None):	
 		return self.embryo.newRadialSliceROI(name,Id,self.getCenter(),self.getUpperRadius(),0.,np.inf,False,color=color,asMaster=asMaster)
+	
+	def getZExtend(self):
 		
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.getZExtend`.
+		
+		By default, cone geometry is set to range from ``-height`` to ``0``. 
+		"""
+		
+		return -self.height,0
+
+	
 class custom(geometry):
 
 	def __init__(self,embryo,center,fnGeo):

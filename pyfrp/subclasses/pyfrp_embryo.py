@@ -56,6 +56,9 @@ import matplotlib.pyplot as plt
 #Time 
 import time
 
+#Misc
+import os
+
 
 #===========================================================================================================================================================================
 #Class definitions
@@ -194,7 +197,7 @@ class embryo:
 		return self.fits
 	
 		
-	def save(self,fn=None):
+	def save(self,fn=None,copyMeshFiles=True,debug=False):
 		
 		"""Saves embryo object to pickle file.
 		
@@ -202,6 +205,8 @@ class embryo:
 		
 		Keyword Args:
 			fn (str): Output filename.
+			copyMeshFiles (bool): Copy meshfiles to embryo file destination.
+			debug (bool): Print out debugging messages.
 			
 		Returns:
 			str: Output filename.
@@ -211,10 +216,65 @@ class embryo:
 		if fn==None:
 			fn=self.name+".emb"
 		
-		pyfrp_IO_module.saveToPickle(self,fn=fn)	
+		if copyMeshFiles:
+			fnGeo,fnMesh=pyfrp_IO_module.copyMeshFiles(fn,self.geometry.fnGeo,self.simulation.mesh.fnMesh,debug=debug)
+			self.geometry.setFnGeo(fnGeo)
+			self.simulation.mesh.setFnMesh(fnMesh)
+			
+			fnNew=os.path.splitext((os.path.split(fn)[-1]))[0]
+			self.renameMeshFiles(fn=fnNew,debug=debug)
+		
+		pyfrp_IO_module.saveToPickle(self,fn=fn)
+		
 		print "Saved "+  self.name+ " to " + fn
 		return fn
+	
+	def renameMeshFiles(self,fn=None,debug=False):
 		
+		"""Renames meshfiles associated with embryo fo ``fn``.
+		
+		If ``fn=None`` will rename to ``self.name.ext``, where ``ext`` is 
+		either ``.geo`` or ``.msh``.
+		
+		Example: 
+		
+		>>> emb.geometry.getFnGeo()
+		>>> path/to/meshfiles/dome.geo
+		>>> emb.getName()
+		>>> myEmbryo
+		>>> emb.renameMeshFiles()
+		>>> emb.geometry.getFnGeo()
+		>>> path/to/meshfiles/myEmbryo.geo
+		
+		.. note:: Will automatically update ``geometry.fnGeo`` and 
+		   ``simulation.mesh.fnMesh`` properties.
+		
+		Keyword Args:
+			fn (str): Desired filename.
+			debug (bool): Print out debugging messages.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* fnGeoNew (str): New path to geometry file.
+				* fnMeshNew (str): New path to mesh file.
+				
+		"""
+		
+		if fn==None:
+			fn=self.name+".emb"
+		
+		if self.geometry!=None:
+			fnGeoNew=pyfrp_IO_module.copyAndRenameFile(self.geometry.fnGeo,fn,debug=debug)
+			self.geometry.setFnGeo(fnGeoNew)
+				
+		if self.simulation.mesh.mesh!=None:
+			fnMeshNew=pyfrp_IO_module.copyAndRenameFile(self.simulation.mesh.fnMesh,fn,debug=debug)
+			self.simulation.mesh.setFnMesh(fnMeshNew)
+			
+		return self.geometry.fnGeo, self.simulation.mesh.fnMesh	
+		
+	
 	def copy(self):
 		
 		"""Copies embryo, preserving all attributes and methods.
@@ -1969,7 +2029,7 @@ class embryo:
 				mesh=False
 		return img,mesh
 	
-	def quickAnalysis(self,maxDExpPx=150.):
+	def quickAnalysis(self,maxDExpPx=None,timeScale='log'):
 			
 		"""Performs complete FRAP analysis of embryo object including:
 		
@@ -1982,7 +2042,8 @@ class embryo:
 			
 		Keyword Args:
 			maxDExpPx (float): Maximum expected diffusion coefficient.
-			
+			timeScale (str): Linear (``'lin'``) or logarithmic (``'log'``) time scaling.
+		
 		"""
 		
 		self.computeROIIdxs()
@@ -1991,7 +2052,13 @@ class embryo:
 		self.analysis.run(showProgress=True)
 
 		#Simulation
-		self.simulation.getOptTvecSim(maxDExpPx)
+		if maxDExpPx!=None:
+			self.simulation.getOptTvecSim(maxDExpPx)
+		
+		if timeScale=='log':
+			self.simulation.toLogTimeScale()
+		
+		
 		self.simulation.run(showProgress=True)
 
 		#Pin Concentrations
@@ -2023,7 +2090,37 @@ class embryo:
 			printError("Failed to clearAllAttributes in embryo" + self.name +" .")
 			return False
 				
-				
-				
+	def sliceEmbryo(self,nSlices):
+		
+		"""Slices embryo in z-direction in ``nSlices``.
+		
+		Creates ``nSlices`` new :py:class:`pyfrp.subclasses.pyfrp_ROI.sliceROI` ROIs
+		and appends them to ``ROIs`` list.
+		
+		.. note:: Slice ROIs will be created with ``sliceBottom=False``.
+		
+		Args:
+			nSlices (int): Number of slices embryo is supposed to get cut.
+		
+		Returns:
+			list: Updates ``ROIs`` list.
+			
+		
+		"""
+		
+		#Get zExtend and height of geometry
+		zmin,zmax = self.geometry.getZExtend()
+		height=abs(zmax-zmin)
+		
+		sliceWidth = height/nSlices
+		
+		for i in range(nSlices):
+			self.newSliceROI("Slice"+str(i),self.getFreeROIId(),zmin+(i+0.5)*sliceWidth,sliceWidth,False,color=[1,1/(i+2.),0.])
+			
+		return self.ROIs
+
+	
+	
+	
 	#def grabDataDetails(self):
 	###NOTE make a function that automatically grabs filetype and what not			

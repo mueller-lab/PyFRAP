@@ -144,4 +144,96 @@ def cleanUp():
 	gc.collect()
 	return None
 
-
+def copyMeshFiles(fn,fnGeo,fnMsh,debug=False):
+	
+	"""Copies meshfiles to new location. 
+	
+	If ``fn`` does not end on ``meshfiles``, will create a folder ``meshfiles`` 
+	where to dump new files.
+	
+	Args:
+		fn (str): Filepath or parent directory where to put meshfiles.
+		fnGeo (str): Filepath of geo file.
+		fnMsh (str): Filepath of msh file.
+	
+	Keyword Args: 
+		debug (bool): Print out debugging messages.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* fnGeoNew (str): New geo file location.
+			* fnMshNew (str): New msh file location.
+			
+	"""
+	
+	if not os.path.isdir(fn):
+	
+		fn=os.path.realpath(fn)
+		fn=os.path.dirname(fn)
+	
+	if 'meshfiles'==os.path.split(fn)[-1]:
+		if debug:
+			print "Folder is already called meshfiles, will it as it is."
+	else:
+		fn=pyfrp_misc_module.slashToFn(fn)
+		try:
+			os.mkdir(fn+"meshfiles")
+		except OSError:
+			if debug:
+				printWarning("Cannot create folder " + fn + ". Already exists")
+			
+		fn=pyfrp_misc_module.slashToFn(fn+"meshfiles")
+		if debug:
+			print "Created new folder " + fn + " ."
+			
+	if debug:
+		cmdGeo="cp -v " + fnGeo + " " + fn
+		cmdMsh="cp -v " + fnMsh + " " + fn
+	else:
+		cmdGeo="cp " + fnGeo + " " + fn
+		cmdMsh="cp " + fnMsh + " " + fn
+		
+	os.system(cmdGeo)
+	os.system(cmdMsh)
+	
+	fnGeoNew=fn+os.path.split(fnGeo)[-1]
+	fnMshNew=fn+os.path.split(fnMsh)[-1]
+	
+	return fnGeoNew,fnMshNew
+	
+def copyAndRenameFile(fn,fnNew,debug=False):
+	
+	"""Copies file ``fn`` into same directory as ``fn`` and 
+	renames it ``fnNew``.
+	
+	.. note:: If copying fails, then function will return old filename.
+	
+	Args:
+		fn (str): Filepath of original file.
+		fnNew (str): New filename.
+	
+	Keyword Args: 
+		debug (bool): Print out debugging messages.
+	
+	Returns:
+		str: Path to new file.
+	
+	"""
+	
+	head,tail=os.path.split(fn)
+	ext=os.path.splitext(tail)[-1]
+	fnNew=pyfrp_misc_module.slashToFn(head)+fnNew+ext
+	
+	if debug:
+		ret=os.system("cp -v " + fn + " " + fnNew)
+	else:
+		ret=os.system("cp " + fn + " " + fnNew)
+	
+	if ret==0:
+		return fnNew
+	else:
+		return fn
+	
+	
+	

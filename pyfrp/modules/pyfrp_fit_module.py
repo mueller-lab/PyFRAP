@@ -157,37 +157,6 @@ def FRAPFitting(fit,debug=False,ax=None):
 
 	return fit
 
-def scaleTime(tvec,D,Dnew):
-	
-	"""Scales time vector with D/Dnew.
-	
-	Args:
-		tvec (numpy.ndarray): Time vector.
-		D (float): Relative diffusion rate.
-		Dnew (float): Scaling diffusion rate.
-			
-	Returns:
-		numpy.ndarray: Scaled time vector.
-	"""
-	
-	return D/Dnew*tvec
-
-def interpolateSolution(tvecData,tvecScaled,yvec):
-
-	"""Interpolates scaled simulation vector onto data time vector.
-	
-	Args:
-		tvecData (numpy.ndarray): Data time vector.
-		tvecScaled (numpy.ndarray): Scaled simulation time vector.
-		yvec (numpy.ndarray): Simulation values.
-			
-	Returns:
-		numpy.ndarray: Scaled simulation vector.
-	"""
-
-	fscal=interpolate.interp1d(tvecScaled,yvec)
-	yvecScaled=fscal(tvecData)
-	return yvecScaled
 
 def assignInputVariables(x,fit):
 	
@@ -272,6 +241,38 @@ def downscaleKinetics(prod,degr,rate):
 	
 	return float(prod)/rate, float(degr)/rate
 
+def scaleTime(tvec,D,Dnew):
+	
+	"""Scales time vector with D/Dnew.
+	
+	Args:
+		tvec (numpy.ndarray): Time vector.
+		D (float): Relative diffusion rate.
+		Dnew (float): Scaling diffusion rate.
+			
+	Returns:
+		numpy.ndarray: Scaled time vector.
+	"""
+	
+	return D/Dnew*tvec
+
+def interpolateSolution(tvecData,tvecScaled,yvec):
+
+	"""Interpolates scaled simulation vector onto data time vector.
+	
+	Args:
+		tvecData (numpy.ndarray): Data time vector.
+		tvecScaled (numpy.ndarray): Scaled simulation time vector.
+		yvec (numpy.ndarray): Simulation values.
+			
+	Returns:
+		numpy.ndarray: Scaled simulation vector.
+	"""
+
+	fscal=interpolate.interp1d(tvecScaled,yvec)
+	yvecScaled=fscal(tvecData)
+	return yvecScaled
+
 def getTvecCutIndex(tvec,tCut):
 	
 	"""Finds last index of time vector before time vector
@@ -328,6 +329,7 @@ def scaleROIs(fit,Dnew):
 		
 	#Rescaling the time series by D/Dnew
 	tvecScaled=scaleTime(fit.embryo.simulation.tvecSim,fit.embryo.simulation.D,Dnew)
+	
 	tvecData=fit.embryo.tvecData
 	
 	#If cutOff option is given, need to find time point and corresponding steps of cutOff
@@ -572,6 +574,8 @@ def FRAPObjFunc(x,fit,debug,ax,returnFit):
 			
 		plt.draw()
 		plt.pause(0.00001)
+	
+
 	
 	fit.SSD=SSD
 	fit.tvecFit=tvecData

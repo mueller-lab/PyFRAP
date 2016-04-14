@@ -800,6 +800,52 @@ class ROI(object):
 		printAllObjAttr(self)
 		print 
 	
+	def plotSimConcProfile(self,phi,ax=None,direction='x'):
+		
+		"""Plots concentration profile of solution variable in 
+		single direction.
+		
+		Args:
+			phi (fipy.CellVariable): Solution variable
+			
+		Keyword Args:
+			ax (matplotlib.axes): Axes to be plotted in.
+			direction (str): Direction to be plotted (x/y/z).
+		
+		Returns:
+			matplotlib.axes: Matplotlib axes used for plotting.
+		
+		"""
+		
+		if ax==None:
+			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Concentration profile"],sup=self.name+" phi")
+			ax=axes[0]
+		
+		if direction=='x':
+			x=self.embryo.simulation.mesh.mesh.x
+		elif direction=='y':
+			x=self.embryo.simulation.mesh.mesh.y
+		elif direction=='z':
+			x=self.embryo.simulation.mesh.mesh.z
+		else:
+			printError('Direction '+ direction+ 'unknown. Will not plot.')
+			return ax
+		
+		x=np.asarray(x)[self.meshIdx]
+		v=np.asarray(phi.value)[self.meshIdx]
+		
+		xSorted,vSorted=pyfrp_misc_module.sortListsWithKey(v,x)
+		
+		pyfrp_plot_module.plotTS(xSorted,vSorted,color=self.color,label=self.name,legend=True)
+		ax.set_xlabel(direction)
+		ax.set_ylabel("Concentration")
+		
+		pyfrp_plot_module.redraw(ax)
+		
+		return ax
+	
+	
+	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Radial ROI class
 
@@ -892,7 +938,7 @@ class radialROI(ROI):
 		self.yExtend=[self.center[1]-self.radius,self.center[1]+self.radius]
 		return self.xExtend, self.yExtend
 	
-	
+
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #slice ROI class

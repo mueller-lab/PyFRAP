@@ -162,6 +162,14 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	for r in simulation.embryo.ROIs:
 		r.getSimConc(phi,append=True)
 	
+	#ax=None
+	#for r in simulation.embryo.ROIs:
+		#ax=r.plotSimConcProfile(phi,ax=ax)
+		
+		
+		
+		
+	
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	#Solving PDE
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -171,7 +179,7 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	
 	avgTime=0
 	stepTime=0
-
+	
 	#mySolver = LinearLUSolver(iterations=10, tolerance=5e-1)
 	mySolver = LinearPCGSolver(tolerance=1e-15,iterations=5000)
 	
@@ -353,10 +361,30 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False):
 	values outside of masterROI (generally just background) to nodes that lie INSIDE image, but OUTSIDE of masterROI.
 	"""
 	
+	print "Before matching",  len(ind)
+	
+	print max(ind)
+	
 	if matchWithMaster:
-		masterROI=simulation.embryo.getMasterROI()	
-		ind=pyfrp_misc_module.matchVals(ind,masterROI.meshIdx)
 		
+		masterROI=simulation.embryo.getMasterROI()
+	
+		xnew=np.asarray(x)[ind]
+		ynew=np.asarray(y)[ind]
+				
+		ins=masterROI.checkXYInside(xnew,ynew)
+		
+		ind=np.asarray(ind)
+		ind=ind[np.where(ins)[0]]
+		ind=list(ind)
+		
+		
+	print max(ind)
+		
+		
+	print "After matching", len(ind)
+
+	
 	#Apply interpolation
 	phi.value[ind]=f.ev(x[ind],y[ind])
 

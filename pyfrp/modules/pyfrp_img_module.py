@@ -211,9 +211,6 @@ def analyzeDataset(analysis,signal=None,embCount=None,debug=False,debugAll=False
 	
 	return analysis
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Converts skiomage to numpy array
-
 def convSkio2NP(img):
 	
 	"""Returns mean concentration over given indices. 

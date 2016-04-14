@@ -327,5 +327,7 @@ class simulation(object):
 		
 		"""
 		
-		return not np.diff(self.tvecSim)[0]==np.diff(self.tvecSim)[-1]
+		#Note: We round here to 5 decimals since diff seems to make numerical mistakes.
+		
+		return not round(np.diff(self.tvecSim)[0],5)==round(np.diff(self.tvecSim)[-1],5)
 	

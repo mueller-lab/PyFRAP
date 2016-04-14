@@ -24,7 +24,7 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Classes for creating/extracting gmsh geometries for PyFRAP toolbox
+#Classes for creating/extracting gmsh geometries for PyFRAP toolbox. 
 
 #===========================================================================================================================================================================
 #Importing necessary modules
@@ -43,10 +43,22 @@ import pyfrp_misc_module
 #===========================================================================================================================================================================
 
 def getAngle(vec1,vec2):
+	
+		"""Returns angle between two vectors in radians.
+		
+		Args:
+			vec1 (numpy.ndarray): Vector 1.
+			vec2 (numpy.ndarray): Vector 2.
+		
+		Returns: 
+			float: Angle.
+		
+		"""
+		
 		a=np.arccos(np.dot(vec1,vec2)/(np.linalg.norm(vec1)*np.linalg.norm(vec2)))
 		
 		if a<0:
-			return self.getAngle(vec2,vec1)
+			return getAngle(vec2,vec1)
 		return a
 
 #===========================================================================================================================================================================
@@ -54,6 +66,16 @@ def getAngle(vec1,vec2):
 #===========================================================================================================================================================================
 	
 class domain:
+	
+	"""Domain class storing embryo geometry entities.
+	
+	Args:
+		edges (list): List of edges.
+		vertices (list): List of edges.
+		arcs (list): List of edges.
+		lines (list): List of edges.
+		
+	"""
 	
 	def __init__(self):
 		

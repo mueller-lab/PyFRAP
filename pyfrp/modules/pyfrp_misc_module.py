@@ -339,9 +339,6 @@ def vars2dict(var,loc):
 		dic[name]=loc[name]
 		
 	return {name: loc[name] for name, val in var.iteritems()}
-	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#
 
 def dict2string(dic,sep="=",newline=False):
 	
