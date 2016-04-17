@@ -24,8 +24,17 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Misc module for PyFRAP toolbox, including following functions:
+"""Miscellaneous module for PyFRAP toolbox. Contains functions handling:
 
+	* Filepath management (Windowns/Unix conversion etc.)
+	* String searching/replacing
+	* List matching/comparison
+	* Dictionary to object and back conversion/extraction.
+	* Settings path management.
+	* Embryo wizard.
+	* etc.
+	
+"""
 
 #===========================================================================================================================================================================
 #Importing necessary modules
@@ -612,10 +621,7 @@ def updateObj(objBlank,obj,debug=False):
 				print item, " = ", vars(self)[str(item)]
 	
 	return obj	
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Remove multiple entries from list	
-		
+	
 def remRepeatsList(l):
 	
 	"""Removes repeated entries from list. 

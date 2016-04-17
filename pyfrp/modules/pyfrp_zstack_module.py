@@ -24,7 +24,13 @@
 #Module Description
 #===========================================================================================================================================================================
 
+"""Z-stack module for PyFRAP toolbox. Used for reading z-stack datasets and converting them into meshes
+that then can be used for a FRAP simulation.
 
+.. warning:: This module is still experimental and unfinished and should not be used. 
+   Will be added as stable in further versions.
+
+"""
 
 #===========================================================================================================================================================================
 #Importing necessary modules

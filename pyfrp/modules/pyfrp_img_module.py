@@ -24,8 +24,16 @@
 #Module Description
 #===========================================================================================================================================================================
 
-""" Image analysis module for PyFRAP toolbox.
+"""Image analysis module for PyFRAP toolbox. This is one of the key modules of PyFRAP, gathering all necessary 
+image manipulation and reading functions used by PyFRAP. Mainly focuses on:
 
+	* Analyzing complete FRAP datasets as specified in a :py:class:`pyfrp.subclasses.pyfrp_analysis.analysis` instance.
+	* Reading concentrations from images over specific regions as specified in  :py:class:`pyfrp.subclasses.pyfrp_ROI.ROI` instances.
+	* Handling and saving rim concentrations.
+	* Image manipulation through filters/quadrant reduction.
+	* Image plotting and histograms.
+	* Fiji wrapping.
+	
 """
 
 #===========================================================================================================================================================================

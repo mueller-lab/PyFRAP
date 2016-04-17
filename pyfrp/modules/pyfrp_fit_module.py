@@ -24,7 +24,12 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Parameter fitting module for PyFRAP toolbox, including following functions:
+"""Parameter fitting module for PyFRAP toolbox. Contains functions for the following two tasks:
+	
+	* Fitting a PyFRAP simulation to FRAP data analyzed by PyFRAP and saving its results in a :py:class:`pyfrp.subclasses.pyfrp_fit.fit`` instance.
+	* Pinning PyFRAP simulation and data between 0 and 1.
+
+"""
 
 #===========================================================================================================================================================================
 #Improting necessary modules

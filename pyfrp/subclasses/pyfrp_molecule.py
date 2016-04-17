@@ -153,7 +153,7 @@ class molecule:
 		
 		return fn
 	
-	def saveExtract(self,fn=None):
+	def saveExtract(self,fn=None,copyMeshFiles=True,debug=False):
 		
 		"""Saves molecule to pickle file in compressed version by doing:
 		
@@ -169,7 +169,9 @@ class molecule:
 		
 		Keyword Args:
 			fn (str): Molecule file name.
-		
+			copyMeshFiles (bool): Copy meshfiles to embryo file destination.
+			debug (bool): Print out debugging messages.
+			
 		Returns:
 			bool: True if success, False else.
 		
@@ -183,7 +185,7 @@ class molecule:
 			fn=self.name+".mol"
 		
 		
-		b=self.extractEmbryos2Files(fn=fn.replace('.mol','')+"_embryos")
+		b=self.extractEmbryos2Files(fn=fn.replace('.mol','')+"_embryos",copyMeshFiles=copyMeshFiles,debug=debug)
 		
 		if not b:
 			printError("Something went wrong extracting embryos, will not continue saving.")
@@ -196,7 +198,7 @@ class molecule:
 		
 		
 	
-	def extractEmbryos2Files(self,fn=""):
+	def extractEmbryos2Files(self,fn="",copyMeshFiles=True,debug=False):
 		
 		"""Extracts embryos in ``embryos`` list into seperate pickled files.
 		
@@ -204,7 +206,9 @@ class molecule:
 		
 		Keyword Args:
 			fn (str): Path of folder where to save embryo files.
-		
+			copyMeshFiles (bool): Copy meshfiles to embryo file destination.
+			debug (bool): Print out debugging messages.
+			
 		Returns:
 			bool: True if success, False else.
 		
@@ -227,7 +231,7 @@ class molecule:
 				return False
 				
 		for embryo in self.embryos:
-			embryo.save(fn+embryo.getName()+".emb")
+			embryo.save(fn=fn+embryo.getName()+".emb",copyMeshFiles=copyMeshFiles,debug=debug)
 		
 		return True
 		

@@ -24,13 +24,13 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Statistics module for PyFRAP toolbox, including following functions:
-#(1) fit_Rsq: Calulates Rsq value of fit
+"""Statistics module for PyFRAP toolbox, mainly used to evaluate goodness of fit, but also providing functions
+to assess overall measurement statistics.
+"""
 
 #===========================================================================================================================================================================
 #Improting necessary modules
 #===========================================================================================================================================================================
-
 
 import numpy as np
 
@@ -38,10 +38,24 @@ import numpy as np
 #Module Functions
 #===========================================================================================================================================================================
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Calulates Rsq value of fit
-	
 def computeFitRsq(fit):
+	
+	"""Computes R-squared values for fit object.
+	
+	R-squared values contain:
+		
+		* Mean R-squared value over all ROIs included in fit, stored in ``fit.MeanRsq``.
+		* Product of R-squared value over all ROIs included in fit, stored in ``fit.Rsq``.
+		* R-squared value for each ROIs included in fit, stored in ``fit.RsqBuROI``.
+		
+	Args:
+		fit (pyfrp.subclasses.pyfrp_fit.fit): Fit object.
+		
+	Returns:
+		pyfrp.subclasses.pyfrp_fit.fit: Updated fit object.
+	
+	"""
+	
 	Rsqs=[]
 	
 	#Compute Rsqs for regions used for fitting	
@@ -55,10 +69,22 @@ def computeFitRsq(fit):
 		
 	return fit
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Calulates Rsq value of fit
-
 def Rsq(data,x):
+	
+	r"""Computes R-squared values for fit series to data series.
+	
+	R-squared value is being computed as 
+	
+	.. math:: R^2 = 1 - \frac{\sum\limits_i (x_i - d_i)^2}{\sum\limits_i (d_i - \bar{d} )^2}
+	
+	Args:
+		x (numpy.ndarray) Fit series.
+		data (numpy.ndarray): Data series.
+		
+	Returns:
+		float: R-squared value.
+	
+	"""
 	
 	#Make numpy array to avoid list substraction problem
 	data=np.asarray(data)
@@ -78,16 +104,47 @@ def Rsq(data,x):
 	
 	return Rsq
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Calulates Rsq value of fit
-
 def computeSSD(data,x):
+	
+	r"""Computes sum of squared differences (SSD) of fit series to data series.
+	
+	The SSD is computed by
+	
+	.. math:: SSD = \sum\limits_i (x_i - d_i)^2
+	
+	Args:
+		x (numpy.ndarray) Fit series.
+		data (numpy.ndarray): Data series.
+		
+	Returns:
+		float: SSD.
+	"""
+	
 	return sum((data-x)**2)
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns mean/std/stderr of array
-
 def parameterStats(x):
+	
+	r"""Returns mean, standard deviation and standard error of array.
+	
+	Note that standard error is computed as 
+	
+	.. math:: \sigma_n = \frac{\sigma}{\sqrt{n}}
+	
+	where :math:`n` is the number of samples in ``x`` and :math: :math:`\sigma`
+	is the standard deviation over ``x``.
+	
+	Args:
+		x (numpy.ndarray): List of values.
+	
+	Returns:
+		tuple: Tuple containing:
+			
+			* xMean (float): Mean of x.
+			* xStd (float): Standard deviation of x.
+			* xSterr (float): Standard error of x.
+			
+	"""
+	
 	return np.mean(x), np.std(x), np.std(x)/np.sqrt(len(x))
 	
 

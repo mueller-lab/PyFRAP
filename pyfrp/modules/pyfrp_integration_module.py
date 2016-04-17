@@ -24,9 +24,11 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Integration module for PyFRAP toolbox, including following functions:
+"""Integration module for PyFRAP toolbox. 
 
-#(1)  
+.. warning:: Might get merged with simulation module at some point.
+
+"""
 
 #===========================================================================================================================================================================
 #Improting necessary modules
@@ -39,23 +41,33 @@ from numpy import linalg as LA
 #Module Functions
 #===========================================================================================================================================================================
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns 
-
 def getAvgConc(val,cvs,ind):
+	
+	"""Integrates simulation result over specific set of indices.
+	
+	Args:
+		val (fipy.CellVariable): PDE solution variable.
+		cvs (numpy.ndarray): Array containing cell volumes.
+		ind (list): List of indices.
+	
+	Returns:
+		float: Integration result.
+	
+	"""
+	
 	if len(ind)>0:
 		return sum(val.value[ind]*cvs[ind])/sum(cvs[ind])
 	else:
 		return 0.
 
-
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Calculates sidelengths of tetrahedron given by 4 points
-
 def calcTetSidelengths(point0,point1,point2,point3):
 
-	#Taking point0 as base point, calculating vectors
+	"""Calculates sidelengths of tetrahedron given by 4 points.
+	
+	.. note:: Taking point0 as base point.
+	
+	"""
+
 	vec1=point1-point0
 	vec2=point2-point0
 	vec3=point3-point0

@@ -24,7 +24,12 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Optimization module for PyFRAP toolbox, including following functions:
+"""Optimization module for PyFRAP toolbox.
+
+Currently contains all functions necessary to transform a constrained FRAP optimization problem into
+a unconstrained one, making it suitable to Nelder-Mead optimization algorithm. 
+
+"""
 
 #===========================================================================================================================================================================
 #Importing necessary modules
@@ -38,8 +43,9 @@ import pyfrp_fit_module
 
 from pyfrp_term_module import *
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Substract background and normalize: Pin concentrations between 0 and 1:
+#===========================================================================================================================================================================
+#Module Functions
+#===========================================================================================================================================================================
 
 def constrObjFunc(x,fit,debug,ax,returnFit):
 	

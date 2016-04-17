@@ -24,7 +24,10 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Input/Output module for PyFRAP toolbox, including following functions:
+"""Input/Output module for PyFRAP toolbox. 
+
+Handles saving/loading PyFRAP projects into pickled files and the memory handling that comes with it.
+"""
 
 #===========================================================================================================================================================================
 #Improting necessary modules

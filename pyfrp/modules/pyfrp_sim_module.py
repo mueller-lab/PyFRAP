@@ -24,7 +24,13 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Simulaton module for PyFRAP toolbox, including following functions:
+"""Simulaton module for PyFRAP toolbox. Handles simulating FRAP experiments and all necessary functions to do so, such as
+	
+	* Handling initial conditions.
+	* Mimicing bleaching effects.
+	* Experiment simulation.
+
+"""
 
 #===========================================================================================================================================================================
 #Improting necessary modules

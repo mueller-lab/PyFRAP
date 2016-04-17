@@ -311,7 +311,7 @@ def readLine(line,parmDic,domain):
 def readGeoFile(fn):
 		
 	"""Reads in .geo file and tries to extract geometry defined in .geo file
-	into a :py:class`pyfrp.modules.pyfrp_gmsh_geometry.domain`.
+	into a :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.domain`.
 	
 	Args:
 		fn (str): Filename of .geo file.

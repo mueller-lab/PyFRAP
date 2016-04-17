@@ -24,8 +24,11 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Plotting module for image analysis and simulation for PyFRAP toolbox, including following functions:
+"""Plotting module for PyFRAP toolbox. 
 
+Contains functions and classes that are often used by PyFRAP toolbox and simplify plot creation and management.
+
+"""
 
 #===========================================================================================================================================================================
 #Improting necessary modules
@@ -52,12 +55,44 @@ from pyfrp_term_module import *
 #Module Functions
 #===========================================================================================================================================================================
 
-
-#===================================================================================================================================
-#Opens figure with first post image and give click selector for boundaries
-#===================================================================================================================================
-
 class FRAPBoundarySelector():
+	
+	"""Simple GUI widget to select circular FRAP boundaries.
+	
+	Has useful center marker that is activatable that helps finding the 
+	center of the image.
+	
+	Mouse Input:
+		
+		* Left: Set center.
+		* Right: Set Radius.
+		* Middle: Activate center marker.
+		
+	Keyboard Input:
+	
+		* Left Arrow: Move center to the left.
+		* Right Arrow: Move center to the right.
+		* Up Arrow: Move center upwards.
+		* Down Arrow: Move center downwards.
+		* Control + Up Arrow: Increase circle radius.
+		* Control + Down Arrow: Decrease circle radius.
+	
+	.. note:: If ``embryo`` is given at initiation, will use first image specified
+	   in embryo's ``fileList`` as background image.
+	   
+	Example Usage:
+	
+	>>> sel=FRAPBoundarySelector(fn="path/to/img/file")
+
+	Use mouse/keyboard to define circular boundary.
+	
+	>>> center,radius=sel.getResults()
+	
+	Keyword Args:
+		embryo (pyfrp.subclasses.pyfrp_embryo.embryo): PyFRAP embryo instance.
+		fn (str): Filepath to image file taken for boundary selection.
+		
+	"""
 	
 	def __init__(self,embryo=None,fn=None):
 		
@@ -91,12 +126,20 @@ class FRAPBoundarySelector():
 		plt.show()
 	
 	def checkInput(self):
+		
+		"""Checks if at least one of the two keyword arguments, ``embryo`` or ``fn``, is given.
+		
+		If not, prints error message and closes down widget.
+		"""
+		
 		if self.fn==None and self.embryo==None:
 			printError("No Embryo or fn defined. Going to exit.")
 			plt.close(self.fig)
 			return
 	
 	def createCanvas(self):
+		
+		"""Creates figure and canvas used for plotting."""
 			
 		h=500/self.dpi
 		v=500/self.dpi
@@ -123,6 +166,9 @@ class FRAPBoundarySelector():
 		return 
 	
 	def keyPressed(self,event):
+		
+		"""Directs all key press events to the respective functions."""
+		
 		if event.key=='left':
 			self.moveLeft()
 		elif event.key=='right':
@@ -137,52 +183,85 @@ class FRAPBoundarySelector():
 			self.decreaseRadius()
 			
 	def moveLeft(self):
+		
+		"""Moves center 1 px to the left."""
+		
 		if self.center!=None:
 			self.center=[self.center[0]-1,self.center[1]]
 			self.drawCenter()
 		
 		
 	def moveRight(self):
+		
+		"""Moves center 1 px to the right."""
+		
 		if self.center!=None:
 			self.center=[self.center[0]+1,self.center[1]]
 			self.redraw()
 	
 	def moveUp(self):
+		
+		"""Moves center 1 px up."""
+		
 		if self.center!=None:
 			self.center=[self.center[0],self.center[1]+1]
 			self.redraw()
 	
 	def moveDown(self):
+		
+		"""Moves center 1 px down."""
+		
 		if self.center!=None:
 			self.center=[self.center[0],self.center[1]-1]
 			self.redraw()
 	
 	def redraw(self):
+		
+		"""Redraws both center and radius if available."""
+		
 		if self.center!=None:
 			self.drawCenter()
 		if self.radius!=None:
 			self.drawRadius()
 			
 	def increaseRadius(self):
+		
+		"""Increases radius by 1 px."""
+		
 		if self.radius!=None:
 			self.radius=self.radius+1
 			self.redraw()
 			
 	def decreaseRadius(self):
+		
+		"""Decreases radius by 1 px."""
+		
 		if self.radius!=None:
 			self.radius=self.radius-1
 			self.redraw()
 			
 	def closeFigure(self,event):
+		
+		"""Returns center and radius at close ``event``."""
+		
 		return self.center,self.radius
 		
 	def getEmbryo(self):	
+		
+		"""Returns ``embryo`` object if given.``"""
+		
 		return self.embryo
 	
 	def getResults(self):
+		
+		"""Returns center and radius."""
+		
 		return self.center,self.radius
 	
 	def drawCenterMarker(self):
+		
+		"""Draws a yellow marker in center of the image, making it 
+		easier to find image center when selecting center of boundary."""
 		
 		centerImg=[self.img.shape[0]/2.,self.img.shape[1]/2.]
 		
@@ -197,6 +276,8 @@ class FRAPBoundarySelector():
 		return self.centerMarker
 		
 	def clearCenterMarker(self):
+		
+		"""Removes center maker from canvas."""
 	
 		for pt in self.centerMarker:
 			pt.remove()
@@ -206,6 +287,8 @@ class FRAPBoundarySelector():
 		self.centerMarker=[]
 	
 	def drawCenter(self):
+		
+		"""Draws a red marker at selected center on canvas."""
 		
 		if len(self.centerPt)>0:
 			self.clearCenter()
@@ -219,6 +302,8 @@ class FRAPBoundarySelector():
 	
 	def clearCenter(self):
 	
+		"""Removes center marker from canvas."""
+		
 		for pt in self.centerPt:
 			pt.remove()
 			
@@ -227,6 +312,8 @@ class FRAPBoundarySelector():
 		self.fig.canvas.draw()
 		
 	def drawRadius(self):
+		
+		"""Draws a red circle around selected center with selected radius on canvas."""
 		
 		if len(self.radiusPt)>0:
 			self.clearRadius()
@@ -239,7 +326,9 @@ class FRAPBoundarySelector():
 		return self.radiusPt
 	
 	def clearRadius(self):
-	
+		
+		"""Removes circle from canvas."""
+		
 		for pt in self.radiusPt:
 			pt.remove()
 			
@@ -251,6 +340,14 @@ class FRAPBoundarySelector():
 		
 		
 	def showFirstDataImg(self):
+		
+		"""Shows either first data image defined in ``embryo.fileList`` or 
+		image specified by ``fn``.
+		
+		.. note:: If both are given, will use the embryo option.
+		
+		"""
+		
 		if self.embryo!=None:
 			self.embryo.updateFileList()
 		
@@ -270,15 +367,28 @@ class FRAPBoundarySelector():
 	
 	def showImg(self,img):
 		
+		"""Shows image on canvas.
+		
+		Args:
+			img (numpy.ndarray): Image to be shown.
+		
+		"""
+		
 		self.ax.imshow(img)
 		self.fig.canvas.draw()
 		
 		return self.canvas
 	
 	def computeRadiusFromCoordinate(self,x,y):
+		
+		"""Computes radius from given cordinate ``(x,y)``.
+		"""
+		
 		return np.sqrt((x-self.center[0])**2+(y-self.center[1])**2)
 		
 	def getMouseInput(self,event):
+		
+		"""Directs mouse input to the right actions."""
 		
 		#Check if click in axes
 		if event.xdata==None:
@@ -311,11 +421,42 @@ class FRAPBoundarySelector():
 		
 		return
 	
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Generates matplotlib figure with (x,y) subplots
-
 def makeSubplot(size,titles=None,tight=False,sup=None,proj=None,fig=None,show=True):
+	
+	"""Generates matplotlib figure with (x,y) subplots.
+	
+	.. note:: List of ``titles`` needs to be same size as desired number of axes.
+	   Otherwise will turn off titles.
+	
+	.. note:: List of ``proj`` needs to be same size as desired number of axes.
+	   Otherwise will turn off projections.
+	   
+	Example:
+	
+	>>> makeSubplot([2,2],titles=["Axes 1", "Axes 2", "Axes 3", "Axes 4"],proj=[None,None,'3d',None])
+	
+	will result in
+	
+	.. image:: ../imgs/pyfrp_plot_module/makeSubplot.png
+	
+	Args:
+		size (list): Size of subplot arrangement.
+	
+	Keyword Args:
+		titles (list): List of axes titles.
+		tight (bool): Use tight layout.
+		sup (str): Figure title.
+		proj (list): List of projections.
+		fig (matplotlib.figure): Figure used for axes.
+		show (bool): Show figure right away.
+	
+	Returns:
+		tuple: Tuple containing:
+			
+			* fig (matplotlib.figure): Figure.
+			* axes (list): List of Matplotlib axes.
+	
+	"""
 	
 	#How many axes need to be created
 	n_ax=size[0]*size[1]
@@ -364,16 +505,31 @@ def makeSubplot(size,titles=None,tight=False,sup=None,proj=None,fig=None,show=Tr
 	#Return axes handle
 	return fig,axes
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Adjust display range of imshow plots in list of axes
-
 def adjustImshowRange(axes,vmin=None,vmax=None):
+	
+	"""Adjust display range of ``matplotlib.pyplot.imshow`` plots in 
+	list of axes.
+	
+	Finds first image artist in each axes in ``axes`` list and then
+	sets display range to ``[vmin,vmax]``.
+	
+	Args:
+		axes (list): List of matplotlib axes.
+		
+	Keyword Args:
+		vmin (float): Minimum value of display range.
+		vmax (float): Maximum value of display range.
+		
+	Returns:
+		 list: Updated list of matplotlib axes.
+	
+	"""
 	
 	#Loop through axes
 	for ax in axes:
 		
 		#Grab plot
-		implot=findImageArtist(ax,"Image")
+		implot=findArtist(ax,"Image")
 		
 		#Rescale
 		if implot!=None:
@@ -384,10 +540,22 @@ def adjustImshowRange(axes,vmin=None,vmax=None):
 		
 	return axes
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Finds artist with key in name and returns it
-
-def findImageArtist(ax,key):
+def findArtist(ax,key):
+	
+	"""Finds ``matplotlib.artist`` which name contains ``key``.
+	
+	.. note:: Will stop searching after first artist is found.
+	
+	Will return ``None`` if no artist can be found.
+	
+	Args:
+		ax (matplotlib.axes): Matplotlib axes.
+		key (str): Key used for search.
+		
+	Returns:
+		matplotlib.artist: Matplotlib artist.
+	
+	"""
 	
 	c=ax.get_children()
 	
@@ -398,20 +566,47 @@ def findImageArtist(ax,key):
 		
 	return None	
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Redraws axes's figure
-
 def redraw(ax):
+	
+	"""Redraws axes's figure's canvas.
+	
+	Makes sure that current axes content is visible.
+	
+	Args:
+		ax (matplotlib.axes): Matplotlib axes.
+		
+	Returns:
+		matplotlib.axes: Matplotlib axes 
+	
+	"""
 			
 	ax.get_figure().canvas.draw()
 	
 	return ax
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Plot timeseries all-in-one function
-
 def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,legend=True,linestyle='-'):
-		
+	
+	"""Plot timeseries all-in-one function.
+	
+	Args:
+		xvec (numpy.ndarray): x-data to be plotted.
+		yvec (numpy.ndarray): y-data to be plotted.
+	
+	Keyword Args:
+		ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+		color (str): Color of plot.
+		linestyle (str): Linestyle of plot.
+		linewidth (float): Linewidth of plot.
+		legend (bool): Show legend.
+		sup (str): Figure title.
+		title (str): Axes title.
+		label (str): Label for legend.
+	
+	Returns:
+		matplotlib.axes: Axes used for plotting.
+	
+	"""
+	
 	if len(xvec)!=len(yvec):
 		printWarning('len(xvec) != len (yvec). This could be due to incomplete simulation/analysis/pinning. Will not plot.')
 		return None

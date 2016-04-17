@@ -24,28 +24,24 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Indexing module for PyFRAP toolbox, including following functions:
+"""Indexing module for PyFRAP toolbox. Mainly contains functions that help finding either
 
-#(1)  getCircleIdxImg 
-#(2)  getRectangleIdxImg
-#(3)  getSquareIdxImg
-#(4)  getAllIdxImg
-#(5)  getPolyIdxImg
-#(6)  getCircleIdxMesh
-#(7)  getSliceIdxMesh
-#(8)  getRectangleIdxImg
-#(9)  getSquareIdxImg
-#(10)  getPolyIdxMesh
-#(11)  checkInsideCircle
-#(12)  checkInsideSquare
-#(13)  checkInsideRectangle
-#(14)  checkInsidePoly
-#(15)  checkQuad
-#(16)  checkSquareSize
-#(17)  checkSquareCenteredFromInd
-#(18)  ind2quad
-#(19)  regions2quad
-#(20)  ind2mask
+	* image indices
+	* mesh indices 
+	* extended indices
+	
+for all types of ROIs, such as
+
+	* circular :py:class:`pyfrp.subclasses.pyfrp_ROI.radialROI`
+	* rectangular :py:class:`pyfrp.subclasses.pyfrp_ROI.rectangleROI`
+	* quadratic :py:class:`pyfrp.subclasses.pyfrp_ROI.squarelROI`
+	* polygonial :py:class:`pyfrp.subclasses.pyfrp_ROI.polyROI`
+	
+Also provides functions to handle indices in case of quadrant reduction and a powerful suite
+of *check* functions that help to figure out if a list of coordinates is inside a ROI., using 
+``numpy.where``.
+	
+"""	
 
 #===========================================================================================================================================================================
 #Improting necessary modules
@@ -67,17 +63,30 @@ import sys
 import pyfrp_misc_module as pyfrp_misc
 import pyfrp_plot_module as pyfrp_plt
 
-                   
 #===========================================================================================================================================================================
 #Module Functions
 #===========================================================================================================================================================================
 
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns all indices in image that lie within given circle
-
 def getCircleIdxImg(center,radius,res,debug=False):
+		
+	"""Returns all indices of image that lie within given circle.
 	
+	Args:
+		center (numpy.ndarray): Center of circle.
+		radius (float): Radius of circle.
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		tuple: Tuple containing:
+			
+			* ind_circ_x (list): List of indices inside circle in x-direction.
+			* ind_circ_y (list): List of indices inside circle in y-direction.
+
+	"""
+		
 	#Empty index vectors
 	ind_circ_x=[]
 	ind_circ_y=[]
@@ -103,10 +112,28 @@ def getCircleIdxImg(center,radius,res,debug=False):
 		
 	return ind_circ_x,ind_circ_y
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns all indices in image that lie within given rectangle
-
 def getRectangleIdxImg(offset,sidelengthX,sidelengthY,res,debug=False):
+	
+	"""Returns all indices of image that lie within given rectangle.
+	
+	.. note:: Offset is set to be bottom left corner.
+	
+	Args:
+		offset (numpy.ndarray): Offset of rectangle.
+		sidelengthX (float): Sidelength in x-directiion.
+		sidelengthY (float): Sidelength in y-directiion.
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		tuple: Tuple containing:
+			
+			* indX (list): List of indices inside rectangle in x-direction.
+			* indY (list): List of indices inside rectangle in y-direction.
+
+	"""
 	
 	indX=[]
 	indY=[]
@@ -130,10 +157,29 @@ def getRectangleIdxImg(offset,sidelengthX,sidelengthY,res,debug=False):
 		
 	return indX,indY	
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns all indices in image that lie within given square
 
 def getSquareIdxImg(offset,sidelength,res,debug=False):
+	
+	"""Returns all indices of image that lie within given square.
+	
+	.. note:: Offset is set to be bottom left corner.
+	
+	Args:
+		offset (numpy.ndarray): Offset of square.
+		sidelengtX (float): Sidelength.
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		tuple: Tuple containing:
+			
+			* indX (list): List of indices inside square in x-direction.
+			* indY (list): List of indices inside square in y-direction.
+
+	"""
+	
 	
 	indX=[]
 	indY=[]
@@ -158,10 +204,23 @@ def getSquareIdxImg(offset,sidelength,res,debug=False):
 		
 	return indX,indY
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns all indices in image
-
 def getAllIdxImg(res,debug=False):
+	
+	"""Returns all indices of image.
+	
+	Args:
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		tuple: Tuple containing:
+			
+			* indX (list): List of indices inside image in x-direction.
+			* indY (list): List of indices inside image in y-direction.
+
+	"""
 	
 	#Empty index vectors
 	indX=[]
@@ -188,10 +247,24 @@ def getAllIdxImg(res,debug=False):
 		
 	return indX,indY
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns all indices in image that lie within given polygon
-
 def getPolyIdxImg(corners,res,debug=False):
+	
+	"""Returns all indices of image that lie within given polygon.
+	
+	Args:
+		corners (list): List of (x,y)-coordinates of corners.
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		tuple: Tuple containing:
+			
+			* indX (list): List of indices inside polygon in x-direction.
+			* indY (list): List of indices inside polygon in y-direction.
+
+	"""
 	
 	#Convert to np array if necessary
 	corners=np.asarray(corners)
@@ -213,12 +286,27 @@ def getPolyIdxImg(corners,res,debug=False):
 	indX,indY= pts[0,:],pts[1,:]
 	
 	return indX,indY
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns all indices in mesh that lie within given circle
 		
 def getCircleIdxMesh(center,radius,mesh,zmin="-inf",zmax="inf",debug=False):
 	
+	"""Returns all indices of mesh that lie within given circle and between ``zmin`` and
+	``zmax``.
+	
+	Args:
+		center (numpy.ndarray): Center of circle.
+		radius (float): Radius of circle.
+		mesh (fipy.Gmsh3DImporter): Mesh.
+		
+	Keyword Args:
+		zmin (float): Minimal z-coordinate.
+		zmax (float): Maximal z-coordinate.
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		list: List of mesh indices inside circle. 
+		
+	"""
+		
 	#Checking that zmin/zmax are converted into numpy floats
 	zmin=pyfrp_misc.translateNPFloat(zmin)
 	zmax=pyfrp_misc.translateNPFloat(zmax)
@@ -242,20 +330,50 @@ def getCircleIdxMesh(center,radius,mesh,zmin="-inf",zmax="inf",debug=False):
 	
 	return indFinal
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns all indices in mesh that lie within given slice
-	
+
 def getSliceIdxMesh(z,zmin,zmax,debug=False):
 	
-
+	"""Returns all indices of mesh that lie within given slice between ``zmin`` and
+	``zmax``.
+	
+	Args:
+		z (float): z-coordinates of mesh.
+		zmin (float): Minimal z-coordinate.
+		zmax (float): Maximal z-coordinate.
+		
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		list: List of mesh indices inside slice. 
+		
+	"""
 	
 	indSlice=np.where((z<zmax) & (z > zmin))[0]
 	return indSlice
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns all indices in mesh that lie within given rectangle
-
 def getRectangleIdxMesh(sidelengthX,sidelengthY,offset,mesh,zmin="-inf",zmax="inf",debug=False):
+	
+	"""Returns all indices of mesh that lie within given rectangle and between ``zmin`` and
+	``zmax``.
+	
+	.. note:: Offset is set to be bottom left corner.
+	
+	Args:
+		offset (numpy.ndarray): Offset of rectangle.
+		sidelengthX (float): Sidelength in x-directiion.
+		sidelengthY (float): Sidelength in y-directiion.
+		mesh (fipy.Gmsh3DImporter): Mesh.
+		
+	Keyword Args:
+		zmin (float): Minimal z-coordinate.
+		zmax (float): Maximal z-coordinate.
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		list: List of mesh indices inside rectangle. 
+		
+	"""
 	
 	#Checking that zmin/zmax are converted into numpy floats
 	zmin=pyfrp_misc.translateNPFloat(zmin)
@@ -275,10 +393,27 @@ def getRectangleIdxMesh(sidelengthX,sidelengthY,offset,mesh,zmin="-inf",zmax="in
 	
 	return indFinal
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns all indices in mesh that lie within given square
-
 def getSquareIdxMesh(sidelength,offset,mesh,zmin="-inf",zmax="inf",debug=False):
+	
+	"""Returns all indices of mesh that lie within given square and between ``zmin`` and
+	``zmax``.
+	
+	.. note:: Offset is set to be bottom left corner.
+	
+	Args:
+		offset (numpy.ndarray): Offset of square.
+		sidelength (float): Sidelength.
+		mesh (fipy.Gmsh3DImporter): Mesh.
+		
+	Keyword Args:
+		zmin (float): Minimal z-coordinate.
+		zmax (float): Maximal z-coordinate.
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		list: List of mesh indices inside square. 
+		
+	"""
 	
 	#Checking that zmin/zmax are converted into numpy floats
 	zmin=pyfrp_misc.translateNPFloat(zmin)
@@ -298,10 +433,24 @@ def getSquareIdxMesh(sidelength,offset,mesh,zmin="-inf",zmax="inf",debug=False):
 	
 	return indFinal
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Returns all indices in mesh that lie within given polygon
-
 def getPolyIdxMesh(corners,mesh,zmin="-inf",zmax="inf",debug=False):
+	
+	"""Returns all indices of mesh that lie within given polygon and between ``zmin`` and
+	``zmax``.
+	
+	Args:
+		corners (list): List of (x,y)-coordinates of corners.
+		mesh (fipy.Gmsh3DImporter): Mesh.
+		
+	Keyword Args:
+		zmin (float): Minimal z-coordinate.
+		zmax (float): Maximal z-coordinate.
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		list: List of mesh indices inside polygon. 
+		
+	"""
 	
 	#Checking that zmin/zmax are converted into numpy floats
 	zmin=pyfrp_misc.translateNPFloat(zmin)
@@ -326,35 +475,107 @@ def getPolyIdxMesh(corners,mesh,zmin="-inf",zmax="inf",debug=False):
 		
 	return indFinal	
 		
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks if coordinate (x,y) is in circle with given radius and center
-
 def checkInsideCircle(x,y,center,radius):
+	
+	"""Checks if coordinate (x,y) is in circle with given radius and center.
+	
+	.. note:: If ``x`` and ``y`` are ``float``, will return ``bool``, otherwise
+	   ``numpy.ndarray`` of booleans.
+	   
+	Args:
+		x (numpy.ndarray): Array of x-coordinates.
+		y (numpy.ndarray): Array of y-coordinates.
+		center (numpy.ndarray): Center of circle.
+		radius (float): Radius of circle.
+		
+	Returns:
+		bool: True if inside, otherwise False.
+			
+	"""
+	
 	return np.sqrt((x-center[0])**2+(y-center[1])**2)<radius
-	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks if coordinate (x,y) is in square with given offset and sidelength
-	
+
 def checkInsideSquare(x,y,offset,sidelength):
+	
+	"""Checks if coordinate (x,y) is in square with given offset and sidelength.
+	
+	.. note:: If ``x`` and ``y`` are ``float``, will return ``bool``, otherwise
+	   ``numpy.ndarray`` of booleans.
+	   
+	.. note:: Offset is set to be bottom left corner.   
+	   
+	Args:
+		x (numpy.ndarray): Array of x-coordinates.
+		y (numpy.ndarray): Array of y-coordinates.
+		offset (numpy.ndarray): Offset of square.
+		sidelength (float): Sidelength.
+		
+	Returns:
+		bool: True if inside, otherwise False.
+			
+	"""
+	
 	return x<=offset[0]+sidelength and offset[0]<=x and y<=offset[1]+sidelength and offset[1]<=y
-	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks if coordinate (x,y) is in square with given offset and sidelength
-	
+		
 def checkInsideRectangle(x,y,offset,sidelengthX,sidelengthY):
+	
+	"""Checks if coordinate (x,y) is in rectangle with given offset and sidelength.
+	
+	.. note:: If ``x`` and ``y`` are ``float``, will return ``bool``, otherwise
+	   ``numpy.ndarray`` of booleans.
+	   
+	.. note:: Offset is set to be bottom left corner.   
+	   
+	Args:
+		x (numpy.ndarray): Array of x-coordinates.
+		y (numpy.ndarray): Array of y-coordinates.
+		offset (numpy.ndarray): Offset of rectangle.
+		sidelengthX (float): Sidelength in x-direction.
+		sidelengthY (float): Sidelength in y-direction.
+		
+	Returns:
+		bool: True if inside, otherwise False.
+			
+	"""
+	
 	return x<=offset[0]+sidelengthX and offset[0]<=x and y<=offset[1]+sidelengthY and offset[1]<=y	
 	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks if coordinate (x,y) is in square with given offset and sidelength
-
 def checkInsideImg(x,y,res,offset=[0,0]):
+	
+	"""Checks if coordinate (x,y) is inside image.
+	
+	.. note:: If ``x`` and ``y`` are ``float``, will return ``bool``, otherwise
+	   ``numpy.ndarray`` of booleans.
+	      
+	Args:
+		x (numpy.ndarray): Array of x-coordinates.
+		y (numpy.ndarray): Array of y-coordinates.
+		res (int): Resolution of image (e.g. 512).
+		
+	Returns:
+		bool: True if inside, otherwise False.
+			
+	"""
+	
 	return (x>offset[0]) * (x<offset[0]+res)*(y>offset[1]) * (y<offset[1]+res)
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks if coordinate (x,y) is in polyogn, checks first if vector or just value
-
 def checkInsidePolyVec(x,y,poly):	
+	
+	"""Checks if coordinate (x,y) is inside polyogn, checks first if vector or just value.
+	
+	.. note:: If ``x`` and ``y`` are ``float``, will return ``bool``, otherwise
+	   ``numpy.ndarray`` of booleans.
+	      
+	Args:
+		poly (list): List of (x,y)-coordinates of corners.
+		x (numpy.ndarray): Array of x-coordinates.
+		y (numpy.ndarray): Array of y-coordinates.
+			
+	Returns:
+		bool: True if inside, otherwise False.
+			
+	"""
+	
 	try:
 		len(x)
 	except TypeError:
@@ -366,12 +587,25 @@ def checkInsidePolyVec(x,y,poly):
 	     
 	return vec
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks if coordinate (x,y) is in polyogn
-
 def checkInsidePoly(x,y,poly):
-
-	#Taken from http://www.ariel.com.au/a/python-point-int-poly.html
+	
+	"""Checks if coordinate (x,y) is inside polyogn.
+	
+	Adapted from http://www.ariel.com.au/a/python-point-int-poly.html.
+	
+	.. note:: If ``x`` and ``y`` are ``float``, will return ``bool``, otherwise
+	   ``numpy.ndarray`` of booleans.
+	      
+	Args:
+		poly (list): List of (x,y)-coordinates of corners.
+		x (float): x-coordinate.
+		y (float): y-coordinate.
+			
+	Returns:
+		bool: True if inside, otherwise False.
+			
+	"""
+	
 	n = len(poly)
 	inside =False
 		
@@ -390,38 +624,102 @@ def checkInsidePoly(x,y,poly):
 	
 	return inside
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks if coordinate (x,y) is first quadrant
-
 def checkQuad(x,y,res):
+	
+	"""Checks if coordinate (x,y) is inside first quadrant.
+	
+	.. note:: If ``x`` and ``y`` are ``float``, will return ``bool``, otherwise
+	   ``numpy.ndarray`` of booleans.
+	      
+	Args:
+		x (float): x-coordinate.
+		y (float): y-coordinate.
+		res (int): Resolution of image (e.g. 512).
+		
+	Returns:
+		bool: True if inside, otherwise False.
+			
+	"""
+	
 	return (res/2.-1<=x) & (res/2.-1<=y)
 	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks if square has right size, returns True if so.
-
 def checkSquareSize(ind_sq_x,ind_sq_y,sidelength):
+	
+	"""Checks if square described by indices has right size.
+	      
+	Args:
+		ind_sq_x (list): Image indices in x-direction.
+		ind_sq_y (list): Image indices y x-direction.
+		sidelength (float): Sidelength of square.
+		
+	Returns:
+		bool: True if equal size, otherwise False.
+			
+	"""
 
 	if floor(sidelength)**2==len(ind_sq_x) and floor(sidelength)**2==len(ind_sq_x) and floor(sidelength)**2==len(unique(ind_sq_x))*len(unique(ind_sq_y)):
 		return True
 	else:
 		return False
 		
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks if square is centered in image from indices (first bracket should be zero and second too)
 	
 def checkSquareCenteredFromInd(ind_sq_x,ind_sq_y,res):
+	
+	"""Checks if square described by indices is cenntered in image.
+	      
+	Args:
+		ind_sq_x (list): Image indices in x-direction.
+		ind_sq_y (list): Image indices y x-direction.
+		res (int): Resolution of image (e.g. 512).
+		
+	Returns:
+		bool: True if centered, otherwise False.
+			
+	"""
+	
+	#first bracket should be zero and second too
 	return not bool((min(ind_sq_x)-(res-1-max(ind_sq_x)))+(min(ind_sq_y)-(res-1-max(ind_sq_y))))
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Checks if square is centered in image (need a correction by .5 because there is a difference between pixels and coordinates)
-	
 def checkSquCentered(offset,sidelength,res):
+	
+	"""Checks if square is centered in image.
+	
+	.. note:: Need a correction by .5 because there is a difference between pixels and coordinates.
+	      
+	Args:
+		offset (numpy.ndarray): Offset of square.
+		sidelength (float): Sidelength.
+		res (int): Resolution of image (e.g. 512).
+		
+	Returns:
+		bool: True if centered, otherwise False.
+			
+	"""
+	
 	return not bool(((res-sidelength)-2*(offset[0]-0.5)) and ((res-sidelength)-2*(offset[1]-0.5)))
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Reduces indices found for whole domain to first quadrant
 
 def idx2QuadImg(indX,indY,res,debug=False):
+	
+	"""Reduces indices found for whole domain to first quadrant.
+	
+	.. note:: Need a correction by .5 because there is a difference between pixels and coordinates.
+	      
+	Args:
+		indX (list): List of indices in x-direction.
+		indY (list): List of indices in y-direction.
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* indXQuad (list): List of reduced indices.
+			* indYQuad (list): List of reduced indices.
+			
+	"""
 	
 	#Convert to np array
 	indX=np.asarray(indX)
@@ -451,10 +749,23 @@ def idx2QuadImg(indX,indY,res,debug=False):
 	
 	return indXQuad, indYQuad
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Reduces indices of regions specified in inds found for whole domain to first quadrant
-
 def regions2quad(inds,res,debug=False):
+	
+	"""Reduces indices of regions specified in ``inds`` found for whole domain to first quadrant.
+	      
+	Args:
+		inds (list): List of indices-list doubles.
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		list: List of reduced indices-list doubles.
+			
+	"""
+	
+	
 	inds_quad=[]
 	for ind in inds:
 		ind_quad=ind2quad(ind[0],ind[1],res,debug=debug)
@@ -462,20 +773,40 @@ def regions2quad(inds,res,debug=False):
 	
 	return inds_quad
 
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Fills img at given positions with value  
-
 def ind2mask(vals,ind_x,ind_y,val):
+	
+	"""Converts indices lists into mask.
+	      
+	Args:
+		vals (numpy.ndarray): Array on which to be masked.
+		ind_x (list): Indices in x-direction.
+		ind_y (list): Indices in y-direction.
+		val (float): Value that is assigned to pixels in indices-lists.
+	
+	Returns:
+		numpy.ndarray: Masked array.
+			
+	"""
 	
 	vals[ind_x,ind_y]=val
 	
 	return vals
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Converts mask into indices
-
 def mask2ind(mask,res):
+	
+	"""Converts mask into indices list.
+	      
+	Args:
+		mask (numpy.ndarray): Mask array.
+		res (int): Resolution of image (e.g. 512).
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* indX_new (list): List of x-indices.
+			* indY_new (list): List of y-indices.
+			
+	"""
 	
 	#To bool
 	mask=mask.astype(bool)
@@ -491,10 +822,26 @@ def mask2ind(mask,res):
 	
 	return idxX_new, idxY_new
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Finds theoretical pixels that could be filled up with rim concentration for a square
-
 def getExtendedPixelsSquare(offset,sidelength,res,debug=False):
+	
+	"""Finds theoretical pixels that could be filled up with rim
+	concentration for a square.
+	      
+	Args:
+		offset (numpy.ndarray): Offset of square.
+		sidelength (float): Sidelength.
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* indX (list): List of x-indices.
+			* indY (list): List of y-indices.
+			
+	"""
 	
 	indX=[]
 	indY=[]
@@ -510,10 +857,29 @@ def getExtendedPixelsSquare(offset,sidelength,res,debug=False):
 				
 	return indX,indY
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Finds theoretical pixels that could be filled up with rim concentration for a rectangle
+
 
 def getExtendedPixelsRectangle(offset,sidelengthX,sidelengthY,res,debug=False):
+	
+	"""Finds theoretical pixels that could be filled up with rim
+	concentration for a rectangle.
+	      
+	Args:
+		offset (numpy.ndarray): Offset of rectangle.
+		sidelengthX (float): Sidelength in x-direction.
+		sidelengthY (float): Sidelength in y-direction.
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* indX (list): List of x-indices.
+			* indY (list): List of y-indices.
+			
+	"""
 	
 	x=np.arange(np.floor(offset[1]),np.ceil(offset[0]+sidelengthX))
 	y=np.arange(np.floor(offset[1]),np.ceil(offset[1]+sidelengthY))
@@ -529,10 +895,26 @@ def getExtendedPixelsRectangle(offset,sidelengthX,sidelengthY,res,debug=False):
 				
 	return indX,indY
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Finds theoretical pixels that could be filled up with rim concentration for a circle
-
 def getExtendedPixelsCircle(center,radius,res,debug=False):
+	
+	"""Finds theoretical pixels that could be filled up with rim
+	concentration for a circle.
+	      
+	Args:
+		center (numpy.ndarray): Center of circle.
+		radius (float): Radius of circle.
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* indX (list): List of x-indices.
+			* indY (list): List of y-indices.
+			
+	"""
 	
 	x=np.arange(np.ceil(center[0]-radius),np.floor(center[0]+radius))
 	y=np.arange(np.ceil(center[1]-radius),np.floor(center[1]+radius))
@@ -548,10 +930,25 @@ def getExtendedPixelsCircle(center,radius,res,debug=False):
 				
 	return indX,indY
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Finds theoretical pixels that could be filled up with rim concentration for a polygon
-
 def getExtendedPixelsPolygon(corners,res,debug=False):
+	
+	"""Finds theoretical pixels that could be filled up with rim
+	concentration for a polygon.
+	      
+	Args:
+		corners (list): List of (x,y)-coordinates of corners.
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* indX (list): List of x-indices.
+			* indY (list): List of y-indices.
+			
+	"""
 	
 	cornersNP=np.array(corners)
 	
@@ -575,10 +972,29 @@ def getExtendedPixelsPolygon(corners,res,debug=False):
 				
 	return indX,indY
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Finds theoretical pixels that could be filled up with rim concentration for a list of ROIs
-
 def getCommonExtendedPixels(ROIs,res,debug=False,procedures=None):
+	
+	"""Finds theoretical pixels that could be filled up with rim concentration 
+	for a list of :py:class:`pyfrp.subclasses.pyfrp_ROI.ROI` ROIs. 
+	
+	The ``procedures`` input is only necessary if ROI is a :py:class:`pyfrp.subclasses.pyfrp_ROI.customROI`,
+	combining multiple ROIs via addition/substraction.
+	
+	Args:
+		ROIs (list): List of ROIs.
+		res (int): Resolution of image (e.g. 512).
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		procedures (list): List of addition/substraction procedures.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* indX (list): List of x-indices.
+			* indY (list): List of y-indices.
+			
+	"""
 	
 	xExtend,yExtend=getCommonXYExtend(ROIs,debug=debug)
 	
@@ -606,10 +1022,21 @@ def getCommonExtendedPixels(ROIs,res,debug=False,procedures=None):
 	
 	return indX,indY
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Gets common x-y-extend for a list of ROIs
-
 def getCommonXYExtend(ROIs,debug=False):
+	
+	"""Finds common x-y-extend of a list of :py:class:`pyfrp.subclasses.pyfrp_ROI.ROI` ROIs..
+	
+	Args:
+		ROIs (list): List of ROIs.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* xExtend (list): ``[minx,maxx]``.
+			* yExtend (list): ``[miny,maxy]``.
+			
+	"""
+	
 	xExtends,yExtends=[],[]
 	for r in ROIs:
 		xExtend,yExtend=r.computeXYExtend()
@@ -628,10 +1055,25 @@ def getCommonXYExtend(ROIs,debug=False):
 	
 	return xExtend, yExtend
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Remove repeated indices tupels from index lists for images
-
 def remRepeatedImgIdxs(idxX,idxY,debug=False):
+	
+	"""Remove repeated indices tupels from index lists for images.
+	
+	Args:
+		idxX (list): List of x-indices.
+		idxY (list): List of y-indices.
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* idxX (list): Filtred list of x-indices.
+			* idxY (list): Filtered list of y-indices.
+	
+	"""
+	
 	idx=zip(idxX,idxY)
 	idx=pyfrp_misc.remRepeatsList(idx)
 	idxX,idxY=pyfrp_misc.unzipLists(idx)
