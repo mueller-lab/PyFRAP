@@ -38,10 +38,44 @@ from pyfrp.modules.pyfrp_term_module import *
 #matplotlib
 import matplotlib.pyplot as plt
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#analysis object
+#===========================================================================================================================================================================
+#Module Classes
+#===========================================================================================================================================================================
+
 
 class analysis:
+	
+	"""PyFRAP analysis class storing information about analysis options 
+	and some analysis results.
+	
+	Analysis options are:
+	
+		* ``gaussian``: Apply gaussian filter to images. Default kernel size is ``gaussianSigma=2``.
+		* ``median``: Apply gaussian filter to images. Default kernel size is ``medianRadius=5``.
+		* ``flatten``: Apply flattening mask.
+		* ``norm``: Norm  by pre image.
+		* ``bkgd``: Substract background.
+		* ``quad``: Perform reduction to first quadrant by flipping.
+		* ``flipBeforeProcess``: Flip into quadrant before other processing options are applied.
+	
+	Analysis options are stored in ``process`` dictionary. If analysis finds option in ``process.keys``, it will
+	perform option. Analysis options can be turned on/off using the respective functions, such as 
+	
+		* :py:func:pyfrp.subclasses.pyfrp_analysis.medianOn
+		* :py:func:pyfrp.subclasses.pyfrp_analysis.flattenOn
+		* etc.
+	
+	Processing parameters are stored in ``process.values``.
+	
+	The default processing options are ``process={}``, meaning that no image modification is applied before 
+	concentration readout.
+	
+	.. warning: Quadrant reduction is still experimental.	
+		
+	Args:
+		embryo (pyfrp.subclasses.pyfrp_embryo.embryo): PyFRAP embryo instance.
+	
+	"""
 	
 	#Creates new embryo object
 	def __init__(self,embryo):
@@ -72,6 +106,24 @@ class analysis:
 		self.medianRadius=5
 		
 	def run(self,signal=None,embCount=None,debug=False,debugAll=False,showProgress=True):
+		
+		"""Runs analysis by passing analysis object to :py:func:`pyfrp.modules.pyfrp_img_module.analyzeDataset`.
+		
+		Will first check if ROI indices are computed for all ROIs and if necessary compute them before starting 
+		data analysis.
+		
+		Keyword Args:
+			signal (PyQt4.QtCore.pyqtSignal): PyQT signal to send progress to GUI.
+			embCount (int): Counter of counter process if multiple datasets are analyzed. 
+			debug (bool): Print final debugging messages and show debugging plots.
+			debugAll (bool): Print debugging messages and show debugging plots of each step.
+			showProgress (bool): Print out progress.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_analysis.analysis: Updated analysis instance.
+		
+		"""
+		
 		if 'norm' in self.process and 'flatten' in  self.process:
 			printWarning("Both norm and flatten have been selected for data analysis. This is not advisable.")
 		
@@ -82,19 +134,63 @@ class analysis:
 		return self
 	
 	def setGaussianSigma(self,s):
+		
+		"""Sets size of gaussian kernel and updates its value
+		in ``process`` dictionary if gaussian filter is turned on.
+		
+		See also http://scikit-image.org/docs/dev/api/skimage.filters.html#skimage.filters.gaussian_filter.
+		
+		Args:
+			s (float): New sigma.
+			
+		"""
+		
 		self.gaussianSigma=s
 		self.updateProcess()
 		return self.gaussianSigma
 	
 	def getGaussianSigma(self):
+		
+		"""Returns size of gaussian kernel.
+		
+		See also http://scikit-image.org/docs/dev/api/skimage.filters.html#skimage.filters.gaussian_filter.
+		
+		Returns:
+			float: Gaussian sigma.
+			
+		"""
+		
 		return self.gaussianSigma
 	
 	def setMedianRadius(self,s):
+		
+		"""Sets size of median kernel and updates its value
+		in ``process`` dictionary if median filter is turned on.
+		
+		See also http://scikit-image.org/docs/dev/api/skimage.filters.html#skimage.filters.median and 
+		http://docs.scipy.org/doc/scipy-0.15.1/reference/generated/scipy.ndimage.filters.median_filter.html.
+		
+		Args:
+			s (float): New radius.
+			
+		"""
+		
 		self.medianRadius=s
 		self.updateProcess()
 		return self.medianRadius
 	
 	def getMedianRadius(self):
+		
+		"""Returns size of median kernel.
+		
+		See also http://scikit-image.org/docs/dev/api/skimage.filters.html#skimage.filters.median and 
+		http://docs.scipy.org/doc/scipy-0.15.1/reference/generated/scipy.ndimage.filters.median_filter.html.
+		
+		Returns:
+			float: New radius.
+			
+		"""
+		
 		return self.medianRadius
 	
 	def setGaussian(self,b):
