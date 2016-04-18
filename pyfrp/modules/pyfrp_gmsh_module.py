@@ -313,6 +313,12 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 	.. note:: If ``redirect=True``, but ``fnStout`` or  ``fnSterr`` is not specified,
 	   will dump stout/sterr into ``meshfiles/gmshLogs/``.
 	
+	.. note:: Gmsh is run with the following settings (if all flags are activated):
+	   ``gmsh -v -3 -optimize -algo3d -clmax volSizeMax -o fnOut fn``
+	   This requires that Gmsh was compiled with TetGen algorithm. PyFRAP can be installed with
+	   Gmsh + TetGen included by choosing the ``--gmsh`` flag. 
+	   See also http://pyfrap.readthedocs.org/en/latest/setup.html#pyfrap-setup-py-api .
+	
 	Args:
 		fn (str): Filepath.
 		

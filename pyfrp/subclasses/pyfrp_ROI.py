@@ -788,10 +788,63 @@ class ROI(object):
 		if findIdxs:
 			self.computeMeshIdx(self.embryo.simulation.mesh.mesh)
 		
-		print "Mesh Nodes in ROI after: ", len(self.meshIdx)
+		if debug and findIdxs:
+			print "Mesh Nodes in ROI after: ", len(self.meshIdx)
 			
 		return fnOut
 	
+	def adaptRefineInMesh(self,nNodesReq,factor=3.,addZ=15.,debug=False):
+		
+		"""Refines mesh inside ROI adaptively until a given number of nodes inside ROI 
+		is reached.
+		
+		Does this by:
+			
+			* Refining through :py:func:`refineInMesh`.
+			* Computing mesh indices via :py:func:`computeMeshIdx`.
+			* If number of nodes did not change, increase ``addZ``, else increase ``factor``.
+			* Check if desired number of nodes is reached or not, if not, repeat.
+		
+		Args:
+			nNodesReq (int): Desired number of nodes inside ROI.
+		
+		Keyword Args:
+			factor (float): Refinement factor.
+			addZ (float): Number of pixels added above and below ROI for box field.
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			int: Final number of nodes in ROI.
+			
+		"""
+		
+		nNodes=len(self.meshIdx)
+		i=0
+		while nNodes<nNodesReq:
+			
+			self.refineInMesh(factor=factor,addZ=addZ,findIdxs=True,debug=debug,run=True)
+			
+			nNodesNew=len(self.meshIdx)
+			
+			if debug:
+				print "Iteration ", i, ". "
+				print "Mesh Nodes in ROI before refinement: " , nNodes, " and after ", nNodesNew, "."
+				
+			if nNodesNew==nNodes:
+				if debug: 
+					print "nNodes did not change, will increase addZ by 1."
+				addZ=addZ+1
+				
+			else:
+				if debug:
+					print "nNodes not large enough yet, will increase factor by 1."
+				factor=factor+1
+			i=i+1
+			
+			nNodes=nNodesNew
+		
+		return nNodes
+				
 	def printDetails(self):
 		
 		"""Prints out all attributes of ROI object."""

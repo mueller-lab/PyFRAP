@@ -1,6 +1,7 @@
 include pyfrp/meshfiles/*
 include pyfrp/meshfiles/experimental/*
 include pyfrp/meshfiles/field/*
+include pyfrp/meshfiles/backup/*
 
 include pyfrp/configurations/*
 include pyfrp/configurations/macros/*

@@ -809,8 +809,34 @@ def writeBoxField(f,fieldID,volSizeIn,volSizeOut,rangeX,rangeY,rangeZ):
 	f.write('\n')
 	return f
 	
+def repairDefaultGeoFiles(debug=False):
 	
-
+	"""Copies default geometry files from backup folder to meshfile folder.
+	Useful if geometry files got somehow overwritten or corrupted.
+	
+	Keyword Args:
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		bool: ``True`` if success, ``False`` otherwise.
+	
+	"""
+	
+	fnBackup=pyfrp_misc_module.getMeshfilesDir()+"backup"
+	
+	if debug:
+		cmd = "cp -v " + fnBackup + "*.geo " + pyfrp_misc_module.getMeshfilesDir()
+		print "Executing command:"
+		print cmd
+	else:
+		cmd = "cp " + fnBackup + "*.geo " + pyfrp_misc_module.getMeshfilesDir()
+	
+	ret=os.system(cmd)
+	
+	if ret>0:
+		return False
+	else:
+		return True
 
 		
 
