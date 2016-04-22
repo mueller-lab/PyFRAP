@@ -203,6 +203,22 @@ class mesh(object):
 					
 		return self.getVolSizePx()	
 	
+	def getNNodes(self):
+		
+		"""Returns number of nodes in mesh. 
+		
+		If no mesh has been generated yet, will return 0.
+		
+		Returns:
+			int: Number of nodes.
+		
+		"""
+		
+		if self.mesh==None:
+			return 0
+		else:
+			return len(self.mesh.getCellCenters()[0])
+		
 	def writeVTKFile(self,fn="",sub=False):
 		
 		if not os.path.isfile(self.fnMesh):
@@ -373,6 +389,7 @@ class mesh(object):
 			
 	def addBoxField(self,volSizeIn,rangeX,rangeY,rangeZ,newFile=True,fnAppendix="_box",comment="newField",run=False):
 		
+		
 		if newFile:
 			if "_box" not in self.geometry.fnGeo:	
 				fnOut=os.path.dirname(self.geometry.fnGeo)+"/field/custom/"+os.path.basename(self.geometry.fnGeo).replace(".geo",fnAppendix+"_"+self.geometry.embryo.name+".geo")
@@ -381,8 +398,9 @@ class mesh(object):
 		else:
 			fnOut=self.geometry.fnGeo
 		
-		pyfrp_gmsh_IO_module.addBoxField(self.geometry.fnGeo,volSizeIn,self.volSizePx,rangeX,rangeY,rangeZ,comment="",fnOut=fnOut)
+		pyfrp_gmsh_IO_module.addBoxField(self.geometry.fnGeo,volSizeIn,self.volSizePx,rangeX,rangeY,rangeZ,comment=comment,fnOut=fnOut)
 		self.geometry.setFnGeo(fnOut)
+		
 		
 		if run:
 			self.genMesh()

@@ -432,6 +432,67 @@ def getAllIDsOfType(fn,elementType):
 	
 	f.close()
 	return Ids
+
+def findComment(fn,comment):
+	
+	"""Finds a specific comment in .geo file and returns
+	line in which it appears, otherwise -1.
+	
+	.. note:: Will only look for an exact match.
+	
+	Args:
+		fn (str): Filename of .geo file.
+		comment (str): Comment to look for.
+		
+	Returns:
+		int: Line number of appearance.
+	
+	"""
+	
+	if not os.path.isfile(fn):
+		printWarning(fn + " does not exist.")
+		return -1
+	
+	f = open (fn,'rb')
+	for i,line in enumerate(f):
+		if line.strip().startswith("//"):
+			if line.strip().replace("//","")==comment:
+				return i
+	
+	return -1
+
+def getFieldByComment(fn,comment,lineDiff=3):
+	
+	"""Returns field that is preceeded by comment ``comment``.
+	
+	.. note:: Will only look for an exact match.
+	
+	Args:
+		fn (str): Filename of .geo file.
+		comment (str): Comment to look for.
+	
+	Keyword Args:
+		lineDiff (int): Maximum allowed difference between line of comment and field.
+	
+	Returns:
+		int: Line number of appearance.
+
+	"""
+	
+	#Get all field IDs
+	fieldIDs=getAllIDsOfType(fn,"Field")
+	
+	#Find line of comment
+	lineComment=findComment(fn,comment)
+
+	for fieldID in fieldIDs:
+		lines=getLinesByID(fn,fieldID,"Field")
+		
+		if lines[0]-lineComment<lineDiff:
+			return fieldID, lines
+		
+	return -1,[]	
+	
 	
 def getLargestIDOfType(fn,elementType):
 	
@@ -614,6 +675,23 @@ def getLinesByID(fn,elementId,elementType=""):
 	f.close()
 	return lineNumbers
 				
+def removeCommentFromFile(fn,comment):
+	
+	"""Removes comment ``comment`` from .geo file. 
+	
+	.. note:: Will remove all appearances of ``comment``.
+	
+	.. note:: Will also remove comments that only start with ``comment``.
+	
+	Args:
+		fn (str): Filename of .geo file.
+		comment (str): Comment to remove
+	
+	"""
+	
+	txtLineReplace(fn,"//"+comment,"")
+	return
+
 def removeElementFromFile(fn,elementType,elementId,delimOpen="(",delimClose=")"):
 	
 	"""Removes element with type ``elementType`` and ID ``elementID`` from .geo file.
@@ -627,13 +705,13 @@ def removeElementFromFile(fn,elementType,elementId,delimOpen="(",delimClose=")")
 		delimOpen (str): Openening delimiter of ID.
 		delimClose (str): Closing delimiter of ID.
 	
-
 	"""
 	
 	txtLineReplace(fn,elementType+delimOpen+str(elementId)+delimClose,"")
 	return
 
-def addBoxField(fn,volSizeIn,volSizeOut,rangeX,rangeY,rangeZ,comment="",fnOut=""):		
+	
+def addBoxField(fn,volSizeIn,volSizeOut,rangeX,rangeY,rangeZ,comment="",fnOut="",overwrite=True,sameComment=True):		
 	
 	"""Adds box field to .geo file by doing the following:
 		
@@ -655,6 +733,10 @@ def addBoxField(fn,volSizeIn,volSizeOut,rangeX,rangeY,rangeZ,comment="",fnOut=""
 	
 	.. note:: If ``fnOut`` is not specified, will overwrite input file.
 	
+	.. note:: Will always remove previous background fields. If ``overwrite=True``, will remove all fields.
+	   If additionally ``sameComment=True``, will look for the field that has the same comment as ``comment``
+	   and only remove this particular one.
+	
 	See also: http://gmsh.info/doc/texinfo/gmsh.html#Specifying-mesh-element-sizes . 
 	
 	Args:
@@ -668,7 +750,8 @@ def addBoxField(fn,volSizeIn,volSizeOut,rangeX,rangeY,rangeZ,comment="",fnOut=""
 	Keyword Args:
 		comment (str): Comment to be added before box field.
 		fnOut (str): Filepath for output.
-	
+		overwrite (bool): Overwrite previously exisiting box fields.
+		sameComment (bool): Only remove box field with particular comment.
 
 	"""
 	
@@ -688,9 +771,22 @@ def addBoxField(fn,volSizeIn,volSizeOut,rangeX,rangeY,rangeZ,comment="",fnOut=""
 	#If there is already a background field, remove all lines containing it
 	if bkgdID!=None:
 		removeElementFromFile(tempPath,"Field",bkgdID,delimOpen="[",delimClose="]")
-		removeElementFromFile(tempPath,"Mesh.",bkgdID,delimOpen="",delimClose="")
+		removeElementFromFile(tempPath,"Mesh.","",delimOpen="",delimClose="")
 		removeElementFromFile(tempPath,"Background Field =",bkgdID,delimOpen="",delimClose="")
-	
+		
+	#Remove other fields if selected:
+	if overwrite:
+		
+		if sameComment:
+			sameID,sameLines=getFieldByComment(tempPath,comment)
+			if sameID>-1:
+				removeElementFromFile(tempPath,"Field",sameID,delimOpen="[",delimClose="]")
+				removeCommentFromFile(tempPath,comment)
+				fieldIDs.remove(sameID)
+		else:	
+			for fieldID in fieldIDs:
+				removeElementFromFile(tempPath,"Field",fieldID,delimOpen="[",delimClose="]")
+		
 	#Get index of last non-empty line
 	idxNonEmpty=getLastNonEmptyLine(tempPath)
 	

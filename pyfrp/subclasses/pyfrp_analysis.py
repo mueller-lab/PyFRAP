@@ -61,8 +61,8 @@ class analysis:
 	Analysis options are stored in ``process`` dictionary. If analysis finds option in ``process.keys``, it will
 	perform option. Analysis options can be turned on/off using the respective functions, such as 
 	
-		* :py:func:pyfrp.subclasses.pyfrp_analysis.medianOn
-		* :py:func:pyfrp.subclasses.pyfrp_analysis.flattenOn
+		* :py:func:`pyfrp.subclasses.pyfrp_analysis.medianOn`
+		* :py:func:`pyfrp.subclasses.pyfrp_analysis.flattenOn`
 		* etc.
 	
 	Processing parameters are stored in ``process.values``.
@@ -70,7 +70,7 @@ class analysis:
 	The default processing options are ``process={}``, meaning that no image modification is applied before 
 	concentration readout.
 	
-	.. warning: Quadrant reduction is still experimental.	
+	.. warning:: Quadrant reduction is still experimental.	
 		
 	Args:
 		embryo (pyfrp.subclasses.pyfrp_embryo.embryo): PyFRAP embryo instance.

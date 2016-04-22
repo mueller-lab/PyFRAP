@@ -779,6 +779,9 @@ class ROI(object):
 		xExtend,yExtend,zExtend=self.getEncapsulatingBox()
 		zExtend=[zExtend[0]-addZ,zExtend[1]+addZ]
 		
+		print "current zExtend", zExtend
+		
+		
 		if debug:
 			print "Adding Box Field for ROI " + self.name
 			print "Mesh Nodes in ROI before: ", len(self.meshIdx)
@@ -818,31 +821,36 @@ class ROI(object):
 			
 		"""
 		
+		
 		nNodes=len(self.meshIdx)
+		nNodesAll=self.embryo.simulation.mesh.getNNodes()
 		i=0
 		while nNodes<nNodesReq:
 			
 			self.refineInMesh(factor=factor,addZ=addZ,findIdxs=True,debug=debug,run=True)
 			
 			nNodesNew=len(self.meshIdx)
+			nNodesAllNew=self.embryo.simulation.mesh.getNNodes()
 			
 			if debug:
 				print "Iteration ", i, ". "
+				print "Total mesh nodes: ", nNodesAllNew
 				print "Mesh Nodes in ROI before refinement: " , nNodes, " and after ", nNodesNew, "."
-				
-			if nNodesNew==nNodes:
-				if debug: 
-					print "nNodes did not change, will increase addZ by 1."
-				addZ=addZ+1
-				
-			else:
-				if debug:
-					print "nNodes not large enough yet, will increase factor by 1."
-				factor=factor+1
+			
+			if nNodesNew<nNodesReq:
+				if nNodesAllNew==nNodesAll:
+					if debug: 
+						print "nNodesAll did not change, will increase addZ by 1. \n"
+					addZ=addZ+1
+					
+				else:
+					if debug:
+						print "nNodes not large enough yet, will increase factor by 1. \n"
+					factor=factor+1
 			i=i+1
 			
 			nNodes=nNodesNew
-		
+			nNodesAll=nNodesAllNew
 		return nNodes
 				
 	def printDetails(self):
@@ -896,8 +904,6 @@ class ROI(object):
 		pyfrp_plot_module.redraw(ax)
 		
 		return ax
-	
-	
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Radial ROI class
@@ -1085,6 +1091,10 @@ class radialSliceROI(sliceROI,radialROI):
 		self.xExtend=[self.center[0]-self.radius,self.center[0]+self.radius]
 		self.yExtend=[self.center[1]-self.radius,self.center[1]+self.radius]
 		return self.xExtend, self.yExtend
+	
+	#def plotIn3D(self,domain=None,ax=None):
+	
+	###NOTE need this function here!!!
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Square ROI class

@@ -156,7 +156,7 @@ class geometry(object):
 			return ax
 		
 		if ax==None:
-			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Geometry" +self.typ])
+			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Geometry " +self.typ],proj=['3d'])
 			ax=axes[0]
 		
 		domain.draw(ax=ax,color=color,ann=ann)
@@ -418,10 +418,44 @@ class cone(geometry):
 		return self.height
 	
 	def computeSliceHeightFromRadius(self,radius):
-		sliceHeight=self.height/(self.upperRadius-self.lowerRadius)*(radius-self.lowerRadius) 
+		
+		r"""Returns the slice height given a slice radius.
+		
+		Slice height is computed by
+		
+		.. math:: s(r) = \frac{h}{l-u} (r-u)
+		
+		where :math:`l,u` are lower and upper radius respectively and :math:`h` is cone height.
+		
+		Args:
+			radius (float): Slice radius.
+			
+		Returns:
+			float: Slice height.
+		
+		"""
+		
+		sliceHeight=self.height/(self.lowerRadius-self.upperRadius)*(radius-self.upperRadius) 
 		return sliceHeight
 	
 	def computeRadiusFromSliceHeight(self,height):
+		
+		r"""Returns the slice radius given a slice height.
+		
+		Slice radius is computed by
+		
+		.. math:: r(s) = \frac{l-u}{h} s +u
+		
+		where :math:`l,u` are lower and upper radius respectively and :math:`h` is cone height.
+		
+		Args:
+			height (float): Slice height.
+			
+		Returns:
+			float: Slice radius.
+		
+		"""
+		
 		radius=(self.upperRadius-self.lowerRadius)/self.height*height+self.upperRadius
 		return radius
 	
