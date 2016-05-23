@@ -53,19 +53,18 @@ from pyfrp.modules import pyfrp_IO_module
 from pyfrp.modules import pyfrp_plot_module
 
 #PyFRAP GUIs
-import pyfrp_gui_molecule_dialogs
-import pyfrp_gui_embryo_dialogs
-import pyfrp_gui_ROI_manager
-import pyfrp_gui_geometry_dialogs
-import pyfrp_gui_gmsh_editor
-import pyfrp_gui_analysis_dialogs
-import pyfrp_gui_simulation_dialogs
-import pyfrp_gui_mesh_dialogs
-import pyfrp_gui_fit_dialogs
-import pyfrp_gui_pinning_dialogs
-import pyfrp_gui_statistics_dialogs
-import pyfrp_gui_basics
-
+from pyfrp.gui import pyfrp_gui_molecule_dialogs
+from pyfrp.gui import pyfrp_gui_embryo_dialogs
+from pyfrp.gui import pyfrp_gui_ROI_manager
+from pyfrp.gui import pyfrp_gui_geometry_dialogs
+from pyfrp.gui import pyfrp_gui_gmsh_editor
+from pyfrp.gui import pyfrp_gui_analysis_dialogs
+from pyfrp.gui import pyfrp_gui_simulation_dialogs
+from pyfrp.gui import pyfrp_gui_mesh_dialogs
+from pyfrp.gui import pyfrp_gui_fit_dialogs
+from pyfrp.gui import pyfrp_gui_pinning_dialogs
+from pyfrp.gui import pyfrp_gui_statistics_dialogs
+from pyfrp.gui import pyfrp_gui_basics
 
 #PyFRAP Classes
 from pyfrp.subclasses import pyfrp_conf
@@ -363,6 +362,9 @@ class pyfrp(QtGui.QMainWindow):
 		defaultROIButton = QtGui.QAction('Create Default ROIs', self)
 		self.connect(defaultROIButton, QtCore.SIGNAL('triggered()'), self.createDefaultROIs)
 		
+		defaultROIWizardButton = QtGui.QAction('Default ROIs Wizard', self)
+		self.connect(defaultROIWizardButton, QtCore.SIGNAL('triggered()'), self.defaultROIsWizard)
+		
 		indexROIButton = QtGui.QAction('Update ROIs indices', self)
 		self.connect(indexROIButton, QtCore.SIGNAL('triggered()'), self.updateROIIdxs)
 		
@@ -380,6 +382,8 @@ class pyfrp(QtGui.QMainWindow):
 		self.roiMB=self.mbEmbryo.addMenu('&ROIs')
 		self.roiMB.addAction(roiManagerButton)
 		self.roiMB.addAction(defaultROIButton)
+		self.roiMB.addAction(defaultROIWizardButton)
+		
 		self.roiMB.addAction(indexROIButton)
 		
 		return 
@@ -1071,7 +1075,7 @@ class pyfrp(QtGui.QMainWindow):
 		self.lastopen=os.path.dirname(str(fn))
 			
 		#Ask if extract save
-		reply = QtGui.QMessageBox.question(self, 'Message',"Do you want to save  (Will only keep essential results and delete everything else)?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+		#reply = QtGui.QMessageBox.question(self, 'Message',"Do you want to save  (Will only keep essential results and delete everything else)?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
 		
 		#No slim save
 		#if reply == QtGui.QMessageBox.No:
@@ -1159,6 +1163,10 @@ class pyfrp(QtGui.QMainWindow):
 		
 		"""Creates new embryo object and adds it to molecule.
 		
+		Will first run :py:func:`selectEmbryoGenMode` to choose way of embryo generation.
+		Will create embryo instance via :py:func:`LSM2EmbryoWizard` if selected, ohterwise
+		will create default embryo.
+		
 		Returns:
 			pyfrp.subclasses.pyfrp_embryo: New embryo object.
 		
@@ -1168,18 +1176,22 @@ class pyfrp(QtGui.QMainWindow):
 		if not self.checkSelectedNode():
 			return 
 		
-		#Generate name
-		embryoNames=pyfrp_misc_module.objAttrToList(self.currMolecule.embryos,"name")
-		newName=pyfrp_misc_module.enumeratedName("newEmbryo",embryoNames,sep="_")
-		
-		#Create new embryo
-		newEmbryo=self.currMolecule.newEmbryo(newName)
-		
-		#Append to object bar
-		newNode=self.embryo2ObjectBar(newEmbryo,self.currMoleculeNode)
-		self.objectBar.setCurrentItem(newNode)
-		self.getCurrentObj()
-		
+		ret=self.selectEmbryoGenMode()
+		if ret==-1:
+			return
+		elif ret==0:
+			#Generate name
+			embryoNames=pyfrp_misc_module.objAttrToList(self.currMolecule.embryos,"name")
+			newName=pyfrp_misc_module.enumeratedName("newEmbryo",embryoNames,sep="_")
+			
+			#Create new embryo
+			newEmbryo=self.currMolecule.newEmbryo(newName)
+			
+			#Append to object bar
+			newNode=self.embryo2ObjectBar(newEmbryo,self.currMoleculeNode)
+			self.objectBar.setCurrentItem(newNode)
+			self.getCurrentObj()
+			
 		#Call embryo editor
 		self.editEmbryo()
 		
@@ -1187,7 +1199,7 @@ class pyfrp(QtGui.QMainWindow):
 		self.selectGeometry()		
 		self.editGeometry()
 		
-		return newEmbryo
+		return self.getCurrentEmbryo()
 	
 	def loadEmbryo(self):
 		
@@ -1267,135 +1279,7 @@ class pyfrp(QtGui.QMainWindow):
 		self.updatePropBar()
 		
 		return self.currMolecule.embryos
-		
-	##---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	##Save embryo
-	
-	#def save_embryo(self):
-		
-		##Check if anything is highlighted
-		#if self.embryos_list.currentItem()==None:
-		
-			##If not give error msg
-			#QtGui.QMessageBox.critical(None, "Error","No embryo selected.",QtGui.QMessageBox.Ok | QtGui.QMessageBox.Default)
-			#return
-		
-		#else:
-			#if self.curr_node.parent()!=self.curr_embryos:
-				##If not give error msg
-				#QtGui.QMessageBox.critical(None, "Error","No embryo selected.",QtGui.QMessageBox.Ok | QtGui.QMessageBox.Default)
-				#return
-			
-			#else:
-				#reply = QtGui.QMessageBox.question(self, 'Message',"Do you also want to save the image data into the embryo file?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-	
-				#if reply == QtGui.QMessageBox.Yes:
-					
-					#fn_save=QtGui.QFileDialog.getSaveFileName(self, 'Save file', self.lastopen,".pk",".pk")
-					
-					#fn_save=str(fn_save)
-					#self.lastopen=os.path.dirname(str(fn_save))
-					#if fn_save=='':
-						#pass
-					#else:
-					
-						#self.curr_embr.save_embryo(fn_save)
-				
-				#else:
-					
-					##Temporarily saving the embryo
-					#temp_emb=cpy.deepcopy(self.curr_embr)
-								
-					##Deleting all image data to reduce file size
-					#temp_emb.masks_embryo=[]
-					#temp_emb.masks_ext=None
-					#temp_emb.masks_int=None
-					
-					#fn_save=QtGui.QFileDialog.getSaveFileName(self, 'Save file', self.lastopen,".pk",".pk")
-					#fn_save=str(fn_save)	
-					#self.lastopen=os.path.dirname(str(fn_save))
-					#if fn_save=='':
-						#pass
-					#else:
-						#temp_emb.save_embryo(fn_save)
-	
-	##---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	##Load embryo
-	
-	#def load_embryo(self):
-		
-		#fn_load=QtGui.QFileDialog.getOpenFileName(self, 'Open file', self.lastopen)
-		#if fn_load=='':
-			#return
-		#self.lastopen=os.path.dirname(str(fn_load))
-		##Create new embryo object
-		#curr_name="newembryo_1"
-		#emb=embryo(curr_name,"default")
-		
-		##Load into new embryo object
-		#emb=emb.load_embryo(fn_load)
-		#curr_name=emb.name
-		
-		##Check if there is already a embryo with the name newembryo_1
-		#in_list=1
-		
-		#while in_list==1:
-			##Go through all embryos
-			#for item in self.curr_mol.embryos:
-				#if item.name==curr_name:
-					#ret=QtGui.QMessageBox.warning(self,self.tr("Warning"),self.tr("Embryo already exists, do you want to overwrite it?"),QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-					
-					#if ret == QtGui.QMessageBox.Yes:
-						#self.delete_specific_embryo(embryo=item)
-						
-					#else:
-						#if "_" in curr_name:
-							#nme,nmbr=curr_name.split("_")
-							#nmbr=str(int(nmbr)+1)
-						#else:
-							#nme=curr_name
-							#nmbr=str(1)
-						
-						#curr_name=curr_name+"_"+nmbr
-			##Actually in list
-			#in_list=0
-		
-		##Set new name
-		#emb.name=curr_name
-		
-		##Add embryo to list of embryos
-		#self.curr_mol.embryos.append(emb)
-		
-		##Add to embryo bar
-		#analyzed=str(0)
-		#fitted=str(0)
-		#simulated=str(0)
-		#if shape(emb.squ_av_data_d)[0]>1:
-			#analyzed=str(1)
-		#if shape(emb.squ_av_d)[0]>1:
-			#simulated=str(1)
-		#if shape(emb.fits)>0:
-			#for fit in emb.fits:
-				#if shape(fit.squ_av_fitted_d)[0]>1:	
-					#fitted=str(1)
-			
-		##Adding embryo to sidebar
-		#self.curr_embr_node=QtGui.QTreeWidgetItem(self.curr_embryos,[curr_name,analyzed,simulated,fitted])
-		#self.curr_fits=QtGui.QTreeWidgetItem(self.curr_embr_node,["Fits",'','',''])
-		
-		##Add fits if they exists
-		#for fit in emb.fits:
-			#if shape(fit.squ_av_fitted_d)[0]>0:		
-				#QtGui.QTreeWidgetItem(self.curr_fits,[fit.name,'','','1'])
-			#else:	
-				#QtGui.QTreeWidgetItem(self.curr_fits,[fit.name,'','','0'])
-						
-		#self.curr_embr=emb
-		#self.embryos_list.expandItem(self.curr_embr_node)
-		#self.embryos_list.expandItem(self.curr_fits)
-	
-	
-	
+
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Checks if molecules or embryos have the same name
 
@@ -1444,10 +1328,48 @@ class pyfrp(QtGui.QMainWindow):
 	
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Wizard
+	#Wizards
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
+	def LSM2EmbryoWizard(self):
+		
+		"""Opens :py:class:`pyfrp.gui.pyfrp_gui_embryo_dialogs.lsmWizard` which lets
+		one to extract and sort microscope files and then creates new 
+		:py:class:`pyfrp.subclasses.pyfrp_embryo.embryo` including new data.
+		
+		.. note:: Uses Fiji. Fiji path needs to be set properly for success.
+		
+		"""
+		
+		lsmWizard = pyfrp_gui_embryo_dialogs.lsmWizard(self)
+		if lsmWizard.exec_():
+			embryo = lsmWizard.getEmbryo()
+			if embryo==None:
+				return	
+			
+			self.currMolecule.addEmbryo(embryo)
+			
+			newNode=self.embryo2ObjectBar(embryo,self.currMoleculeNode)
+			self.objectBar.setCurrentItem(newNode)
+			self.getCurrentObj()
+					
 	def openWizard(self):
+		
+		"""Wizard for PyFRAP analysis.
+		
+		Leads user through following steps:
+		
+			* Embryo creation :py:func:`newEmbryo`.
+			* ROI creation :py:func:`createDefaultROIs`.
+			* ROI handling :py:func:`openROIManager`.
+			* Mesh generation :py:func:`generateMesh`.
+			* Data analysis :py:func:`analyzeEmbryo`.
+			* FRAP simulation :py:func:`simulateEmbryo`.
+			* Fit creation :py:func:`newFit`.
+			* Fit plotting :py:func:`plotFit`.
+			
+		"""	
+		
 		self.newEmbryo()
 		self.createDefaultROIs()
 		self.openROIManager()
@@ -1459,30 +1381,104 @@ class pyfrp(QtGui.QMainWindow):
 		self.newFit()
 		self.plotFit()
 	
+	def selectEmbryoGenMode(self):
+		
+		"""Opens :py:class:`pyfrp.gui.pyfrp_gui_embryo_dialogs.wizardSelector`
+		and lets user select embryo generation mode. 
+		
+		Returns:
+			int: 1 if user chose from microscope, 0 if not, -1 else.
+		
+		"""
+		
+		selectWizard = pyfrp_gui_embryo_dialogs.wizardSelector(self)
+		if selectWizard.exec_():
+			useLSM = selectWizard.getUseLSM()
+			if useLSM==None:
+				return -1
+			
+			if useLSM:
+				self.LSM2EmbryoWizard()
+				return 1
+			return 0
+				
+		
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Embryo Menubar Methods
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Open ROI Manager for current embryo
-		
 	def openROIManager(self):
+		
+		"""Open ROI Manager for current embryo.
+		"""
+		
 		currEmbryo=self.getCurrentEmbryo()
 		if currEmbryo!=None:
 			ret=pyfrp_gui_ROI_manager.ROImanager(currEmbryo,self).exec_()
 			self.updateROIsNodeChildren()
 		return
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Create default ROIs for current embryo
-		
+	
 	def createDefaultROIs(self):
+		
+		"""Create default ROIs for current embryo.
+		"""
+		
 		currEmbryo=self.getCurrentEmbryo()
 		if currEmbryo!=None:
 			ret=pyfrp_gui_ROI_manager.defaultROIsDialog(currEmbryo,self).exec_()
 			self.updateROIsNodeChildren()
 		return
 	
+	def defaultROIsWizard(self):
+		
+		"""Small Wizard that helps creating a set of default ROIs for current embryo.
+		"""
+		
+		currEmbryo=self.getCurrentEmbryo()
+		if currEmbryo==None:
+			return
+		
+		#Select Slice ROI
+		sliceSelector = pyfrp_gui_ROI_manager.ROISelector(currEmbryo,'radialSlice',self,msg='Select Slice ROI',sliceHeight=currEmbryo.sliceHeightPx,sliceWidth=currEmbryo.sliceWidthPx,color='g',name='Slice')
+		if sliceSelector.exec_():
+			sliceROI=sliceSelector.getROI()
+			
+		#Select Bleached ROI
+		squSelector = pyfrp_gui_ROI_manager.ROISelector(currEmbryo,'squareSlice',self,msg='Select Bleached ROI',sliceHeight=currEmbryo.sliceHeightPx,sliceWidth=currEmbryo.sliceWidthPx,color='b',name='Bleached Square')
+		if squSelector.exec_():
+			bleachedROI=squSelector.getROI()
+		
+		#Select Rim ROI
+		if hasattr(sliceROI,'radius'):
+			radius=sliceROI.radius*0.66
+			center=sliceROI.center
+			rimSelector = pyfrp_gui_ROI_manager.ROISelector(currEmbryo,'radialSlice',self,msg='Select Rim ROI',radius=radius,center=center,sliceHeight=currEmbryo.sliceHeightPx,sliceWidth=currEmbryo.sliceWidthPx,color='y',name='Slice rim')
+		else:
+			radius=133.
+			rimSelector = pyfrp_gui_ROI_manager.ROISelector(currEmbryo,'radialSlice',self,msg='Select Rim ROI',radius=radius,sliceHeight=currEmbryo.sliceHeightPx,sliceWidth=currEmbryo.sliceWidthPx,color='y',name='Slice rim')
+			
+		if rimSelector.exec_():
+			rimROI=rimSelector.getROI()
+		
+		#Build default ROIs
+		radius=300.
+		center=[256.,256.]
+		if hasattr(sliceROI,'radius'):
+			radius=sliceROI.radius
+			center=sliceROI.center
+		else:
+			if currEmbryo.geometry!=None:
+				if hasattr(currEmbryo.geometry,'imagingRadius'):
+					radius=currEmbryo.geometry.imagingRadius
+				else:
+					if hasattr(currEmbryo.geometry,'radius'):
+						radius=currEmbryo.geometry.radius
+		
+		currEmbryo.genDefaultROIs(center,radius,rimFactor=0.66,masterROI=sliceROI,bleachedROI=bleachedROI,rimROI=rimROI,clean=True)
+		
+		self.updateROIsNodeChildren()
+
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Updates all ROI Idxs
 		

@@ -143,6 +143,14 @@ class basicCanvasDialog(QtGui.QDialog):
 	
 	def connectCanvas(self):
 		self.canvas.mpl_connect('button_press_event', self.getMouseCanvas)
+		self.canvas.mpl_connect('key_press_event', self.keyPressed)
+		
+		self.canvas.setFocusPolicy( QtCore.Qt.ClickFocus )
+		self.canvas.setFocus()
+		
+		
+	def keyPressed(self):
+		printWarning("No Key-Press Action defined.")
 	
 	def removeArtist(self,idx=-1):
 		if len(self.artists)>0:

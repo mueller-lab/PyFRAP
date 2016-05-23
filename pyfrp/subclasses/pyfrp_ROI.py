@@ -62,6 +62,9 @@ import matplotlib.patches as ptc
 #Time 
 import time
 
+#Copy
+import copy
+
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Main ROI class
 
@@ -101,6 +104,21 @@ class ROI(object):
 		
 		#Rim concentration
 		self.useForRim=False
+	
+	def setId(self,Id):
+		
+		"""Sets Id of ROI.
+		
+		Args:
+			Id (int): New Id.
+		
+		Returns:
+			int: New Id.
+		
+		"""
+		
+		self.Id=Id
+		return self.Id
 	
 	def setName(self,n):
 		self.name=n
@@ -905,6 +923,18 @@ class ROI(object):
 		
 		return ax
 	
+	def getCopy(self):
+		
+		"""Returns deepcopy of ROI object.
+		
+		Uses ``copy.deepcopy`` to generate copy of object, see also https://docs.python.org/2/library/copy.html .
+		
+		"""
+		
+		return copy.deepcopy(self)
+	
+	
+	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Radial ROI class
 
@@ -997,7 +1027,14 @@ class radialROI(ROI):
 		self.yExtend=[self.center[1]-self.radius,self.center[1]+self.radius]
 		return self.xExtend, self.yExtend
 	
-
+	def getCenterOfMass(self):
+		
+		"""Returns center of mass of ROI.
+		
+		For a radial ROI, this is equivalent to the ``center``.
+		"""
+		
+		return self.center
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #slice ROI class
@@ -1181,6 +1218,49 @@ class squareROI(ROI):
 		self.yExtend=[self.offset[1],self.offset[1]+self.sidelength]
 		return self.xExtend, self.yExtend
 	
+	def getCorners(self):
+		
+		"""Returns corners of square in counter-clockwise order, starting with offset.
+		
+		Returns:
+			list: List of 2D coordinates of corners.
+		
+		"""
+		
+		corner1=np.asarray(self.offset)
+		corner2=np.asarray([self.offset[0]+self.sidelength,self.offset[1]])
+		corner3=np.asarray([self.offset[0]+self.sidelength,self.offset[1]+self.sidelength])
+		corner4=np.asarray([self.offset[0],self.offset[1]+self.sidelength])
+		
+		return [corner1,corner2,corner3,corner4]
+	
+	def getCenterOfMass(self):
+		
+		r"""Computes center of mass of ROI.
+		
+		The center of mass is computed by
+		
+		.. math:: c = \frac{1}{N} \sum\limits_{i=1}{N} x_i ,
+		
+		where :math:`c` is the center of mass, :math:`N` the number of corners and :math:`x_i` is the 
+		coordinate of corner :math:`i` .
+		
+		Returns:
+			numpy.ndarray: Center of mass.
+		
+		"""
+		
+		corners=self.getCorners()
+		
+		CoM=cornes[0]
+		
+		for i in range(1,len(corners)):
+			CoM=CoM+corners[i]
+		
+		CoM=CoM/len(corners)
+		
+		return CoM
+		
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Square and slice ROI class
 
@@ -1300,12 +1380,55 @@ class rectangleROI(ROI):
 		self.yExtend=[self.offset[1],self.offset[1]+self.sidelengthY]
 		return self.xExtend, self.yExtend
 	
+	def getCorners(self):
+		
+		"""Returns corners of rectangle in counter-clockwise order, starting with offset.
+		
+		Returns:
+			list: List of 2D coordinates of corners.
+		
+		"""
+		
+		corner1=np.asarray(self.offset)
+		corner2=np.asarray([self.offset[0]+self.sidelengthX,self.offset[1]])
+		corner3=np.asarray([self.offset[0]+self.sidelengthX,self.offset[1]+self.sidelengthY])
+		corner4=np.asarray([self.offset[0],self.offset[1]+self.sidelengthY])
+		
+		return [corner1,corner2,corner3,corner4]
+	
+	def getCenterOfMass(self):
+		
+		r"""Computes center of mass of ROI.
+		
+		The center of mass is computed by
+		
+		.. math:: c = \frac{1}{N} \sum\limits_{i=1}{N} x_i ,
+		
+		where :math:`c` is the center of mass, :math:`N` the number of corners and :math:`x_i` is the 
+		coordinate of corner :math:`i` .
+		
+		Returns:
+			numpy.ndarray: Center of mass.
+		
+		"""
+		
+		corners=self.getCorners()
+		
+		CoM=cornes[0]
+		
+		for i in range(1,len(corners)):
+			CoM=CoM+corners[i]
+		
+		CoM=CoM/len(corners)
+		
+		return CoM
+		
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Rectangle and slice ROI class
 
 class rectangleSliceROI(rectangleROI,sliceROI):
 	
-	def __init__(self,embryo,name,Id,offset,sidelength,height,width,sliceBottom,color='b'):
+	def __init__(self,embryo,name,Id,offset,sidelengthX,sidelengthY,height,width,sliceBottom,color='b'):
 		
 		rectangleROI.__init__(self,embryo,name,Id,offset,sidelengthX,sidelengthY,color=color)
 		sliceROI.__init__(self,embryo,name,Id,height,width,sliceBottom,color=color)
@@ -1395,6 +1518,56 @@ class polyROI(ROI):
 		self.xExtend=[xmin,xmax]
 		self.yExtend=[ymin,ymax]
 		return self.xExtend, self.yExtend
+	
+	def getCenterOfMass(self):
+		
+		r"""Computes center of mass of ROI.
+		
+		The center of mass is computed by
+		
+		.. math:: c = \frac{1}{N} \sum\limits_{i=1}{N} x_i ,
+		
+		where :math:`c` is the center of mass, :math:`N` the number of corners and :math:`x_i` is the 
+		coordinate of corner :math:`i` .
+		
+		Returns:
+			numpy.ndarray: Center of mass.
+		
+		"""
+		
+		CoM=np.asarray(self.cornes[0])
+		
+		for i in range(1,len(self.corners)):
+			CoM=CoM+np.asarray(self.corners[i])
+		
+		CoM=CoM/len(corners)
+		
+		return CoM
+	
+	def moveCorner(self,idx,x,y):
+		
+		"""Moves corner to new postion.
+		
+		Args:
+			idx (int): Index of corner to be moved.
+			x (float): New x-coordinate.
+			y (float): New y-coordinate.
+			
+		Results:
+			list: Updated corners list.
+			
+		"""
+		
+		if idx==-1:
+			idx=len(self.corners)-1
+		
+		for i,corner in enumerate(self.corners):
+			if i==idx:
+				
+				self.corners[idx]=[x,y]
+				
+		return self.corners		
+		
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Polygon and slice ROI class

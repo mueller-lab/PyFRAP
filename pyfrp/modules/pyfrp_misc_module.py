@@ -239,6 +239,11 @@ def appDtype(l,s,dtype='int'):
 	
 	"""Appends string to list and convert to right dtype.
 	
+	..note:: Will use ``s.strip()`` before conversion to avoid
+	  unnecessary spaces.
+	  
+	.. note:: Will remove quotes from strings using :py:func:`removeQuoteSignsFromString`.  
+	
 	Args:
 		l (list): A list.
 		s (str): String to append.
@@ -251,17 +256,44 @@ def appDtype(l,s,dtype='int'):
 	"""
 	
 	if s!="":
-		if dtype=="int":
+		s=s.strip()
+		if dtype=="int" or dtype==int:
 			l.append(int(s))
-		elif dtype=="float":
+		elif dtype=="float" or dtype==float:
 			l.append(float(s))
-		elif dtype=="str":
-			l.append(str(s))
+		elif dtype=="str" or dtype==str:
+			
+			# Don't convert strings to strings, that can lead to problems
+			s=removeQuoteSignsFromString(s)
+			l.append(s)
+			
 		else:
 			printWarning("Not understanding dtype = "+ dtype)
 		
 	return l	
 
+def removeQuoteSignsFromString(s):
+	
+	"""Removes Quote signs from string.
+	
+	Example:
+	>>> a='"Test('Test')"'
+	>>> removeQuoteSignsFromString()
+	>>> 'Test(Test)'
+	
+	Args:
+		s (str): A string.
+	
+	Returns: 
+		str: String without quote signs.
+	
+	"""
+	
+	s=s.replace("\"","")
+	s=s.replace("\'","")
+	
+	return s
+	
 def complValsSimple(l1,l2):
 	
 	"""Returns complimentary values of two lists.
@@ -939,7 +971,7 @@ def getPath(identifier,fnPath=None,defaultOutput=""):
 	
 	return path
 	
-def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True):
+def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True,recoverIdent=['recover','post'],bleachIdent=['bleach'],preIdent=['pre'],colorPrefix='_c00',cleanUp=True):
 	
 	"""Creates embryo object ready for analysis from microscope data.
 	
@@ -957,7 +989,12 @@ def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True):
 		nChannel (int): Defines which channel of the images contains relevant data
 		fnDest (str): Path of embryo data structure
 		createEmbryo (boo): Flag if embryo object should be created
-		
+		recoverIdent (list): List of identifiers for recovery data
+		bleachIdent (list): List of identifiers for bleach data
+		preIdent (list): List of identifiers for pre-bleach data
+		colorPrefix (str): Defines how to detect if multichannel or not
+		cleanUp (bool): Clean up .tif files from other channels afterwards.
+			
 	Returns:
 		pyfrp.subclasses.pyfrp_embryo.embryo: Created Embryo in case of success, otherwise -1
 
@@ -971,7 +1008,7 @@ def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True):
 	
 	l=getSortedFileList(fn,ftype)
 	if len(l)==0:
-		printError(fn+ "does not contain images of type ", ftype)
+		printError(fn+ "does not contain images of type " + ftype)
 		return -1
 	
 	r=pyfrp_img_module.extractMicroscope(fn,ftype)
@@ -985,21 +1022,21 @@ def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True):
 	fnDest=slashToFn(fnDest)
 	
 	makeEmbryoFolderStruct(fnDest)
-	sortImageFiles(fn,fnDest,ftype,nChannel=nChannel)
+	sortImageFiles(fn,fnDest,ftype,nChannel=nChannel,recoverIdent=recoverIdent,bleachIdent=bleachIdent,preIdent=preIdent,colorPrefix=colorPrefix,cleanUp=cleanUp)
 	
 	if createEmbryo:
 		from pyfrp.subclasses import pyfrp_embryo
 		
 		emb=pyfrp_embryo.embryo(name)
-		emb.setDataFolder(fnDest+'recover')
+		emb.setDataFolder(fnDest+'recover/')
 		a=emb.newAnalysis()
-		a.setFnPre(fnDest+'pre')
+		a.setFnPre(fnDest+'pre/')
 		
 		return emb
 	else:
 		return 1
 	
-def sortImageFiles(fn,fnDest,ftype,recoverIdent=['recover','post'],bleachIdent=['bleach'],preIdent=['pre'],nChannel=1,debug=False,colorPrefix='_c00'):
+def sortImageFiles(fn,fnDest,ftype,recoverIdent=['recover','post'],bleachIdent=['bleach'],preIdent=['pre'],nChannel=1,debug=False,colorPrefix='_c00',cleanUp=True):
 	
 	"""Sorts all image data in fn into the respective folders of embryo project.
 	
@@ -1015,6 +1052,7 @@ def sortImageFiles(fn,fnDest,ftype,recoverIdent=['recover','post'],bleachIdent=[
 		nChannel (int): Defines which channel of the images contains relevant data
 		debug (bool): Debugging flag
 		colorPrefix (str): Defines how to detect if multichannel or not
+		cleanUp (bool): Clean up .tif files from other channels afterwards.
 		
 	Returns:
 		int: 0
@@ -1026,9 +1064,66 @@ def sortImageFiles(fn,fnDest,ftype,recoverIdent=['recover','post'],bleachIdent=[
 	moveImageFiles(fn,'recover','tif',recoverIdent,recoverMulti,fnDest=fnDest,debug=debug,colorPrefix=colorPrefix)
 	moveImageFiles(fn,'pre','tif',preIdent,preMulti,fnDest=fnDest,debug=debug,colorPrefix=colorPrefix)
 	moveImageFiles(fn,'bleach','tif',bleachIdent,bleachMulti,fnDest=fnDest,debug=debug,colorPrefix=colorPrefix)
-	moveImageFiles(fn,'lsm','lsm',[""],False,fnDest=fnDest,debug=debug,colorPrefix=colorPrefix)
+	moveImageFiles(fn,'lsm',ftype,[""],False,fnDest=fnDest,debug=debug,colorPrefix=colorPrefix)
 	
+	if cleanUp:
+		cleanUpImageFiles(fn,'tif',ident=recoverIdent,debug=debug,colorPrefix=colorPrefix)
+		cleanUpImageFiles(fn,'tif',ident=bleachIdent,debug=debug,colorPrefix=colorPrefix)
+		cleanUpImageFiles(fn,'tif',ident=preIdent,debug=debug,colorPrefix=colorPrefix)
+		
 	return 
+
+def cleanUpImageFiles(fn,ftype,ident=None,debug=False,colorPrefix='_c00',nChannel=None):
+	
+	"""Removes all image files fullfilling ``*ident*colorPrefix*ftype`` from ``fn``.
+	
+	If ``nChannel=None``, will remove all files of ftype.
+	
+	Args:
+		fn (str): Path to folder containing images.
+		ftype (str): Type of file, for example "tif".
+		
+
+	Keyword Args:
+		debug (bool): Debugging flag
+		colorPrefix (str): String prefix before channel number.
+		nChannel (int): Defines which channel to delete
+		ident (list): List of identifiers, for example ["recover","post"].
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+
+	"""
+	
+	debugFlag=debug*' -v '
+	r=0
+	
+	if nChannel!=None:
+		colorFlag='*'+colorPrefix+str(nChannel)
+	else:
+		colorFlag=''
+		
+	if ident!=None:
+	
+		for ind in ident:
+			cmd='rm '+debugFlag+fn+'*'+ind+colorFlag+'*.'+ftype 
+			try:
+				os.system(cmd)
+				r=1
+			except:
+				printError("Something went wrong executing:" + cmd )
+				r=0
+	
+	else:
+		cmd='rm '+debugFlag+fn+'*'+colorFlag+'*.'+ftype 
+		try:
+			os.system(cmd)
+			r=1
+		except:
+			printError("Something went wrong executing:" + cmd )
+			r=0
+	return r
+	
 	
 def moveImageFiles(fn,fnTarget,ftype,ident,isMulti,fnDest=None,debug=False,colorPrefix='_c00',nChannel=1):
 	
@@ -1038,7 +1133,7 @@ def moveImageFiles(fn,fnTarget,ftype,ident,isMulti,fnDest=None,debug=False,color
 		fn (str): Path to folder containing images.\n
 		fnTarget (str): Name of folder files should go in, for example "recover".
 		ftype (str): Type of file, for example "tif".
-		indent (list): List of identifiers, for example ["recover","post"].
+		ident (list): List of identifiers, for example ["recover","post"].
 		isMulti (bool): Flag if images are multichannel or not.
 
 	Keyword Args:
@@ -1057,15 +1152,16 @@ def moveImageFiles(fn,fnTarget,ftype,ident,isMulti,fnDest=None,debug=False,color
 	
 	debugFlag=debug*' -v '
 	r=0
+	
 	for ind in ident:
+			
+		colorFlag=isMulti*('*'+colorPrefix+str(nChannel))
+		cmd='mv '+debugFlag+fn+'*'+ind+colorFlag+'*.'+ftype +' ' + fnDest + fnTarget+'/'
 		try:
-			colorFlag=isMulti*('*'+colorPrefix+str(nChannel))
-			cmd='mv '+debugFlag+fn+'*'+ind+colorFlag+'*.'+ftype +' ' + fnDest + fnTarget+'/'
 			os.system(cmd)
 			r=1
 		except:
-			printError("Something went wrong executing:" )
-			print cmd
+			printError("Something went wrong executing: " + cmd)
 			r=0
 	
 	return r
@@ -1108,7 +1204,7 @@ def checkMultiChannel(fn,ident,colorPrefix='_c00'):
 	
 	Args:
 		fn (str): Path to folder containing images
-		indent (list): List of identifiers, for example ["recover","post"]
+		ident (list): List of identifiers, for example ["recover","post"]
 	
 	Keyword Args:
 		colorPrefix (str): Defines how to detect if multichannel or not

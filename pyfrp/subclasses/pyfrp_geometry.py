@@ -24,12 +24,30 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Geometry class for PyFRAP toolbox, including following classes:
+"""PyFRAP module containing geometry classes. The :py:class:`geometry` class is 
+a simple geometry class providing basic parameters and methods, parenting different
+more specific geometries such as:
 
-#(1) geometry
-#(2) zebrafishDomeStage
-#(3) cylinder
-#(4) xenopusBall
+	* :py:class:`zebrafishDomeStage`: Describing a zebrafish embryo in dome stage.
+	* :py:class:`cylinder`: A simple cylinder.
+	* :py:class:`xenopusBall`: A simple ball geometry (looking like a xenopus embryo).
+	* :py:class:`cone`: A (truncated) cone.
+
+For most of the geometries, this module also provides quadrant reduced versions of the geometry,
+reducing the geometry to the first quadrant around the center. 
+
+.. note:: Rules for adding new geometries:
+	
+	   * Always subclass from  :py:class:`geometry`
+	   * Always center geometry around ``geometry.center``. That includes having defining the center
+	     in the .geo file by ``center_x`` and ``center_y``.
+	   * Unit is pixels.
+	   * Be careful with method overwrites. Use them wisely.
+	   * Include the geometries into the GUI.
+	   * Make them accessable by sharing them.
+
+"""
+
 
 #===========================================================================================================================================================================
 #Importing necessary modules
@@ -50,7 +68,27 @@ from pyfrp.modules.pyfrp_term_module import *
 #===========================================================================================================================================================================
 
 class geometry(object):
+	
+	"""Basic PyFRAP geometry class. 
+	
+	Stores all the necessary information to describe a geometry. Comes with helpful methods
+	for 
+	
+		* Centering (see :py:func:`centerInImg`)
+		* Defining optimal ROIs (see :py:func:`optimalAllROI`)
+		* Geometry file parsing (see :py:func:`readGeoFile`)
+		* Geometry plotting (see :py:func:`plotGeometry`)
 
+	Args:
+		embryo (pyfrp.subclasses.pyfrp_emrbyo.embryo): Embryo class that geometry belongs to.
+		typ (str): Type of geometry.
+		fnGeo (str): Path to gmsh .geo file describing the geometry.
+		center (numpy.ndarray): Center of geometry.
+		
+	
+	
+	"""
+	
 	def __init__(self,embryo,typ,fnGeo,center):
 		
 		self.typ=typ
@@ -61,32 +99,120 @@ class geometry(object):
 		self.geoFileParameters={}
 		
 	def getEmbryo(self):
+		
+		"""Returns :py:class:`pyfrp.subclasses.pyfrp_embryo.embryo` instance 
+		that geometry belongs to."""
+		
 		return self.embryo
 	
 	def getTyp(self):
+		
+		"""Returns type of geometry.
+		
+		Returns:
+			str: Type of geometry.
+		"""
+		
+		
 		return self.typ
 	
 	def setFnGeo(self,fn):
+		
+		"""Sets path to .geo file.
+		
+		Args:
+			fn (str): Path to file.
+		
+		Returns:
+			str: Path to file.
+		"""
+		
 		self.fnGeo=fn
 		return self.fnGeo
 	
 	def getFnGeo(self):
+		
+		"""Returns path to .geo file.
+		
+		Returns:
+			str: Path to file.
+		"""
+		
 		return self.fnGeo
 	
-	def setCenter(self,c):
+	def setCenter(self,c,updateInFile=True):
+		
+		"""Sets geometry center.
+		
+		.. note:: The geometry ``center`` attribute is then also set in
+		   .geo file if ``updateInFile`` is selected.
+		
+		Args:
+			c (numpy.ndarray): New center ``[x,y]``.
+			
+		Keyword Args:
+			updateInFile (bool): Update center in .geo file.
+			
+		Returns:
+			numpy.ndarray: New center.
+		
+		"""
+		
 		self.center=c
+		
+		if updateInFile:
+			if hasattr(self,'updateGeoFile'):
+				self.updateGeoFile()
 		return self.center
 	
 	def getCenter(self):
+		
+		"""Returns geometry center.
+		
+		Returns:
+			numpy.ndarray: New center.
+		
+		"""
+		
 		return self.center
 	
-	def center2Mid(self):
+	def center2Mid(self,updateInFile=True):
+		
+		"""Sets geometry center to center of image.
+		
+		Uses ``embryo.dataResPx`` to calculate image center.
+		
+		.. note:: The geometry ``center`` attribute is then also set in
+		   .geo file if ``updateInFile`` is selected.
+			
+		Keyword Args:
+			updateInFile (bool): Update center in .geo file.
+			
+		Returns:
+			numpy.ndarray: New center.
+		
+		"""
+		
 		if mod(self.embryo.dataResPx,2)==0:
-			return self.setCenter([self.embryo.dataResPx/2+0.5,self.embryo.dataResPx/2+0.5])
+			return self.setCenter([self.embryo.dataResPx/2+0.5,self.embryo.dataResPx/2+0.5],updateInFile=updateInFile)
 		else:
-			return self.setCenter([self.embryo.dataResPx/2,self.embryo.dataResPx/2])
+			return self.setCenter([self.embryo.dataResPx/2,self.embryo.dataResPx/2],updateInFile=updateInFile)
 	
 	def centerInImg(self):
+		
+		"""Sets geometry center to center of image, updates .geo file and 
+		if avaialable remeshes.
+		
+		Uses ``embryo.dataResPx`` to calculate image center.
+		
+		.. note:: The geometry ``center`` attribute is then also set in
+		   .geo file.
+				
+		Returns:
+			numpy.ndarray: New center.
+		
+		"""
+		
 		oldCenter=self.getCenter()
 		self.centerMid()
 		a=raw_input("Change center of geometry from " + oldCenter + ' to ' + self.getCenter() + ' ? [Y/N]')
@@ -101,6 +227,18 @@ class geometry(object):
 		return 	self.getCenter()
 	
 	def setAllROI(self,name='All',makeNew=False,updateIdxs=False):
+		
+		"""Tries to set the optimal *All* ROI for a specific geometry.
+		
+		Keyword Args:
+			name (str): Name of All ROI to look for.
+			makeNew (bool): Generate a new All ROI. 
+			updateIdxs (bool): Update indices of new ROI.
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_ROI.ROI: New ROI instance.
+		
+		"""
 		
 		if not hasattr(self,'optimalAllROI'):
 			printWarning('Cannot set AllROI. Geometry of type ' + self.typ + ' has no method for this!')
@@ -140,6 +278,14 @@ class geometry(object):
 	
 	def readGeoFile(self):
 		
+		"""Reads the .geo file and parses it into a :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.domain` 
+		instance. 
+		
+		Returns:
+			:py:class:`pyfrp.modules.pyfrp_gmsh_geometry.domain`: Domain containing geometry. 
+		
+		"""
+		
 		try:
 			domain,self.geoFileParameters=pyfrp_gmsh_IO_module.readGeoFile(self.fnGeo)
 		except:
@@ -149,6 +295,23 @@ class geometry(object):
 		return domain
 	
 	def plotGeometry(self,ax=None,color='k',ann=False):
+		
+		"""Plots geometry in 3D.
+		
+		Reads the .geo file and parses it into a :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.domain` 
+		instance. Then draws the domain.
+		
+		If no axes are given via ``ax``, will create new matplotlib axes.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Axes to draw in.
+			color (str): Color of plot.
+			ann (bool): Show annotations.
+		
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
 		
 		domain=self.readGeoFile()
 		
@@ -195,6 +358,31 @@ class geometry(object):
 		
 class zebrafishDomeStage(geometry):
 	
+	"""Geometry describing a zebrafish embryo in dome stage.
+	
+	For information about zebrafish stages, see 
+	http://onlinelibrary.wiley.com/doi/10.1002/aja.1002030302/abstract;jsessionid=1EAD19FE5563DAA94E3C22C5D5BEEC85.f01t03.
+	
+	.. image:: ../imgs/pyfrp_geometry/dome.png
+	
+	The zebrafish geometry is basically described by two half-balls with different radii piled on top of each other.
+	The crucial geometrical parameters are:
+		
+		* ``outerRadius``: Radius of the outer ball.
+		* ``innerRadius``: Radius of the inner ball.
+		* ``centerDist``: Distance between the centers of the two balls.
+	
+	PyFRAP automatically computes these parameters given 
+	
+		* ``imagingRadius``: Radius of embryo at imaging depth.
+		* ``imagingHeight``: Imaging depth.
+		* ``radiusScale``: Scaling factor between radii.
+		
+	For details of this computations, see :py:func:`computeDome`.
+		
+
+	"""
+	
 	def __init__(self,embryo,center,imagingRadius,radiusScale=1.1):
 		
 		mdir=pyfrp_misc_module.getMeshfilesDir()
@@ -209,21 +397,66 @@ class zebrafishDomeStage(geometry):
 		self.restoreDefault()
 	
 	def setOuterRadius(self,r):
+		
+		"""Sets outer radius and updates zebrafish geometry.
+		
+		Args:
+			r (float): New radius.
+		
+		Returns:
+			float: New radius.
+		
+		"""
+		
 		self.outerRadius=r
 		self.computeDome()
 		return self.outerRadius
 	
 	def setRadiusScale(self,s):
+		
+		"""Sets scaling factor between outer and inner radius 
+		and updates zebrafish geometry.
+		
+		Args:
+			s (float): New scaling factor.
+		
+		Returns:
+			float: New scaling factor.
+		
+		"""
+		
 		self.radiusScale=s
 		self.computeDome()
 		return self.radiusScale
 	
 	def setImagingRadius(self,r):
+		
+		"""Sets imaging radius and updates zebrafish geometry.
+		
+		Args:
+			r (float): New radius.
+		
+		Returns:
+			float: New radius.
+		
+		"""
+		
 		self.imagingRadius=r
 		self.computeDome()
 		return self.imagingRadius
 	
 	def setImagingHeight(self,h):
+		
+		"""Sets imaging height and updates zebrafish geometry.
+		
+		Args:
+			h (float): New height.
+		
+		Returns:
+			float: New height.
+		
+		"""
+		
 		self.imagingHeight=h
 		if self.embryo.sliceHeightPx!=self.imagingHeight:
 			printWarning("imagingHeight of geometry is not identical with imaging depth of embryo. This can lead to problems.")
@@ -232,32 +465,98 @@ class zebrafishDomeStage(geometry):
 		return self.imagingHeight
 	
 	def getImagingRadius(self):
+		
+		"""Returns imaging radius.
+		"""
+		
 		return self.imagingRadius
 	
 	def getImagingHeight(self):
+		
+		"""Returns imaging height.
+		"""
+		
 		return self.imagingHeight
 	
 	def getOuterRadius(self):
+		
+		"""Returns outer radius.
+		"""
+		
 		return self.outerRadius
 	
 	def getRadiusScale(self):
+		
+		"""Returns radius scaling factor.
+		"""
+		
 		return self.radiusScale
 	
 	def computeDome(self):
+		
+		r"""Updates zebrafish geometry.
+		
+		Computes zebrafish geometry as follows:
+		
+		.. math:: r_{\mathrm{outer}}=\frac{r_{\mathrm{imaging}}^2+h_{\mathrm{imaging}}}{-2 h_{\mathrm{imaging}}},\\
+		   r_{\mathrm{inner}}=s_{\mathrm{radius}}r_{\mathrm{outer}},\\
+		   d_{\mathrm{center}}=\sqrt{r_{\mathrm{inner}}-r_{\mathrm{outer}}},
+		   
+		where :math:`r_{\mathrm{outer}}` is the ``outerRadius``, :math:`r_{\mathrm{inner}}` is the ``innerRadius``, :math:`h_{\mathrm{imaging}}` 
+		is the ``imagingHeight`` and :math:`r_{\mathrm{imaging}}` is the ``imagingRadius``.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* innerRadius (float): New inner radius.
+				* centerDist (float): New distance between centers.
+				
+		"""
+		
 		self.outerRadius=(self.imagingRadius**2+self.imagingHeight**2)/(2*(-self.imagingHeight))
 		self.innerRadius=self.outerRadius*self.radiusScale
 		self.centerDist=np.sqrt(self.innerRadius**2-self.outerRadius**2) 
 		return self.innerRadius,self.centerDist
 	
 	def restoreDefault(self):
+		
+		"""Restores default values.
+		
+		Only default value of zebrafish geometry is that ``imagingHeight`` is set to
+		be equal to ``sliceHeightPx`` of ``embryo``.
+		
+		"""
+		
 		self.imagingHeight=self.embryo.sliceHeightPx
 		self.computeDome()
 	
 	def updateGeoFile(self,debug=False):
+		
+		"""Updates .geo file of geometry.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		"""
+		
 		pyfrp_gmsh_module.updateDomeGeo(self.fnGeo,self.imagingRadius,self.imagingHeight,self.center,run=False,debug=debug)
 		
-	def optimalAllROI(self,name='',Id=0,color='b',asMaster=False,roi=None):	
-		return self.embryo.newRadialSliceROI(name,Id,self.getCenter(),self.getOuterRadius(),0.,np.inf,False,color=color,asMaster=asMaster)
+	def optimalAllROI(self,name='',Id=0,color='b',asMaster=False):	
+		
+		"""Sets optimal ROI to a :py:class:`pyfrp.subclasses.pyfrp_ROI.radialSliceROI`
+		with radius ``outerRadius``, center ``center``, covering the whole z-range of 
+		geometry.
+		
+		Keyword Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			color (str): Color that ROI is going to be associated with.
+			asMaster (bool): Make new ROI masterROI.
+			
+		
+		"""
+		
+		return self.embryo.newRadialSliceROI(name,Id,self.getCenter(),self.getOuterRadius(),-np.inf,np.inf,False,color=color,asMaster=asMaster)
 	
 	def getZExtend(self):
 		
@@ -270,6 +569,15 @@ class zebrafishDomeStage(geometry):
 	
 class zebrafishDomeStageQuad(zebrafishDomeStage):
 	
+	"""Geometry describing a zebrafish embryo in dome stage, reduced to first quadrant.
+	
+	Inherits from :py:class:`zebrafishDomeStage`. Please refer to its documentation for
+	further details.
+	
+	.. image:: ../imgs/pyfrp_geometry/domequad.png
+	
+	"""
+	
 	def __init__(self,embryo,center,imagingRadius,radiusScale=1.1):
 		
 		mdir=pyfrp_misc_module.getMeshfilesDir()
@@ -279,6 +587,17 @@ class zebrafishDomeStageQuad(zebrafishDomeStage):
 	
 class cylinder(geometry):
 	
+	"""Geometry describing a cylinder.
+	
+	.. image:: ../imgs/pyfrp_geometry/cylinder.png
+	
+	The crucial geometrical parameters are:
+		
+		* ``radius``: Radius of the cylinder.
+		* ``height``: Height of the cylinder.
+		
+	"""
+	
 	def __init__(self,embryo,center,radius,height):
 		mdir=pyfrp_misc_module.getMeshfilesDir()
 		super(cylinder, self).__init__(embryo,"cylinder",mdir+"cylinder.geo",center)
@@ -287,23 +606,83 @@ class cylinder(geometry):
 		self.height=height
 		
 	def setHeight(self,h):
+		
+		"""Sets cylinder height.
+		
+		Args:
+			h (float): New height.
+		
+		Returns:
+			float: New height.
+		
+		"""
+		
 		self.height=h
 		return self.height
 	
 	def setRadius(self,r):
+		
+		"""Sets cylinder radius.
+		
+		Args:
+			h (float): New radius.
+		
+		Returns:
+			float: New radius.
+		
+		"""
+		
 		self.radius=r
 		return self.radius
 	
 	def getHeight(self):
+		
+		"""Returns cylinder height.
+		
+		Returns:
+			float: Height.
+		
+		"""
+		
 		return self.height
 	
 	def getRadius(self):
+		
+		"""Returns cylinder radius.
+		
+		Returns:
+			float: Radius.
+		
+		"""
+		
 		return self.radius
 	
 	def updateGeoFile(self,debug=False):
+		
+		"""Updates .geo file of geometry.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		"""
+		
 		pyfrp_gmsh_module.updateCylinderGeo(self.fnGeo,self.radius,self.height,self.center,run=False,debug=debug)
 
 	def optimalAllROI(self,name='',Id=0,color='b',asMaster=False,roi=None):	
+		
+		"""Sets optimal ROI to a :py:class:`pyfrp.subclasses.pyfrp_ROI.radialSliceROI`
+		with radius ``radius``, center ``center``, covering the whole z-range of 
+		geometry.
+		
+		Keyword Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			color (str): Color that ROI is going to be associated with.
+			asMaster (bool): Make new ROI masterROI.
+			
+		
+		"""
+		
 		return self.embryo.newRadialSliceROI(name,Id,self.getCenter(),self.getRadius(),0.,np.inf,False,color=color,asMaster=asMaster)
 	
 	def getZExtend(self):
@@ -317,6 +696,15 @@ class cylinder(geometry):
 	
 class cylinderQuad(cylinder):
 	
+	"""Geometry describing a cylinder, reduced to first quadrant.
+	
+	Inherits from :py:class:`cylinder`. Please refer to its documentation for
+	further details.
+	
+	.. image:: ../imgs/pyfrp_geometry/cylinderquad.png
+	
+	"""
+	
 	def __init__(self,embryo,center,radius,height):
 		
 		mdir=pyfrp_misc_module.getMeshfilesDir()
@@ -325,6 +713,25 @@ class cylinderQuad(cylinder):
 		
 	
 class xenopusBall(geometry):
+	
+	"""Geometry describing a ball.
+	
+	This geometry is similar to a xenopus in stage 7-10, see http://www.xenbase.org/anatomy/alldev.do.
+	
+	.. image:: ../imgs/pyfrp_geometry/ball.png
+	
+	The crucial geometrical parameters are:
+		
+		* ``radius``: Radius of the ball.
+		
+	PyFRAP automatically computes these parameters given 
+	
+		* ``imagingRadius``: Radius of embryo at imaging depth.
+		* ``imagingHeight``: Imaging depth.
+		
+	For details of this computations, see :py:func:`computeBall`.
+		
+	"""
 	
 	def __init__(self,embryo,center,imagingRadius):		
 		
@@ -336,35 +743,111 @@ class xenopusBall(geometry):
 		self.restoreDefault()
 	
 	def setImagingRadius(self,r):
+		
+		"""Sets imaging radius and updates ball geometry.
+		
+		Args:
+			h (float): New radius.
+		
+		Returns:
+			float: New radius.
+		
+		"""
+		
 		self.imagingRadius=r
-		self.computeDome()
+		self.computeBall()
 		return self.imagingRadius
 	
 	def setImagingHeight(self,h):
+		
+		"""Sets imaging height and updates ball geometry.
+		
+		Args:
+			h (float): New height.
+		
+		Returns:
+			float: New height.
+		
+		"""
+		
+		
 		self.imagingHeight=h
-		self.computeDome()
+		self.computeBall()
 		return self.imagingHeight
 	
 	def getImagingRadius(self,r):
+		
+		"""Returns imaging radius."""
+		
 		return self.imagingRadius
 	
 	def getImagingHeight(self,h):
+		
+		"""Returns imaging height."""
+		
 		return self.imagingHeight
 	
 	def computeBall(self):
+		
+		r"""Computes ball geometry from ``imagingRadius`` and ``imagingHeight``.
+		
+		Computes ball geometry as follows:
+		
+		.. math:: r=\frac{r_{\mathrm{imaging}}^2+h_{\mathrm{imaging}}}{-2 h_{\mathrm{imaging}}},
+		   
+		where :math:`r` is the ``radius``, :math:`h_{\mathrm{imaging}}` 
+		is the ``imagingHeight`` and :math:`r_{\mathrm{imaging}}` is the ``imagingRadius``.
+		
+		The center of the ball is set to ``[center[0],center[1],-radius]`` (Only in .geo file).
+		
+		"""
+		
 		self.radius=(self.imagingRadius**2+self.imagingHeight**2)/(2*(-self.imagingHeight))
 	
 	def restoreDefault(self):
+		
+		"""Restores default values.
+		
+		Only default value of ball geometry is that ``imagingHeight`` is set to
+		be equal to ``sliceHeightPx`` of ``embryo``.
+		
+		"""
+		
 		self.imagingHeight=self.embryo.sliceHeightPx
 		self.computeBall()
 		
 	def updateGeoFile(self,debug=False):
+		
+		"""Updates .geo file of geometry.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		"""
+		
 		pyfrp_gmsh_module.updateBallGeo(self.fnGeo,self.radius,self.center,run=False,debug=debug)
 	
 	def getRadius(self):
+		
+		"""Returns ball radius."""
+		
 		return self.radius
 	
 	def optimalAllROI(self,name='',Id=0,color='b',asMaster=False,roi=None):	
+		
+		"""Sets optimal ROI to a :py:class:`pyfrp.subclasses.pyfrp_ROI.radialSliceROI`
+		with radius ``radius``, center ``center``, covering the whole z-range of 
+		geometry.
+		
+		Keyword Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			color (str): Color that ROI is going to be associated with.
+			asMaster (bool): Make new ROI masterROI.
+			
+		
+		"""
+		
 		return self.embryo.newRadialSliceROI(name,Id,self.getCenter(),self.getRadius(),0.,np.inf,False,color=color,asMaster=asMaster)
 	
 	def getZExtend(self):
@@ -378,6 +861,15 @@ class xenopusBall(geometry):
 	
 class xenopusBallQuad(xenopusBall):
 	
+	"""Geometry describing a ball, reduced to first quadrant.
+	
+	Inherits from :py:class:`xenopusBall`. Please refer to its documentation for
+	further details.
+	
+	.. warning:: ``meshfiles/quad_ball.geo`` does not exist yet. 
+	
+	"""
+	
 	def __init__(self,embryo,center,imagingRadius):
 		
 		mdir=pyfrp_misc_module.getMeshfilesDir()
@@ -385,6 +877,21 @@ class xenopusBallQuad(xenopusBall):
 		geometry.__init__(self,embryo,"xenopusBallQuad",mdir+"quad_ball.geo",center)	
 
 class cone(geometry):
+	
+	"""Geometry describing a cut-off cone.
+	
+	.. image:: ../imgs/pyfrp_geometry/cone.png
+	
+	The crucial geometrical parameters are:
+		
+		* ``upperRadius``: Upper radius of cone.
+		* ``lowerRadius``: Lower radius of cone.
+		* ``height``: Height of cone.
+		
+	.. note:: Can also be extended to a real cone by setting 
+	   ``lowerRadius=0``.
+	
+	"""
 	
 	def __init__(self,embryo,center,upperRadius,lowerRadius,height):
 		
@@ -397,24 +904,66 @@ class cone(geometry):
 		self.height=height
 		
 	def setHeight(self,h):
+		
+		"""Sets cone height.
+		
+		Args:
+			h (float): New height.
+		
+		Returns:
+			float: New height.
+		
+		"""
+		
 		self.height=h
 		return self.height
 	
 	def setLowerRadius(self,r):
+		
+		"""Sets cone lower radius.
+		
+		Args:
+			h (float): New lower radius.
+		
+		Returns:
+			float: New lower radius.
+		
+		"""
+		
 		self.lowerRadius=r
 		return self.lowerRadius
 	
 	def getLowerRadius(self):
+		
+		"""Returns lower radius of cone."""
+		
 		return self.lowerRadius
 	
 	def setUpperRadius(self,r):
+		
+		"""Sets cone upper radius.
+		
+		Args:
+			h (float): New upper radius.
+		
+		Returns:
+			float: New upper radius.
+		
+		"""
+		
 		self.upperRadius=r
 		return self.upperRadius
 	
 	def getUpperRadius(self):
+		
+		"""Returns upper radius of cone."""
+		
 		return self.upperRadius
 	
 	def getHeight(self):
+		
+		"""Returns cone radius."""
+		
 		return self.height
 	
 	def computeSliceHeightFromRadius(self,radius):
@@ -460,9 +1009,31 @@ class cone(geometry):
 		return radius
 	
 	def updateGeoFile(self,debug=False):
+		
+		"""Updates .geo file of geometry.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		"""
+		
 		pyfrp_gmsh_module.updateConeGeo(self.fnGeo,self.upperRadius,self.lowerRadius,abs(self.height),self.center,run=False,debug=debug)
 
 	def optimalAllROI(self,name='',Id=0,color='b',asMaster=False,roi=None):	
+		
+		"""Sets optimal ROI to a :py:class:`pyfrp.subclasses.pyfrp_ROI.radialSliceROI`
+		with radius ``upperRadius``, center ``center``, covering the whole z-range of 
+		geometry.
+		
+		Keyword Args:
+			name (str): Name of new ROI.
+			Id (int): ID of new ROI.
+			color (str): Color that ROI is going to be associated with.
+			asMaster (bool): Make new ROI masterROI.
+			
+		
+		"""
+		
 		return self.embryo.newRadialSliceROI(name,Id,self.getCenter(),self.getUpperRadius(),0.,np.inf,False,color=color,asMaster=asMaster)
 	
 	def getZExtend(self):
@@ -476,7 +1047,11 @@ class cone(geometry):
 
 	
 class custom(geometry):
+	
+	"""Custom geometry class for custom geometry configurations.
 
+	"""
+	
 	def __init__(self,embryo,center,fnGeo):
 		
 		geometry.__init__(self,embryo,"custom",fnGeo,center)

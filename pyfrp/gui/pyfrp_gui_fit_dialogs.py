@@ -195,6 +195,7 @@ class fitSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		self.ROIList=QtGui.QTreeWidget()
 		self.ROIList.setHeaderLabels(["Name"])
 		self.ROIList.setColumnWidth(0,100)
+		self.updateROIList()
 		
 		#Buttons
 		self.btnAddROI=QtGui.QPushButton('Add')

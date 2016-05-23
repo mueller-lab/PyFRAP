@@ -202,6 +202,8 @@ class zebrafishDomeStageDialog(geometryDialog):
 		self.btnRestoreDefaults=QtGui.QPushButton('Restore Defaults')
 		self.btnRestoreDefaults.connect(self.btnRestoreDefaults, QtCore.SIGNAL('clicked()'), self.restoreDefaults)
 		
+		###NOTE: Will need "Grab from ROI" button for certain properties.
+		
 		#Layout
 		nRows=self.grid.rowCount()
 		

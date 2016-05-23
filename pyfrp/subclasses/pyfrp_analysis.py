@@ -194,6 +194,20 @@ class analysis:
 		return self.medianRadius
 	
 	def setGaussian(self,b):
+		
+		"""Turns on/off gaussian filter for analysis.
+		
+		.. note:: Will use ``gaussianSigma`` as kernel size. Can be changed via
+		
+		
+		Args:
+			b (bool): ``True`` if gaussian should be turned on, ``False`` else.
+			
+		Returns:
+			dict: Updated process dictionary.
+		
+		"""
+		
 		return self.parm2Process(b,'gaussian',self.gaussianSigma)
 		
 	def setNorm(self,b):

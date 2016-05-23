@@ -147,5 +147,111 @@ def parameterStats(x):
 	
 	return np.mean(x), np.std(x), np.std(x)/np.sqrt(len(x))
 	
+def overlapSubSampleSelect(d,n,k):
+	
+	r"""Takes subsamples of size ``n`` that overlap on both 
+	sides by ``k`` points out of d.
+	
+	Algorithm collects snippets of d from :math:`j(n-k)` to
+	:math:`(j+1)n-jk`, where :math:`j` is the counter for the
+	subsamples.
+	
+	Args:
+		d (numpy.ndarray): Data vector.
+		n (int): Size of subsamples.
+		k (int): Overlap.
+		
+	Returns:
+		list: List of ``numpy.ndarray`` of overlapping subsamples.
+		
+	"""
+	
+	j=0
+	ds=[]
+	for i in range(len(d)):
+		try:
+			dnew=d[j*(n-k):(j+1)*n-j*k]
+		except IndexError:
+			dnew=d[j*(n-k):]
+		ds.append(dnew)
+		
+		if (j+1)*n-j*k>len(d):
+			break
+		
+		j=j+1
+		
+	return ds	
 
+def overlapSubSampleError(d,n,k):
+	
+	r"""Computes error between overlapping subsamples.
+	
+	Error is calculated by
+	
+	.. math:: \left|\frac{\bar{d_i}+\epsilon}{\bar{d_j}+\epsilon}\right|,
+	
+	where :math:`i,j \in {1,..,\frac{N}{n-k}}` and :math:`\epsilon` is some 
+	offset to avoid singularties.
+	
+	.. note:: The resulting error matrix is symmetric.
+	
+	Args:
+		d (numpy.ndarray): Data vector.
+		n (int): Size of subsamples.
+		k (int): Overlap.
+		
+	Returns:
+		numpy.ndarray: Error matrix.
+	
+	"""
+	
+	ds=overlapSubSampleSelect(d,n,k)
+	
+	dMean=[]
+	for dnew in ds:
+		dMean.append(np.mean(dnew))
+	
+	dError=np.zeros((len(dMean),len(dMean)))
+	for i in range(len(dMean)):
+		for j in range(len(dMean)):
+			dError[i,j]=abs((dMean[i]+1E-10)/(dMean[j]+1E-10+1E-11)-1)
+		
+	return dError	
+	
+def selectDataByOverlapSubSample(d,n,k,thresh,debug=False):
+	
+	"""Selects data vector based on overlapping
+	subsampling and simple threshholding.
+	
+	This algorithm combines local derivatives with global changes
+	and filters both datasets that have large local changes as well
+	as large global changes. However, taking means over subsamples
+	prevents neglecting data sets that have short peaks over only 1
+	or 2 time points, such as bubbles etc.
+	
+	Args:
+		d (numpy.ndarray): Data vector.
+		n (int): Size of subsamples.
+		k (int): Overlap.
+		thresh (float): Selecting threshhold.
+		
+	Keyword Args:
+		debug (bool): Print debugging messages.
+		
+	Returns:
+		bool: True if data set should be neglected.
+	
+	"""
 
+	dError=overlapSubSampleError(d,n,k)		
+	
+	idxs=np.where(dError>thresh)
+	
+	if debug:
+		
+		if len(dError[idxs].flatten())>0:
+			for i in range(len(idxs[0])):
+				print "Subsamples ", idxs[0][i],idxs[1][i], " generate error ", dError[idxs[0][i],idxs[1][i]]
+			
+	return len(dError[idxs].flatten())>0
+	
