@@ -131,6 +131,7 @@ class geometryDialog(pyfrp_gui_basics.basicCanvasDialog):
 		
 		self.setWindowTitle('Edit Geometry')    
 		
+		
 		self.show()
 
 	def setCenter(self):
@@ -146,7 +147,7 @@ class geometryDialog(pyfrp_gui_basics.basicCanvasDialog):
 			return
 				
 		self.geometry.fnGeo=fn
-		self.updateFnGeoLbl()		
+		self.updateFnGeoLbl()
 		
 		self.drawGeometry()
 		
@@ -173,6 +174,8 @@ class geometryDialog(pyfrp_gui_basics.basicCanvasDialog):
 	def updateAllROI(self):
 		self.geometry.setAllROI()
 	
+	#def cropCenterFromImage(self):
+		#pyfrp_plot_module.
 	
 class zebrafishDomeStageDialog(geometryDialog):
 	
@@ -283,7 +286,9 @@ class cylinderDialog(geometryDialog):
 		self.geometry.updateGeoFile()
 		self.drawGeometry()
 		return self.geometry.getHeight()
+	
 		
+	
 class coneDialog(geometryDialog):
 	
 	def __init__(self,geometry,parent):	

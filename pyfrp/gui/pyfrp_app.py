@@ -1371,7 +1371,7 @@ class pyfrp(QtGui.QMainWindow):
 		"""	
 		
 		self.newEmbryo()
-		self.createDefaultROIs()
+		self.defaultROIsWizard()
 		self.openROIManager()
 		self.getCurrentEmbryo().newSimulation()
 		self.generateMesh()

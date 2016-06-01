@@ -817,7 +817,7 @@ def sortListsWithKey(l,keyList):
 		
 	return sortedList,sortedKeys
 		
-def compareObjAttr(obj1,obj2):
+def compareObjAttr(obj1,obj2,):
 	
 	"""Compare the values of two objects.
 	
@@ -839,8 +839,18 @@ def compareObjAttr(obj1,obj2):
 	notInBoth={}
 	
 	for item in vars(obj1):
+		
 		if item in vars(obj2):
-			if vars(obj1)[str(item)]==vars(obj2)[str(item)]:
+			
+			#print item
+			
+			#Need to check if something is array, then need to use different comparison.
+			if isinstance(vars(obj1)[str(item)],(np.ndarray)):
+				b=compareArrays(vars(obj1)[str(item)],vars(obj2)[str(item)])	
+			else:
+				b=(vars(obj1)[str(item)]==vars(obj2)[str(item)])
+			
+			if b:
 				same[str(item)]=[vars(obj1)[str(item)],vars(obj2)[str(item)]]
 			else:
 				different[str(item)]=[vars(obj1)[str(item)],vars(obj2)[str(item)]]
@@ -852,6 +862,73 @@ def compareObjAttr(obj1,obj2):
 			notInBoth[str(item)]=2
 			
 	return same,different,notInBoth
+
+def compareArrays(arr1,arr2):
+	
+	"""Converts two lists/arrays into numpy arrays and compares
+	then elementwise.
+	
+	Args:
+		arr1 (numpy.ndarray): Some array.
+		arr2 (numpy.ndarray): Other arrayy.
+		
+	Returns:
+		bool: True if elemet are the same element wise.
+		
+	"""
+	
+	arr1=np.asarray(arr1)
+	arr2=np.asarray(arr2)
+	
+	try:
+		return (arr1==arr2).all()
+	except:
+		(arr1==arr2)
+		
+def compareROIs(emb1,emb2,byName=True):
+	
+	"""Compares the list of ROIs between to 
+	:py:class:`pyfrp.subclasses.pyfrp_embryo.embryo`` objects.
+	
+	Args:
+		emb1 (pyfrp.subclasses.pyfrp_embryo.embryo): First embryo.
+		emb2 (pyfrp.subclasses.pyfrp_embryo.embryo): Second embryo.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* sameAll (list): List of same output of ``compareObjAttr(ROI,ROI2)`` per ROI, see also :py:func:`compareObjAttr`.
+			* differentAll (list): List of different output of ``compareObjAttr(ROI,ROI2)`` per ROI, see also :py:func:`compareObjAttr`.
+			* notInBothAll (list): List of notInBoth output of ``compareObjAttr(ROI,ROI2)`` per ROI, see also :py:func:`compareObjAttr`.
+			* notFound (dict): Dictionary of ROI names that are in ``emb1`` but not ``emb2``.
+			
+	
+	"""
+	
+	notFound={}
+	
+	sameAll=[]
+	differentAll=[]
+	notInBothAll=[]
+	
+	
+	for ROI in emb1.ROIs:
+		if byName:
+			ROI2=emb2.getROIByName(ROI.name)
+		else:
+			ROI2=emb2.getROIById(ROI.Id)
+		
+		if ROI2==None:
+			notFound[str(ROI.name)]=1
+			continue
+		
+		same,different,notInBoth=compareObjAttr(ROI,ROI2)
+		
+		sameAll.append(same)
+		differentAll.append(different)
+		notInBothAll.append(notInBoth)
+		
+	return sameAll,differentAll,notInBothAll, notFound
 
 def simpleHist(x,y,bins):
 
@@ -1294,8 +1371,7 @@ def translateNPFloat(x):
 	
 	return np.float(x)
 		
-	
-	
+
 	
 	
 	

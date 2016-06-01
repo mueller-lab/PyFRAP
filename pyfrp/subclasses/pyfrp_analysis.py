@@ -68,10 +68,18 @@ class analysis:
 	Processing parameters are stored in ``process.values``.
 	
 	The default processing options are ``process={}``, meaning that no image modification is applied before 
-	concentration readout.
+	concentration readout, see also :py:func:`genDefaultProcess`.
 	
 	.. warning:: Quadrant reduction is still experimental.	
-		
+	
+	Three other important attributes are:
+	
+		* ``dataOffset``: The offset of the data that is for example used for norming, see also :py:func:`getOptimalOffset`.
+		* ``addRimImg``: Flag that controls if rim concentrations are added to ROI concentratrtion profiles, see also
+		  :py:func:`setAddRimImg`.
+		* ``concRim``: The rim concentration of the first post-bleaching image used later by the simulation for nodes that 
+		  are outside of original image boundaries.
+	
 	Args:
 		embryo (pyfrp.subclasses.pyfrp_embryo.embryo): PyFRAP embryo instance.
 	
@@ -197,8 +205,8 @@ class analysis:
 		
 		"""Turns on/off gaussian filter for analysis.
 		
-		.. note:: Will use ``gaussianSigma`` as kernel size. Can be changed via
-		
+		.. note:: Will use ``gaussianSigma`` as kernel size. Can be changed via 
+		   :py:func:`setGaussianSigma`.
 		
 		Args:
 			b (bool): ``True`` if gaussian should be turned on, ``False`` else.
@@ -211,118 +219,424 @@ class analysis:
 		return self.parm2Process(b,'gaussian',self.gaussianSigma)
 		
 	def setNorm(self,b):
+		
+		"""Turns on/off norming by preimage for analysis.
+		
+		.. note:: Will use ``preMask`` for norming. ``preMask`` is updated
+		   via :py:func:`computePreMask` and then automatically updated in ``process`` dictionary.
+		
+		Args:
+			b (bool): ``True`` if norming should be turned on, ``False`` else.
+			
+		Returns:
+			dict: Updated process dictionary.
+		
+		"""
+		
 		return self.parm2Process(b,'norm',self.fnPreimage)
 	
 	def setFlipBeforeProcess(self,b):
+		
+		"""Turns on/off if image should be flipped into quadrant before or after 
+		performing all other image processing for analysis.
+		
+		.. warning:: Quadrant reduction is still experimental.
+		
+		Args:
+			b (bool): ``True`` if image should be flipped before, ``False`` else.
+			
+		Returns:
+			dict: Updated process dictionary.
+		
+		"""
+		
 		return self.parm2Process(b,'flipBeforeProcess',True)
 		
 	def setMedian(self,b):
+		
+		"""Turns on/off median filter for analysis.
+		
+		.. note:: Will use ``medianRadius`` as kernel size. Can be changed via 
+		   :py:func:`setMedianRadius`.
+		
+		Args:
+			b (bool): ``True`` if median should be turned on, ``False`` else.
+			
+		Returns:
+			dict: Updated process dictionary.
+		
+		"""
+		
 		return self.parm2Process(b,'median',self.medianRadius)
 	
 	def setQuad(self,b):
+		
+		"""Turns on/off if image should be flipped into first quadrant for analysis.
+		
+		.. warning:: Quadrant reduction is still experimental.
+		
+		Args:
+			b (bool): ``True`` if quadrant reduction should be turned on, ``False`` else.
+			
+		Returns:
+			dict: Updated process dictionary.
+		
+		"""
+		
 		return self.parm2Process(b,'quad',True)
 	
 	def setFlatten(self,b):
+		
+		"""Turns on/off flattening for analysis.
+		
+		.. note:: Will use ``flatteningMask`` for flattening. ``flatteningMask`` is updated
+		   via :py:func:`computeFlatteningMask` and then automatically updated in ``process`` dictionary.
+		
+		Args:
+			b (bool): ``True`` if flattening should be turned on, ``False`` else.
+			
+		Returns:
+			dict: Updated process dictionary.
+		
+		"""
+		
 		return self.parm2Process(b,'flatten',self.fnFlatten)
 	
 	def setBkgd(self,b):
+		
+		"""Turns on/off background substraction for analysis.
+		
+		.. note:: Will use ``bkgdMask`` for flattening. ``bkgdMask`` is updated
+		   via :py:func:`computeBkgdMask` and then automatically updated in ``process`` dictionary.
+		
+		Args:
+			b (bool): ``True`` if background substraction should be turned on, ``False`` else.
+			
+		Returns:
+			dict: Updated process dictionary.
+		
+		"""
+		
 		return self.parm2Process(b,'bkgd',self.fnBkgd)
 	
 	def setFnFlatten(self,fn):
+		
+		"""Sets path to flattening dataset.
+		
+		Args:
+			fn (str): Path to flattening dataset.
+		
+		"""
+		
 		self.fnFlatten=fn
 		self.updateProcess()
 		return self.fnFlatten
 	
 	def getFnFlatten(self):
+		
+		"""Returns path to flattening dataset.
+		
+		Returns:
+			str: Path to flattening dataset.
+		"""
+		
 		return self.fnFlatten
 	
 	def setFnBkgd(self,fn):
+		
+		"""Sets path to background dataset.
+		
+		Args:
+			fn (str): Path to background dataset.
+		
+		"""
+		
 		self.fnBkgd=fn
 		self.updateProcess()
 		return self.fnBkgd
 	
 	def getFnBkgd(self):
+			
+		"""Returns path to background dataset.
+		
+		Returns:
+			str: Path to background dataset.
+		"""
+		
 		return self.fnBkgd
 	
 	def setFnPre(self,fn):
+		
+		"""Sets path to preimage dataset.
+		
+		Args:
+			fn (str): Path to preimage dataset.
+		
+		"""
+		
 		self.fnPreimage=fn
 		self.updateProcess()
 		return self.fnPreimage
 	
 	def getFnPre(self):
+		
+		"""Returns path to norming dataset.
+		
+		Returns:
+			str: Path to norming dataset.
+		"""
+		
 		return self.fnPreimage
 	
 	def setDataOffset(self,s):
+		
+		"""Sets dataoffset used for norming.
+		
+		Args:
+			s (float): New offset.
+
+		"""
+		
 		self.dataOffset=s 
 		return self.dataOffset
 	
 	def getDataOffset(self):
+		
+		"""Returns dataoffset used for norming.
+		
+		Returns:
+			float: Current offset.
+
+		"""
+		
 		return self.dataOffset
 	
 	def setAddRimImg(self,s):
+		
+		"""Sets the addRimImg flag.
+		
+		The addRim flag controls if the rim concentration is added to the concentration 
+		of each ROI timeseries depending on how many imaginary pixels they have outside
+		of the actual image.
+		
+		Args:
+			s (bool): Flag value.
+			
+			
+		"""
+		
 		self.addRimImg=s 
 		return self.addRimImg
 	
 	def getAddRimImg(self):
+		
+		"""Returns the addRimImg flag.
+		
+		See also :py:func:`setAddRimImg`.
+		
+		Returns:
+			bool: Flag value.
+			
+		"""
+		
 		return self.addRimImg
 	
 	def setConcRim(self,s):
+		
+		"""Sets rim concentration.
+		
+		Args:
+			s (float): New rim concentration.
+		"""
+		
 		self.concRim=s 
 		return self.concRim
 	
 	def getConcRim(self):
+		
+		"""Returns rim concentration.
+		
+		Returns:
+			float: Current rim concentration.
+		"""
+		
 		return self.concRim
 	
 	def setProcess(self,s):
+		
+		"""Sets process dictionary.
+		
+		Args:
+			s (dict): New process dictionary.
+		"""
+		
 		self.process=s 
 		return self.process
 	
 	def getProcess(self):
+		
+		"""Returns process dictionary."""
+		
 		return self.process
 	
 	def setNPre(self,n):
+		
+		"""Sets the number of images used for the computation
+		for the mean norming image.
+		
+		Args:
+			n (int): Number of images used.
+			
+		"""	
+		
 		self.nPre=n 
 		return self.nPre
 	
 	def getNPre(self):
+		
+		"""Returns the number of images used for the computation
+		for the mean norming image.
+		
+		Returns:
+			int: Number of images used.
+			
+		"""	
+		
 		return self.nPre
 	
 	def setNFlatten(self,n):
+		
+		"""Sets the number of images used for the computation
+		for the mean flattening image.
+		
+		Args:
+			n (int): Number of images used.
+			
+		"""	
+		
 		self.nFlatten=n 
 		return self.nFlatten
 	
 	def getNFlatten(self):
+		
+		"""Returns the number of images used for the computation
+		for the mean flattening image.
+		
+		Returns:
+			int: Number of images used.
+			
+		"""	
+		
 		return self.nFlatten
 	
 	def setNBkgd(self,n):
+		
+		"""Sets the number of images used for the computation
+		for the mean background image.
+		
+		Args:
+			n (int): Number of images used.
+			
+		"""	
+		
 		self.nBkgd=n 
 		return self.nBkgd
 	
 	def getNBkgd(self):
+		
+		"""Returns the number of images used for the computation
+		for the mean background image.
+		
+		Returns:
+			int: Number of images used.
+			
+		"""	
+		
+		
 		return self.nBkgd
 	
 	def normOn(self):
+		
+		"""Returns current state of this option.
+		
+		Returns:
+			bool: ``True`` if switched on, ``False`` else.
+		
+		"""
+		
 		return 'norm' in self.process.keys()
 	
 	def bkgdOn(self):
+		
+		"""Returns current state of this option.
+		
+		Returns:
+			bool: ``True`` if switched on, ``False`` else.
+		
+		"""
+		
 		return 'bkgd' in self.process.keys()
 	
 	def flattenOn(self):
+		
+		"""Returns current state of this option.
+		
+		Returns:
+			bool: ``True`` if switched on, ``False`` else.
+		
+		"""
+		
 		return 'flatten' in self.process.keys()
 	
 	def gaussianOn(self):
+		
+		"""Returns current state of this option.
+		
+		Returns:
+			bool: ``True`` if switched on, ``False`` else.
+		
+		"""
+		
 		return 'gaussian' in self.process.keys()
 	
 	def medianOn(self):
+		
+		"""Returns current state of this option.
+		
+		Returns:
+			bool: ``True`` if switched on, ``False`` else.
+		
+		"""
+		
 		return 'median' in self.process.keys()
 	
 	def quadOn(self):
+		
+		"""Returns current state of this option.
+		
+		Returns:
+			bool: ``True`` if switched on, ``False`` else.
+		
+		"""
+		
 		return 'quad' in self.process.keys()
 	
 	def flipBeforeProcessOn(self):
+		
+		"""Returns current state of this option.
+		
+		Returns:
+			bool: ``True`` if switched on, ``False`` else.
+		
+		"""
+		
 		return 'flipBeforeProcess' in self.process.keys()
 	
 	def updateProcess(self):
+		
+		"""Updates all values in process dictionary with
+		the ones saved in attributes of analysis object."""
+		
 		if 'flatten' in self.process.keys():
 			self.process['flatten']=self.fnFlatten
 		if 'norm' in self.process.keys():
@@ -337,10 +651,26 @@ class analysis:
 		return
 	
 	def printProcess(self):
+		
+		"""Prints out current process options in a nicely formatted way."""
+		
 		printDict(self.process)
 		return
 	
 	def parm2Process(self,b,key,val):
+		
+		"""Adds/Removes a new option to ``process`` dictionary.
+		
+		Args:
+			b (bool): Flag if process should be added or removed.
+			key (str): Key of option to be added.
+			val (any): Value of dictionary entry.
+		
+		Returns:
+			dict: Updated ``process`` dictionary.
+		
+		"""
+		
 		if b:
 			self.process[key]=val
 		else:	
@@ -351,6 +681,24 @@ class analysis:
 		return self.process	
 		
 	def genDefaultProcess(self):
+		
+		"""Sets ``process`` dictionary to default options.
+		
+		Default options are:
+		
+			* ``gaussian=False``
+			* ``median=False``
+			* ``quad=False``
+			* ``flatten=False``
+			* ``bkgd=False``
+			* ``norm=False``
+			* ``flipBeforeProcess=True``
+		
+		Returns:
+			dict: Updated ``process`` dictionary.
+		
+		"""
+		
 		self.setGaussian(False)
 		self.setFlipBeforeProcess(True)
 		self.setQuad(False)
@@ -361,6 +709,18 @@ class analysis:
 		return self.process
 	
 	def removeProcessStep(self,dic,step):
+		
+		"""Removes process step from dictionary.
+		
+		Args:
+			dic (dict): A dictionary.
+			step (str): Key of step to be removed.
+			
+		Returns:
+			dict: Updated dictionary.
+		
+		"""
+		
 		try:
 			dic.pop(step)
 		except KeyError:
@@ -368,6 +728,23 @@ class analysis:
 		return dic
 		
 	def computeFlatteningMask(self,applyProcess=True):
+		
+		"""Computes flattening mask.
+		
+		Takes first ``nFlatten`` images in ``fnFlatten`` and computes mean image of these 
+		images. Then, if ``applyProcess`` is selected, applies the selected process options 
+		defined in ``process`` dictionary to it.
+		
+		.. note:: Will not apply process options ``norm``, ``flatten`` and ``bkgd`` to mean 
+		   flattening image.
+		   
+		Keyword Args:
+			applyProcess (bool): Apply processing options to flattening mask.
+			
+		Returns:
+			numpy.ndarray: Flattening mask.
+		
+		"""
 		
 		fileList=pyfrp_misc_module.getSortedFileList(self.fnFlatten,self.embryo.dataFT)
 		fileList=fileList[:self.nFlatten]
@@ -389,6 +766,27 @@ class analysis:
 	
 	def computeBkgdMask(self,flatteningMask,applyProcess=True,applyFlatten=False):
 		
+		"""Computes background mask.
+		
+		Takes first ``nBkgd`` images in ``fnBkgd`` and computes mean image of these 
+		images. Then, if ``applyProcess`` is selected, applies the selected process options 
+		defined in ``process`` dictionary to it.
+		
+		.. note:: Will not apply process options ``norm`` and ``bkgd`` to mean 
+		   background image.
+		
+		Args:
+			flatteningMask (numpy.ndarray): Flattening mask.
+		
+		Keyword Args:
+			applyProcess (bool): Apply processing options to background mask.
+			applyFlatten (bool): Apply flattening to background mask.
+			
+		Returns:
+			numpy.ndarray: Background mask.
+		
+		"""
+		
 		fileList=pyfrp_misc_module.getSortedFileList(self.fnBkgd,self.embryo.dataFT)
 		fileList=fileList[:self.nBkgd]
 		meanImg=pyfrp_img_module.computeMeanImg(self.fnBkgd,fileList,self.embryo.dataEnc)
@@ -409,6 +807,27 @@ class analysis:
 	
 	def computePreMask(self,flatteningMask,bkgdMask,applyProcess=True):
 		
+		"""Computes norming mask.
+		
+		Takes first ``nPre`` images in ``fnPreimage`` and computes mean image of these 
+		images. Then, if ``applyProcess`` is selected, applies the selected process options 
+		defined in ``process`` dictionary to it.
+		
+		.. note:: Will not apply process option ``norm`` to mean 
+		   background image.
+		
+		Args:
+			flatteningMask (numpy.ndarray): Flattening mask.
+			bkgdMask (numpy.ndarray): Background mask.
+			
+		Keyword Args:
+			applyProcess (bool): Apply processing options to background mask.
+			
+		Returns:
+			numpy.ndarray: Norming mask.
+		
+		"""
+		
 		fileList=pyfrp_misc_module.getSortedFileList(self.fnPreimage,self.embryo.dataFT)
 		fileList=fileList[:self.nPre]
 		meanImg=pyfrp_img_module.computeMeanImg(self.fnPreimage,fileList,self.embryo.dataEnc)
@@ -426,6 +845,28 @@ class analysis:
  
 	def getOptimalOffset(self,debug=False):
 		
+		r"""Computes optimal dataoffset for data analysis.
+		
+		Finds minimal non-zero offset for main dataset, preimage dataset
+		flattening dataset and background dataset, if available. The Idea is that
+		one does not want to have negative pixels, so substraction of a fixed value
+		from an image should always lead to positive pixel values. Thus the offset is 
+		computed by
+		
+		.. math:: offset = max\{ o_{\mathrm{min},\mathrm{data}},o_{\mathrm{min},\mathrm{flatten}}
+		   ,o_{\mathrm{min},\mathrm{pre}},o_{\mathrm{min},\mathrm{bkgd}}\}
+		
+		where :math:`o_{\mathrm{min},d}` is the minimum pixel values of all images in dataset 
+		:math:`d`.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			float: Optimal offset.
+			
+		"""
+		
 		self.dataOffset=pyfrp_img_module.findMinOffset(self.embryo.fnDatafolder,self.embryo.fileList,self.embryo.dataEnc,oldOffset=self.dataOffset,defaultAdd=1.,debug=debug)
 		
 		if self.fnPreimage!=None:
@@ -441,10 +882,4 @@ class analysis:
 			self.dataOffset=pyfrp_img_module.findMinOffset(self.fnBkgd,fileList,self.embryo.dataEnc,oldOffset=self.dataOffset,defaultAdd=1.,debug=debug)
 			
 		return self.dataOffset
-		
-	###NOTE: This function can be removed at publication date
-	def testImport(self):
-		printWarning("Testing module")
-		print pyfrp_misc_module.remRepeatsList([3,3,4,56,1,3])
-		
 		

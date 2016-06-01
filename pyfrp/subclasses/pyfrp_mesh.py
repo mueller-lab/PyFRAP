@@ -66,6 +66,24 @@ class mesh(object):
 	
 	def setVolSizePx(self,v,remesh=True,fnOut=None):
 		
+		"""Sets volSize of mesh in px.
+		
+		.. note:: If ``fnOut=None``, then either ``fnMesh`` will be used, or,
+		   if ``fnMesh`` is not set yet, will use ``geometry.fnGeo``.
+		
+		Args:
+			v (float): New volSize.
+			
+		Keyword Args:
+			remesh (bool): Generate mesh with new volSize.
+			fnOut (str): Output filepath for meshfile.
+		
+		Returns:
+			float: New volSize.
+		
+		"""
+		
+		
 		self.volSizePx=v
 		self.updateGeoFile()
 		if remesh:
@@ -73,12 +91,38 @@ class mesh(object):
 		return self.volSizePx
 	
 	def getVolSizePx(self):
+		
+		"""Returns mesh volSize in px.
+		
+		Returns:
+			float: VolSize.
+		
+		"""
+		
 		return self.volSizePx
 		
 	def getSimulation(self):
+		
+		"""Returns :py:class:`pyfrp.subclasses.pyfrp_simulation` that mesh belongs to.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_simulation: Simulation object.
+		"""
+		
 		return self.simulation
 	
 	def restoreDefaults(self):	
+		
+		"""Restores default parameters of mesh.
+		
+		Default parameters are:
+		
+			* ``mesh.geometry=mesh.simulation.embryo.geometry``
+			* ``mesh.fromFile=True``
+			* ``mesh.volSizePx=20``
+			* ``mesh.fnMesh=""``
+	
+		"""
 		
 		if self.simulation.embryo.geometry==None:
 			printWarning("Geometry of embryo not specified, mesh generation will not work!")
@@ -89,6 +133,24 @@ class mesh(object):
 		self.fnMesh=""
 		
 	def genMesh(self,fnOut=None,debug=False):
+		
+		"""Main mesh generation function.
+		
+		.. note:: If ``fnOut=None``, will use ``geometry.fnGeo``.
+		
+		.. note:: If ``fromFile=True``, will generate from .geo file running
+		   gmsh directly on the file. If not, will try to run hard coded FiPy
+		   version for mesh generation via :py:func:`runFiPyMeshGenerator` .
+		
+		Keyword Args:
+			fnOut (str): Output filepath for meshfile.
+			debug (bool): Print debugging messages.
+		
+		Returns:
+			fipy.GmshImporter3D: Gmsh mesh object.
+		
+		"""
+		
 		if fnOut==None:
 			fnOut=self.geometry.fnGeo.replace(".geo",".msh")
 			
@@ -130,6 +192,13 @@ class mesh(object):
 	
 	def getMesh(self):
 		return self.mesh
+	
+	def getFnMesh(self):
+		
+		"""Returns the filepath of meshfile.
+		"""
+		
+		return self.fnMesh
 	
 	def setFnMesh(self,fn):
 		self.fnMesh=fn

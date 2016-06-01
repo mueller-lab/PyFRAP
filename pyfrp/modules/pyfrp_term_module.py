@@ -62,9 +62,12 @@ def printNote(txt):
 
 	print(colorama.Fore.GREEN + "NOTE:") + colorama.Fore.RESET + txt
 	
-def printDict(dic):
+def printDict(dic,maxL=5):
 	
 	"""Prints all dictionary entries in the form key = value.
+	
+	If attributes are of type ``list`` or ``numpy.ndarray``, will check if the size
+	exceeds threshhold. If so, will only print type and dimension of attribute.
 	
 	Args:
 		dic (dict): Dictionary to be printed.
@@ -75,7 +78,8 @@ def printDict(dic):
 	"""
 	
 	for k in dic.keys():
-		print k , ' = ' , dic[k]
+		printAttr(k,dic[k],maxL=maxL)
+		
 	return True	
 
 def printObjAttr(var,obj):
@@ -110,16 +114,39 @@ def printAllObjAttr(obj,maxL=5):
 	"""
 	
 	for item in vars(obj):
-		if isinstance(vars(obj)[str(item)],(list)):
-			if len(vars(obj)[str(item)])>maxL:
-				print item, " = ", getListDetailsString(vars(obj)[str(item)])
-				continue
-		if isinstance(vars(obj)[str(item)],(np.ndarray)):
-			if max(vars(obj)[str(item)].shape)>maxL:
-				print item, " = ", getArrayDetailsString(vars(obj)[str(item)])
-				continue
-		print item, " = ", vars(obj)[str(item)]
+		printAttr(item,vars(obj)[str(item)],maxL=maxL)
+		
 	return True
+
+def printAttr(name,attr,maxL=5):
+
+	"""Prints single attribute in the form attributeName = attributeValue.
+	
+	If attributes are of type ``list`` or ``numpy.ndarray``, will check if the size
+	exceeds threshhold. If so, will only print type and dimension of attribute.
+	
+	Args:
+		name (str): Name of attribute.
+		attr (any): Attribute value.
+		
+	Keyword Args:
+		maxL (int): Maximum length threshhold.
+	
+	"""
+
+	if isinstance(attr,(list)):
+		if len(attr)>maxL:
+			print name, " = ", getListDetailsString(attr)
+			return True
+	elif isinstance(attr,(np.ndarray)):
+		if min(attr.shape)>maxL:
+			print name, " = ", getArrayDetailsString(attr)
+			return True
+		
+	print name, " = ", attr
+		
+	return True	
+
 
 def getListDetailsString(l):
 	

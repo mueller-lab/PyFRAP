@@ -797,9 +797,6 @@ class ROI(object):
 		xExtend,yExtend,zExtend=self.getEncapsulatingBox()
 		zExtend=[zExtend[0]-addZ,zExtend[1]+addZ]
 		
-		print "current zExtend", zExtend
-		
-		
 		if debug:
 			print "Adding Box Field for ROI " + self.name
 			print "Mesh Nodes in ROI before: ", len(self.meshIdx)
@@ -814,7 +811,7 @@ class ROI(object):
 			
 		return fnOut
 	
-	def adaptRefineInMesh(self,nNodesReq,factor=3.,addZ=15.,debug=False):
+	def adaptRefineInMesh(self,nNodesReq,factor=3.,addZ=15.,zIncrement=1.,fIncrement=1.,nNodesMax='inf',debug=False):
 		
 		"""Refines mesh inside ROI adaptively until a given number of nodes inside ROI 
 		is reached.
@@ -825,6 +822,9 @@ class ROI(object):
 			* Computing mesh indices via :py:func:`computeMeshIdx`.
 			* If number of nodes did not change, increase ``addZ``, else increase ``factor``.
 			* Check if desired number of nodes is reached or not, if not, repeat.
+			
+		.. note:: If the new number of nodes in the ROI exceeds ``nNodesMax``, will revert the last step
+		   and perform the other operation, e.g. increasing ``addZ`` instead of ``factor`` and vice versa.
 		
 		Args:
 			nNodesReq (int): Desired number of nodes inside ROI.
@@ -832,6 +832,9 @@ class ROI(object):
 		Keyword Args:
 			factor (float): Refinement factor.
 			addZ (float): Number of pixels added above and below ROI for box field.
+			zIncrement (float): Number of pixels addZ is increased per adaptive step.
+			fIncrement (float): Stepsize of refinement factor.
+			nNodesMax (float): Maximum number of nodes allowed in ROI.
 			debug (bool): Print debugging messages.
 			
 		Returns:
@@ -839,32 +842,62 @@ class ROI(object):
 			
 		"""
 		
+		#Convert nNodesMax if necessary
+		nNodesMax=pyfrp_misc_module.translateNPFloat(nNodesMax)
 		
+		#Get current node numbers
+		self.computeMeshIdx(self.embryo.simulation.mesh.mesh)
 		nNodes=len(self.meshIdx)
 		nNodesAll=self.embryo.simulation.mesh.getNNodes()
+		
+		#Init flags
+		mode=0
 		i=0
+		
+		#As long as 
 		while nNodes<nNodesReq:
 			
-			self.refineInMesh(factor=factor,addZ=addZ,findIdxs=True,debug=debug,run=True)
+			
+			self.refineInMesh(factor=factor,addZ=addZ,findIdxs=True,debug=False,run=True)
 			
 			nNodesNew=len(self.meshIdx)
 			nNodesAllNew=self.embryo.simulation.mesh.getNNodes()
 			
 			if debug:
 				print "Iteration ", i, ". "
+				print "Current parameters: addZ = ", addZ, " factor = ", factor 
 				print "Total mesh nodes: ", nNodesAllNew
 				print "Mesh Nodes in ROI before refinement: " , nNodes, " and after ", nNodesNew, "."
 			
 			if nNodesNew<nNodesReq:
 				if nNodesAllNew==nNodesAll:
 					if debug: 
-						print "nNodesAll did not change, will increase addZ by 1. \n"
-					addZ=addZ+1
-					
+						print "nNodesAll did not change, will increase addZ by ",zIncrement,". \n"
+					addZ=addZ+zIncrement
+					mode=0
 				else:
 					if debug:
-						print "nNodes not large enough yet, will increase factor by 1. \n"
-					factor=factor+1
+						print "nNodes not large enough yet, will increase factor by ",fIncrement,". \n"
+					factor=factor+fIncrement
+					mode=1
+					
+			elif nNodesNew>nNodesMax:
+				if debug:
+					print "Number of nodes exceeded maximum allowed number", nNodesMax, "."
+				
+				if mode==0:
+					if debug:
+						print "Previously tried to increase addZ. Will try old addZ, but increase factor by " ,fIncrement,". \n"
+					addZ=addZ-zIncrement
+					factor=factor+fIncrement
+					mode=1
+				elif mode==1:
+					if debug:
+						print "Previously tried to increase factor. Will try old factor, but increase addZ by " ,zIncrement,". \n"
+					addZ=addZ+zIncrement
+					factor=factor-fIncrement
+					mode=0
+						
 			i=i+1
 			
 			nNodes=nNodesNew

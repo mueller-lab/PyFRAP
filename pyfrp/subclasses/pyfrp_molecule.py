@@ -101,6 +101,38 @@ class molecule:
 		self.embryos.append(embryo)
 		return self.embryos
 	
+	def replaceEmbryo(self,embryo,name=""):
+		
+		"""Replaces embryo with same name that ``embryo`` in molecule's ``embryos`` list.
+		
+		If no embryo with the same name exists, will simply add embryo. If ``name`` is given,
+		will try to replace embryo with name ``name`` in ``embryos`` list.
+		
+		Args:
+			embryo (pyfrp.subclasses.pyfrp_embryo): New embryo to be inserted.
+			
+		Keyword Args:
+			name (str): Optional name of embryo embryo to be replaced.
+
+		Returns:
+			bool: True if anything was replaced, False if anything was appended.
+			
+		"""
+		
+		for i,emb in enumerate(self.embryos):
+			if name!="":
+				if emb.name==embryo.name:
+					self.embryos[i]=embryo
+					return True
+			else:
+				if emb.name==name:
+					self.embryos[i]=embryo
+					return True
+			
+		self.addEmbryo(embryo)
+		
+		return False
+		
 	def newEmbryo(self,name):
 		
 		"""Creates new embryo and appends it to ``embryos`` list.
