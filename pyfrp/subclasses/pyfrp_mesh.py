@@ -167,7 +167,25 @@ class mesh(object):
 	
 	def runFiPyMeshGenerator(self,typ):
 		
-		if typ=="Cylinder":
+		"""Runs gmsh on the via FiPy internally defined meshes.
+		
+		Available meshes:
+			
+			* cylinder
+			* zebrafishDomeStage
+			* xenopusBall
+			
+		.. note:: Any refinement method will not work if mesh is created this way.
+		
+		Args:
+			typ (str): Type of mesh to be created (see list above).
+				
+		Returns:
+			fipy.GmshImporter3D: Gmsh mesh object.
+			
+		"""
+		
+		if typ=="cylinder":
 			self.mesh=pyfrp_gmsh_module.genFiPyCylinderMesh(self.volSizePx,self.geometry.radius,self.geometry.height,self.geometry.center)
 		elif typ=="zebrafishDomeStage":
 			self.mesh=pyfrp_gmsh_module.genFiPyDomeMesh(self.volSizePx,self.geometry.innerRadius,self.geometry.outerRadius,self.geometry.centerDist,self.geometry.center)
@@ -179,18 +197,62 @@ class mesh(object):
 		return self.mesh
 		
 	def importMeshFromFile(self,fn):
+		
+		"""Imports mesh from a Gmsh .msh file.
+		
+		See also http://www.ctcms.nist.gov/fipy/fipy/generated/fipy.meshes.html. 
+		
+		Args:
+			fn (str): Filepath to meshfile.
+				
+		Returns:
+			fipy.GmshImporter3D: Gmsh mesh object.
+			
+		"""
+		
 		self.mesh=fipy.GmshImporter3D(fn)
 		return self.mesh
 		
 	def setMesh(self,m):
+		
+		"""Sets ``mesh`` attribute to a new mesh.
+		
+		Args:
+			m (fipy.GmshImporter3D): New mesh.
+				
+		Returns:
+			fipy.GmshImporter3D: Gmsh mesh object.
+		
+		"""
+		
 		self.mesh=m
 		return self.mesh
 	
 	def setFromFile(self,v):
+		
+		"""Sets flag if mesh is supposed to be created from file (recommended)
+		or from internally defined mesh creation method.
+		
+		Args:
+			v (bool): New flag value.
+				
+		Returns:
+			bool: New flag value.
+		
+		"""
+		
 		self.fromFile=v
 		return self.fromFile
 	
 	def getMesh(self):
+		
+		"""Returns mesh that is used for simulation.
+		
+		Returns:
+			fipy.GmshImporter3D: Gmsh mesh object.
+		
+		"""
+
 		return self.mesh
 	
 	def getFnMesh(self):
@@ -201,11 +263,32 @@ class mesh(object):
 		return self.fnMesh
 	
 	def setFnMesh(self,fn):
+		
+		
+		"""Sets the filepath of meshfile.
+		
+		Imports the new mesh right away using :py:func:`importMeshFromFile`.
+		
+		"""
+		
+		
 		self.fnMesh=fn
 		self.importMeshFromFile(self.fnMesh)
 		return self.fnMesh
 	
 	def updateGeoFile(self,debug=False):
+		
+		"""Updates geometry file by writing new ``volSizePx``
+		into ``embryo.geometry.fnGeo``.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+		
+		Returns:
+			str: Path to ouput meshfile.
+		
+		"""
+		
 		if os.path.isfile(self.geometry.fnGeo):
 			self.fnMesh=pyfrp_gmsh_module.updateVolSizeGeo(self.geometry.fnGeo,self.volSizePx,run=False,debug=debug)
 		else:
@@ -213,11 +296,45 @@ class mesh(object):
 		return self.fnMesh
 	
 	def refine(self,debug=False):
+		
+		"""Refines mesh by splitting.
+		
+		See also http://gmsh.info/doc/texinfo/gmsh.html .
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+		
+		"""
+		
 		pyfrp_gmsh_module.refineMsh(self.fnMesh,debug=debug)
 		self.importMeshFromFile(self.fnMesh)
 		return self.fnMesh
 	
 	def forceMinMeshDensityInROI(self,ROI,density,stepPercentage=0.1,debug=False,findIdxs=True,method='refine',maxCells=100000):
+		
+		"""Forces global mensh density such that a certain density is reached in a
+		given ROI.
+		
+		Tries to achive a mesh density ``density`` in ``ROI`` by globally refining mesh either 
+		through decreasing ``volSizePx`` by ``stepPercentage`` percent (``method=volSize``), or 
+		by using Gmsh's ``-refine`` option (``method=refine``). If maximum number of cells is 
+		exceeded, will use the last mesh that did not exceed ``maxCells``.
+		
+		Args:
+			ROI (pyfrp.subclasses.pyfrp_ROI.ROI): ROI object.
+			density (float): Desired density.
+			
+		Keyword Args:
+			stepPercentage (float): If method is ``volSize``, percentage of ``volSize`` decrease.
+			method (str): Refinement method (``refine``/``volSize``).
+			maxCells (int): Total maximum number of mesh cells allowed.
+			findIdxs (bool): Find ROI indices after refinement.
+			debug (bool): Print debugging messages.
+		
+		Returns:
+			float: New ``volSizePx``
+		
+		"""
 		
 		#Set counter to 0
 		j=0
@@ -290,6 +407,31 @@ class mesh(object):
 		
 	def writeVTKFile(self,fn="",sub=False):
 		
+		"""Writes mesh into vtk file.
+		
+		Uses *meshIO* (https://github.com/nschloe/meshio), to convert the mesh saved
+		in ``fnMesh`` to a .vtk file. 
+		
+		If ``sub==True``, will start a seperate subprocess and submit 
+		``pyfrp_meshIO_script.py`` to it. This can be sometimes useful, since PyFRAP
+		sometimes tends to crash otherwise.
+		
+		If no output path is given via ``fn``, will use same path as ``fnMesh``.
+		
+		.. note:: *meshIO* only gets imported inside this function, making PyFRAP running
+		   even without the package installed. However, this feature will only run with
+		   *meshIO*.
+		
+		Keyword Args:
+			fn (str): Optional output path.
+			sub (bool): Subprocess flag.
+		
+		Returns:
+			str: Used output path.
+		
+		"""
+		
+		
 		if not os.path.isfile(self.fnMesh):
 			printWarning("Filepath to meshfile has not been specified yet. Cannot write VTK file.")
 		
@@ -317,6 +459,28 @@ class mesh(object):
 	
 	def importVTKFile(self,fnVTK="",sub=False):
 		
+		"""Imports a .vtk file into a vtk renderer.
+		
+		If ``fnVTK`` is not given, will generate .vtk file from meshfile stored in ``fnMesh``
+		using :py:func:`writeVTKFile`.
+		
+		If ``sub==True``, will start a seperate subprocess and submit 
+		``pyfrp_meshIO_script.py`` to it. This can be sometimes useful, since PyFRAP
+		sometimes tends to crash otherwise.
+		
+		.. note:: This function imports *vtk*. *vtk* is only necessary in a few functions,
+		   hence only imported when needed. This should make PyFRAP more portable.
+		
+	
+		Keyword Args:
+			fnVTK (str): Path to input vtk file.
+			sub (bool): Subprocess flag.
+			
+		Returns:
+			vtk.vtkRenderer: Renderer object.
+		
+		"""
+		
 		#vtk
 		import vtk
 		
@@ -325,8 +489,6 @@ class mesh(object):
 		
 		if fnVTK=="":
 			fnVTK=self.writeVTKFile(sub=sub)
-		
-		print fnVTK
 		
 		# Read the source file.
 		reader = vtk.vtkUnstructuredGridReader()
@@ -362,7 +524,24 @@ class mesh(object):
 
 		return renderer
 	
-	def plotMesh(self,fnVTK="",window=None):
+	def plotMesh(self,fnVTK=""):
+		
+		"""Plots the mesh using VTK.
+		
+		If ``fnVTK`` is not given, will generate .vtk file from meshfile stored in ``fnMesh``
+		using :py:func:`writeVTKFile`.
+		
+		.. note:: This function imports *vtk*. *vtk* is only necessary in a few functions,
+		   hence only imported when needed. This should make PyFRAP more portable.
+		
+		Keyword Args:
+			fnVTK (str): Path to input vtk file.
+			
+		Returns:
+			vtk.vtkRenderWindow: RenderWindow object.
+		
+		"""
+		
 		
 		#vtk
 		import vtk
@@ -385,6 +564,16 @@ class mesh(object):
 		return renderWindow
 		
 	def printStats(self,tetLenghts=False):
+		
+		"""Prints out statistics of mesh.
+		
+		Also calculates all tetraheder lengths if ``tetLenghts`` is selected. 
+		This might take some time depending on mesh size.
+		
+		Keyword Args:
+			tetLenghts (bool): Also calculate and print out tetrahedra sidelengths.
+		
+		"""
 	
 			
 		print "-------------------------------------------"
@@ -415,7 +604,15 @@ class mesh(object):
 	
 	def calcAllTetSidelenghts(self):
 		
-		#Calculating sidelengths of tetrahedrons
+		"""Calculates sidelengths of all tetrahedra.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_integration_module.calcTetSidelengths`.
+		
+		Returns:
+			list: List of all sidelengths.
+		"""
+		
+		#Calculating sidelengths of tetrahedra
 		slsVec=[]
 		for i in range(np.shape(self.mesh._getOrderedCellVertexIDs())[1]):
 			currVert=self.mesh._getOrderedCellVertexIDs()[:,i]
@@ -434,6 +631,27 @@ class mesh(object):
 		return slsVec
 	
 	def plotDensity(self,axes=None,hist=True,bins=100,color='b'):
+		
+		"""Plots the mesh density in x/y/z-direction.
+		
+		``hist=True`` is recommended, since otherwise plots generally appear fairly 
+		noisy. 
+		
+		.. note:: If no ``axes`` are given or they do not have the necessary size, 
+		   will create new ones.
+		
+		.. image:: ../imgs/pyfrp_mesh/density_plot.png
+		
+		Keyword Args:
+			axes (list): List of ``matplotlib.axes``.
+			hist (bool): Summarize densities in bins.
+			bins (int): Number of bins used for hist.
+			color (str): Color of plot.
+			
+		Returns:
+			list: List of ``matplotlib.axes``.
+			
+		"""
 			
 		volSortedByX,xSorted=pyfrp_misc_module.sortListsWithKey(self.mesh.getCellVolumes(),self.mesh.x)
 		volSortedByY,ySorted=pyfrp_misc_module.sortListsWithKey(self.mesh.getCellVolumes(),self.mesh.y)
@@ -441,6 +659,10 @@ class mesh(object):
 		
 		if axes==None:
 			fig,axes = pyfrp_plot_module.makeSubplot([1,3],titles=["Density(x)","Density(y)","Density(z)"])
+		else:
+			if len(axes)<3:
+				printWarning("axes do not have right have, will create new ones.")
+				fig,axes = pyfrp_plot_module.makeSubplot([1,3],titles=["Density(x)","Density(y)","Density(z)"])
 		
 		if hist:
 			xSorted,volSortedByX=pyfrp_misc_module.simpleHist(xSorted,volSortedByX,bins)
@@ -458,6 +680,27 @@ class mesh(object):
 			
 	def addBoxField(self,volSizeIn,rangeX,rangeY,rangeZ,newFile=True,fnAppendix="_box",comment="newField",run=False):
 		
+		"""Adds box field to mesh.
+		
+		Box fields allow to refine certain areas of the mesh, see also 
+		http://gmsh.info/doc/texinfo/gmsh.html#Specifying-mesh-element-sizes .
+		
+		.. note:: Will keep ``volSizePx`` as volSize outside of the box.
+		
+		Args:
+			volSizeIn (float): volSize in px inside the box.
+			rangeX (list): Range of box field in x-direction given as ``[minVal,maxVal]``.
+			rangeY (list): Range of box field in y-direction given as ``[minVal,maxVal]``.
+			rangeZ (list): Range of box field in z-direction given as ``[minVal,maxVal]``.
+			newFile (bool): Write new mesh into a new .geo file.
+			fnAppendix (str): Append this to new file name.
+			comment (str): Comment in .geo file before definition of box field.
+			run (bool): Run Gmsh on new .geo file afterwards.
+			
+		Returns:
+			str: Path to new .geo file.
+			
+		"""
 		
 		if newFile:
 			if "_box" not in self.geometry.fnGeo:	
