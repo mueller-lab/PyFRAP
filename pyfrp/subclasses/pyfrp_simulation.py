@@ -81,8 +81,6 @@ class simulation(object):
 		self.stepsSim=3000
 		self.tvecSim=np.linspace(self.embryo.tStart,self.embryo.tEnd,self.stepsSim)
 		
-		
-		
 		#Integration specific (deprecated)
 		#self.avgMode=0
 		#self.addRimSim=0

@@ -247,12 +247,12 @@ def genFakeIC(res,valIn,valOut,offset,sidelength,radius,center,rim,add_rim_from_
 	vals=np.nan*np.ones((res,res))
 	
 	#getting indices for regions
-	idxCircleX,idxCircleY = getCircleIdxImg(center,radius,res,debug=debug)
-	idxSquareX,idxSquareY = getSquareIdxImg(offset,sidelength,res,debug=debug)
+	idxCircleX,idxCircleY = pyfrp_idx_module.getCircleIdxImg(center,radius,res,debug=debug)
+	idxSquareX,idxSquareY = pyfrp_idx_module.getSquareIdxImg(offset,sidelength,res,debug=debug)
 	
 	#Assign values
-	vals=ind2mask(vals,idxSquareX,idxSquareY,valIn)
-	vals=ind2mask(vals,idxCircleX,idxCircleY,valOut)
+	vals=pyfrp_idx_module.ind2mask(vals,idxSquareX,idxSquareY,valIn)
+	vals=pyfrp_idx_module.ind2mask(vals,idxCircleX,idxCircleY,valOut)
 			
 	#Debugging plot	
 	if debug:

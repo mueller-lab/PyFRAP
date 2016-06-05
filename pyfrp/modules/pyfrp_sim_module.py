@@ -172,10 +172,6 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	#for r in simulation.embryo.ROIs:
 		#ax=r.plotSimConcProfile(phi,ax=ax)
 		
-		
-		
-		
-	
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	#Solving PDE
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

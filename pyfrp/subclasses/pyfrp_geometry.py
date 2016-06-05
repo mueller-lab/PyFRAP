@@ -485,6 +485,13 @@ class zebrafishDomeStage(geometry):
 		
 		return self.outerRadius
 	
+	def getInnerRadius(self):
+		
+		"""Returns inner radius.
+		"""
+		
+		return self.innerRadius
+	
 	def getRadiusScale(self):
 		
 		"""Returns radius scaling factor.
@@ -498,7 +505,7 @@ class zebrafishDomeStage(geometry):
 		
 		Computes zebrafish geometry as follows:
 		
-		.. math:: r_{\mathrm{outer}}=\frac{r_{\mathrm{imaging}}^2+h_{\mathrm{imaging}}}{-2 h_{\mathrm{imaging}}},\\
+		.. math:: r_{\mathrm{outer}}=\frac{r_{\mathrm{imaging}}^2+h_{\mathrm{imaging}}^2}{-2 h_{\mathrm{imaging}}},\\
 		   r_{\mathrm{inner}}=s_{\mathrm{radius}}r_{\mathrm{outer}},\\
 		   d_{\mathrm{center}}=\sqrt{r_{\mathrm{inner}}-r_{\mathrm{outer}}},
 		   
@@ -793,7 +800,7 @@ class xenopusBall(geometry):
 		
 		Computes ball geometry as follows:
 		
-		.. math:: r=\frac{r_{\mathrm{imaging}}^2+h_{\mathrm{imaging}}}{-2 h_{\mathrm{imaging}}},
+		.. math:: r=\frac{r_{\mathrm{imaging}}^2+h_{\mathrm{imaging}}^2}{-2 h_{\mathrm{imaging}}},
 		   
 		where :math:`r` is the ``radius``, :math:`h_{\mathrm{imaging}}` 
 		is the ``imagingHeight`` and :math:`r_{\mathrm{imaging}}` is the ``imagingRadius``.

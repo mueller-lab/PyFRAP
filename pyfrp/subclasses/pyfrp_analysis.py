@@ -21,6 +21,13 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #===========================================================================================================================================================================
+#Module Description
+#===========================================================================================================================================================================
+
+"""Essential PyFRAP module containing :py:class:`analysis` class. 
+"""
+
+#===========================================================================================================================================================================
 #Importing necessary modules
 #===========================================================================================================================================================================
 
@@ -70,7 +77,7 @@ class analysis:
 	The default processing options are ``process={}``, meaning that no image modification is applied before 
 	concentration readout, see also :py:func:`genDefaultProcess`.
 	
-	.. warning:: Quadrant reduction is still experimental.	
+	.. warning:: Quadrant reduction is still experimental.
 	
 	Three other important attributes are:
 	
@@ -79,6 +86,9 @@ class analysis:
 		  :py:func:`setAddRimImg`.
 		* ``concRim``: The rim concentration of the first post-bleaching image used later by the simulation for nodes that 
 		  are outside of original image boundaries.
+	
+	.. note:: ``addRimImg=True`` by default. This is generally good, since the simulation value in ROIs is getting evaluated over
+	   over mesh nodes both inside the actual image and outside of it. 
 	
 	Args:
 		embryo (pyfrp.subclasses.pyfrp_embryo.embryo): PyFRAP embryo instance.
@@ -91,7 +101,7 @@ class analysis:
 		self.embryo=embryo
 		
 		#Rim handling
-		self.addRimImg=False
+		self.addRimImg=True
 		self.concRim=None
 		
 		#Norming Data

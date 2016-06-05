@@ -88,7 +88,7 @@ class fit:
 		self.bounds=None
 		
 		#More settings
-		self.kineticTimeScale=100000.
+		self.kineticTimeScale=1.
 		self.bruteInit=False		
 		
 		#Cutting tvec option
@@ -129,26 +129,82 @@ class fit:
 		self.tvecFit=embryo.tvecData
 
 	def addROI(self,r):
+		
+		"""Adds ROI to the list of fitted ROIs.
+		
+		Args:
+			r (pyfrp.subclasses.pyfrp_ROI.ROI): ROI to be used for fitting.
+		
+		Returns:
+			list: Updated list of ROIs used for fitting.
+			
+		"""
+		
 		if r not in self.ROIsFitted:
 			self.ROIsFitted.append(r)
 		return self.ROIsFitted
 	
 	def addROIByName(self,name):
+		
+		"""Adds ROI to the list of fitted ROIs, given a specific name.
+		
+		Args:
+			name (str): Name of ROI to be used for fitting.
+		
+		Returns:
+			list: Updated list of ROIs used for fitting.
+			
+		"""
+		
 		r=self.embryo.getROIByName(name)
 		return self.addROI(r)
 	
 	def addROIById(self,Id):
+		
+		"""Adds ROI to the list of fitted ROIs, given a specific ROI Id.
+		
+		Args:
+			Id (int): Id of ROI to be used for fitting.
+		
+		Returns:
+			list: Updated list of ROIs used for fitting.
+			
+		"""
+		
 		r=self.embryo.getROIById(Id)
 		return self.addROI(r)
 	
 	def removeROI(self,r):
+		
+		"""Removes ROI from the list of fitted ROIs.
+		
+		Args:
+			r (pyfrp.subclasses.pyfrp_ROI.ROI): ROI to be removed.
+		
+		Returns:
+			list: Updated list of ROIs used for fitting.
+			
+		"""
+		
 		if r in self.ROIsFitted:
 			self.ROIsFitted.remove(r)
 		return self.ROIsFitted
 	
 	def getX0(self):
 		
-		#Copying x0 into local variable to pass to solver, pop entries that are currently not needed
+		"""Returns initial guess of fit in the form that is useful for 
+		the call of the optimization algorithm.
+		
+		Copies x0 into local variable to pass to solver, pop entries that are 
+		currently not needed since they are turned off via ``fitProd`` or ``fitDegr``.
+		
+		.. note:: Always gets executed at the start of ``run``.
+		
+		Returns:
+			list: Currently used x0.
+			
+		"""
+		
 		if self.fitProd and self.fitDegr:
 			x0=list(self.x0)		
 		elif self.fitProd and  not self.fitDegr:	
@@ -163,6 +219,24 @@ class fit:
 		return x0
 	
 	def getBounds(self):
+		
+		"""Generates tuple of boundary tuples, limiting parameters 
+		varied during SSD minimization.
+		
+		Will generate exactly the boundary tuple that is currently 
+		useful to the optimization algorithm, meaning that only 
+		values that are needed  since they are turned on via ``fitProd`` or ``fitDegr``
+		will be included into tuple.
+		
+		Will use values that are stored in ``LBx`` and ``UBx``, where ``x`` is 
+		``D``, ``Prod``, or ``Degr`` for the creation of the tuples. 
+		
+		.. note:: Always gets executed at the start of ``run``.
+		
+		Returns:
+			tuple: Boundary value tuple.
+			
+		"""
 	
 		if self.fitProd and self.fitDegr:
 			bnds = ((self.LBD, self.UBD), (self.LBD, self.UBD),(self.LBD,self.UBD))
@@ -185,10 +259,43 @@ class fit:
 		return self.bounds
 		
 	def run(self,debug=False,ax=None):
+		
+		"""Runs fit.
+		
+		Fitting is done by passing fit object to :py:func:`pyfrp.modules.pyfrp_fit_module.FRAPFitting`.
+		This function then calls all necessary methods of fit to prepare it for optimization and
+		then passes it to optimization algorithm.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			ax (matplotlib.axes): Axes to show debugging plots in.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_fit.fit: ``self``.
+		
+		"""
+		
 		self=pyfrp_fit_module.FRAPFitting(self,debug=debug,ax=ax)
 		return self
 	
 	def assignOptParms(self,res):
+		
+		r"""Assigns optimal parameters found by optimization algorithm to
+		attributes in fit object depending on fit options chosen.
+		
+		Args:
+			res (list): Result array from optimization algorithm.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* DOptPx (float): Optimal diffusion coefficient in :math:`\frac{\mathrm{px}^2}{s}}`.
+				* prod (float): Optimal production rate in :math:`\frac{\[c\]}{s}}`.
+				* degr (float): Optimal degradation rate in :math:`\frac{1}{s}}`.
+				* DOptMu (float): Optimal diffusion coefficient in :math:`\frac{\mu\mathrm{m}^2}{s}}`.
+				
+		"""
+		
 		if self.fitProd and self.fitDegr:
 			self.DOptPx=res[0]
 			self.prodOpt=res[1]/self.kineticTimeScale
@@ -216,12 +323,30 @@ class fit:
 	
 	def plotFit(self,ax=None,legend=True,title=None):
 		
+		"""Plots fit, showing the result for all fitted ROIs.
+		
+		.. note:: If no ``ax`` is given, will create new one.
+		
+		.. image:: ../imgs/pyfrp_fit/fit.png
+		
+		Keyword Args:
+			ax (matplotlib.axes): Axes used for plotting.
+			legend (bool): Show legend.
+			title (str): Title of plot.
+		
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
 		for r in self.ROIsFitted:
 			ax=r.plotFit(self,ax=ax,legend=legend,title=title)
 			
 		return ax
 	
 	def printResults(self):
+		
+		"""Prints out main results of fit."""
 		
 		printObjAttr('DOptMu',self)
 		printObjAttr('DOptPx',self)
@@ -234,41 +359,157 @@ class fit:
 		return True
 	
 	def setOptMeth(self,m):
+		
+		"""Sets optimization method.
+		
+		Available optimization methods are:
+		
+			* Constrained Nelder-Mead
+			* Nelder-Mead
+			* TNC
+			* L-BFGS-B
+			* SLSQP
+			* brute
+			* BFGS
+			* CG
+		
+		See also http://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.optimize.minimize.html and
+		http://docs.scipy.org/doc/scipy-0.17.0/reference/generated/scipy.optimize.brute.html#scipy.optimize.brute .
+		
+		You can find out more about the constrained Nelder-Mead algorithm in the documentation of 
+		:py:func:`pyfrp.modules.pyfrp_optimization_module.constrObjFunc`.
+		
+		Args:
+			m (str): New method.
+			
+		"""
+		
 		self.optMeth=m
 		return self.optMeth
 	
 	def getOptMeth(self):
+		
+		"""Returns the currently used optimization algorithm.
+		
+		Returns:
+			str: Optimization algorithm.
+			
+		"""
+		
 		return self.optMeth
 		
 	def isFitted(self):
+		
+		"""Checks if fit already has been run and succeeded.
+		
+		Returns:
+			bool: ``True`` if success.
+			
+		"""
+		
 		return self.DOptMu!=None
 		
 	def setEqu(self,b):
+		
+		"""Turns on/off equalization.
+		
+		Args:
+			b (bool): New flag value.
+			
+		Returns:
+			bool: New flag value.
+		
+		"""
+		
 		self.equOn=b
 		return self.equOn
 	
 	def setFitPinned(self,b):
+		
+		"""Turns on/off if pinned series are supposed to be fitted.
+		
+		Args:
+			b (bool): New flag value.
+			
+		Returns:
+			bool: New flag value.
+		
+		"""
+		
 		self.fitPinned=b
 		return self.fitPinned
 	
 	def setFitProd(self,b):
+		
+		"""Turns on/off if production is supposed to be considered in fit.
+		
+		Args:
+			b (bool): New flag value.
+			
+		Returns:
+			bool: New flag value.
+		
+		"""
+		
 		self.fitProd=b
 		return self.fitProd
 	
 	def setFitDegr(self,b):
+		
+		"""Turns on/off if degradation is supposed to be considered in fit.
+		
+		Args:
+			b (bool): New flag value.
+			
+		Returns:
+			bool: New flag value.
+		
+		"""
+		
 		self.fitDegr=b
 		return self.fitDegr
 	
 	def setSaveTrack(self,b):
+		
+		"""Turns on/off if fitting process is supposed to be stored.
+		
+		This then can then be used to following the convergence of 
+		the optimization algorithm and possibly to identify local minima.
+		
+		Args:
+			b (bool): New flag value.
+			
+		Returns:
+			bool: New flag value.
+		
+		"""
+		
 		self.saveTrack=b
 		return self.saveTrack
 	
 	def setFitCutOffT(self,b):
+		
+		"""Turns on/off if only a certain fraction of the timeseries
+		is supposed to be fitted.
+		
+		.. warning:: This option is currently VERY experimental. Fitting might
+		   crash.
+		
+		Args:
+			b (bool): New flag value.
+			
+		Returns:
+			bool: New flag value.
+		
+		"""
+		
+		
 		printWarning("CutOffT Option is currently VERY experimental. Fitting might crash.")
 		self.fitCutOffT=b
 		return self.fitCutOffT
 	
 	def setCutOffT(self,t):
+		
 		self.cutOffT=t
 		return self.cutOffT
 	

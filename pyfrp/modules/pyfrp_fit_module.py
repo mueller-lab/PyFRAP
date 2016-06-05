@@ -530,7 +530,7 @@ def FRAPObjFunc(x,fit,debug,ax,returnFit):
 	
 	if debug:
 		print "------------------------------------------"
-		print "Dnew=",Dnew, "prod=", int(fit.fitProd)*prod, "degr=", int(fit.fitDegr)*degr
+		print "Dnew=",Dnew, "prod=", prod, "degr=", degr
 	
 	#Scale simulation vectors
 	try:

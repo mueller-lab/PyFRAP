@@ -24,9 +24,8 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Mesh class for PyFRAP toolbox, including following classes:
-
-#(1) mesh 
+"""Essential PyFRAP module containing :py:class:`mesh` class. 
+"""
 
 #===========================================================================================================================================================================
 #Importing necessary modules
@@ -56,6 +55,33 @@ import os
 #===========================================================================================================================================================================
 
 class mesh(object):
+	
+	"""Mesh class for PyFRAP.
+	
+	The mesh class stores all information about location and creation of the mesh used for a simulation. 
+	It is directly associated with the :py:class:`pyfrp.subclasses.pyfrp_simulation.simulation` object
+	that uses it.
+	
+	Meshes can either be created via running Gmsh onto the *.geo* file of the :py:class:`pyfrp.subclasses.pyfrp_geometry.geometry`,
+	or by running Gmsh internally from FiPy using some predefined functions (limited geometry support). See also 
+	:py:func:`genMesh`.
+	
+	The most important attributes are:
+	
+		* ``mesh``: The actual mesh as a ``fipy.GmshImporter3D`` object.
+		* ``fromFile``: Flag that controls if mesh should be created from *.geo* file or not.
+		* ``volSizePx``: Mesh element size in px.
+	
+	Besides mesh storage and creation, the mesh class contains useful functions such as:
+		
+		* Mesh refinement, see :py:func:`refine`, :py:func:`addBoxField` and :py:func:`forceMinMeshDensityInROI`.
+		* Information output, see :py:func:`printStats`.
+		* Plotting, see :py:func:`plotMesh` and :py:func:`plotDensity`.
+	
+	Args:
+		simulation (pyfrp.subclasses.pyfrp_simulation.simulation): Simulation object.
+	
+	"""
 
 	def __init__(self,simulation):
 		

@@ -966,6 +966,30 @@ class ROI(object):
 		
 		return copy.deepcopy(self)
 	
+	def getNMeshNodes(self):
+		
+		"""Returns number of mesh indices inside ROI.
+		
+		Returns:
+			int: Number of nodes.
+			
+		"""
+		
+		return len(self.meshIdx)
+	
+	def getNImgPxs(self):
+		
+		"""Returns number of image pixels inside ROI.
+		
+		Returns:
+			int: Number of indices.
+			
+		"""
+		
+		return len(self.imgIdxX)
+	
+
+	
 	
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
