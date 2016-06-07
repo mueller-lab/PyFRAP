@@ -77,9 +77,15 @@ class simulation(object):
 		self.ICmode=3
 		self.IC=None
 		
+		#Only necessary if ICmode=4 (ideal ICs)
+		self.bleachedROI=None
+		self.valOut=None
+		
 		#Time specific
 		self.stepsSim=3000
 		self.tvecSim=np.linspace(self.embryo.tStart,self.embryo.tEnd,self.stepsSim)
+		
+		
 		
 		#Integration specific (deprecated)
 		#self.avgMode=0
@@ -90,8 +96,23 @@ class simulation(object):
 		#Debugging (deprecated)
 		#self.debug=0
 		
-	def setInterpolationMode(self,m):
+	def setICMode(self,m):
+		
+		"""Sets the mode of initial conditions.
+		"""
+		
+		if m not in range(5):
+			printError("ICmode = " +  m + " is not defined. Not going to change ICmode" )
+			return self.ICmode
+			
 		self.ICmode=m
+		
+		if m==4:
+			if self.bleachedROI==None:
+				printWarning("bleachedROI is not set yet. This might lead to problems later.")
+			if self.valOut==None:
+				printWarning("valOut is not set yet. This might lead to problems later.")
+		
 		return self.ICmode
 		
 	def run(self,signal=None,embCount=None,showProgress=True,debug=False):
@@ -291,7 +312,7 @@ class simulation(object):
 		return self.tvecSim
 	
 	def setTimesteps(self,n):
-		self.stepsSim=n
+		self.stepsSim=int(n)
 		self.updateTvec()
 		return self.stepsSim
 	

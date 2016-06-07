@@ -626,30 +626,90 @@ class fit:
 		return self.x0[2]
 	
 	def setX0(self,x):
-		self.x0=x
+		
+		"""Sets the initial guess ``x0``.
+		
+		Argument 
+		
+		.. note:: If ``fitProd`` or ``fitDegr`` are not chosen, the values in
+		   ``x0`` are going to be used as static parameters.
+		
+		
+		
+		
+		"""
+		
+		if len(x)==3:
+			self.x0=x
+		else:
+			printError("Length of x0 is not 3, not going to change it.")
+				
 		return self.x0
 	
 	def checkPinned(self):
+		
+		"""Checks if all ROIs in ``ROIsFitted`` have been pinned.
+		
+		Returns:
+			bool: ``True`` if all ROIs have been pinned, ``False`` else.
+		"""
+		
 		b=True
 		for i,r in enumerate(self.ROIsFitted):
 			b = b + len(self.embryo.tvecData)==len(r.dataVecPinned) + len(self.embryo.simulation.tvecSim)==len(r.simVecPinned) 
 		return b
 	
 	def checkSimulated(self):
+		
+		"""Checks if all ROIs in ``ROIsFitted`` have been simulated.
+		
+		Returns:
+			bool: ``True`` if all ROIs have been simulated, ``False`` else.
+		"""
+		
 		b=True
 		for r in self.ROIsFitted:
 			b = b + len(r.simVec)==len(self.embryo.simulation.tvecSim)
 		return b
 		
 	def updateVersion(self):
+		
+		"""Updates fit object to current version, making sure that it possesses
+		all attributes.
+		
+		Creates a new fit object and compares ``self`` with the new fit object.
+		If the new fit object has a attribute that ``self`` does not have, will
+		add attribute with default value from the new fit object.
+		
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_fit.fit: ``self``
+			
+		"""
+		
 		fittemp=fit(self.embryo,"temp")
 		pyfrp_misc_module.updateObj(fittemp,self)
 		return self
 	
 	def computeStats(self):
+		
+		"""Computes stastics for fit.
+		
+		Statistics include:
+			
+			* ``MeanRsq``
+			* ``Rsq``
+			* ``RsqByROI``
+		
+		"""
+		
 		self=pyfrp_stats_module.computeFitRsq(self)
 		
 	def printRsqByROI(self):
+		
+		"""Prints out Rsq value per ROI.
+		"""
+		
 		print "Rsq Values by ROI for fit ", self.name
 		printDict(self.RsqByROI)
 		

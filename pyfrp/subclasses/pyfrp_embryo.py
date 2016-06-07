@@ -292,7 +292,7 @@ class embryo:
 		"""Updates embryo object to current version, making sure that it possesses
 		all attributes.
 		
-		Creates a new embyo object and compares ``self`` with the new embryo object.
+		Creates a new embryo object and compares ``self`` with the new embryo object.
 		If the new embryo object has a attribute that ``self`` does not have, will
 		add attribute with default value from the new embryo object.
 		
@@ -1855,12 +1855,26 @@ class embryo:
 		bkgds=[]
 		for r in self.ROIs:
 			if fromTS in ['data','both']:
-				bkgdTemp,norm=pyfrp_fit_module.computePinVals(r.dataVec,useMin=useMin,useMax=False,debug=debug)
-				bkgds.append(bkgdTemp)
+				if r.isAnalyzed():
+					bkgdTemp,norm=pyfrp_fit_module.computePinVals(r.dataVec,useMin=useMin,useMax=False,debug=debug)
+					bkgds.append(bkgdTemp)
+				else:
+					if debug:
+						printWarning("ROI " + r.name + " is not analyzed yet, cannot use it for background computation.")
+						
 			if fromTS in ['sim','both']:
-				bkgdTemp,norm=pyfrp_fit_module.computePinVals(r.simVec,useMin=useMin,useMax=False,debug=debug)
-				bkgds.append(bkgdTemp)
-			
+				if r.isSimulated():
+					bkgdTemp,norm=pyfrp_fit_module.computePinVals(r.simVec,useMin=useMin,useMax=False,debug=debug)
+					bkgds.append(bkgdTemp)
+				else:
+					if debug:
+						printWarning("ROI " + r.name + " is not simulated yet, cannot use it for background computation.")
+		
+		if len(bkgds)==0:
+			if debug:
+				printWarning("No bkgd value could be found. Will return 0.")
+			return 0.
+		
 		return min(bkgds)	
 	
 	def computeNorm(self,bkgdVal,useMax=True,fromTS='both',debug=False):
@@ -1890,11 +1904,25 @@ class embryo:
 		norms=[]
 		for r in self.ROIs:
 			if fromTS in ['data','both']:
-				bkgdTemp,norm=pyfrp_fit_module.computePinVals(r.dataVec,bkgdVal=bkgdVal,useMin=False,useMax=useMax,debug=debug)
-				norms.append(norm)
+				if r.isAnalyzed():
+					bkgdTemp,norm=pyfrp_fit_module.computePinVals(r.dataVec,bkgdVal=bkgdVal,useMin=False,useMax=useMax,debug=debug)
+					norms.append(norm)
+				else:
+					if debug:
+						printWarning("ROI " + r.name + " is not analyzed yet, cannot use it for norming computation.")
+						
 			if fromTS in ['sim','both']:
-				bkgdTemp,norm=pyfrp_fit_module.computePinVals(r.simVec,bkgdVal=bkgdVal,useMin=False,useMax=useMax,debug=debug)
-				norms.append(norm)
+				if r.isSimulated():
+					bkgdTemp,norm=pyfrp_fit_module.computePinVals(r.simVec,bkgdVal=bkgdVal,useMin=False,useMax=useMax,debug=debug)
+					norms.append(norm)
+				else:
+					if debug:
+						printWarning("ROI " + r.name + " is not simulated yet, cannot use it for norming computation.")
+		if len(norms)==0:
+			if debug:
+				printWarning("No norm value could be found. Will return 1.")
+			return 1.
+			
 		return max(norms)	
 			
 	def computeIdealFRAPPinVals(self,bkgdName='Bleached Square',normName='Slice',debug=False,useMin=False,useMax=False,sepSim=True,switchThresh=0.95):

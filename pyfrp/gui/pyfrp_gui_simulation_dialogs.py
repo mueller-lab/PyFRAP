@@ -149,7 +149,7 @@ class simulationSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 			self.simulation.toLogTimeScale()
 			
 	def setICMode(self,text):
-		self.simulation.setInterpolationMode(int(self.comboIC.currentIndex()))
+		self.simulation.setICMode(int(self.comboIC.currentIndex()))
 		
 	def initComboIC(self):
 		self.comboIC.setCurrentIndex(self.simulation.ICmode-1)

@@ -237,23 +237,38 @@ def convSkio2NP(img):
 	
 	return np.asarray(img)
 	
-def genFakeIC(res,valIn,valOut,offset,sidelength,radius,center,rim,add_rim_from_radius,debug=False):
+def genFakeIC(res,valIn,valOut,offset,sidelength,radius,center,rim,add_rim_from_radius,fill=0.,debug=False):
 	
 	"""Create fake image consisting of circular ROI with pixel value valOut
 	and a square ROI centered inside circle with pixel value valIn. 
+	
+	.. note:: If ``fill=np.nan``, then :py:func:`pyfrp.modules.pyfrp_sim_module.applyInterpolatedICs` will 
+	   not work.
+	   
+	Args:
+		res (int): Resolution of desired image.
+		valIn (float): Value inside bleached region.
+		valOut (float): Value outside of bleached region.
+		offset (numpy.ndarray): Offset of bleached square.
+		sidelength (float): Sidelength of
+	
 	"""
 	
+	if debug:
+		if fill==np.nan:
+			printWarning("fill is set to NaN. This will lead to problems in IC interpolation.")
+	
 	#Empty picture
-	vals=np.nan*np.ones((res,res))
+	vals=fill*np.ones((res,res))
 	
 	#getting indices for regions
 	idxCircleX,idxCircleY = pyfrp_idx_module.getCircleIdxImg(center,radius,res,debug=debug)
 	idxSquareX,idxSquareY = pyfrp_idx_module.getSquareIdxImg(offset,sidelength,res,debug=debug)
 	
 	#Assign values
-	vals=pyfrp_idx_module.ind2mask(vals,idxSquareX,idxSquareY,valIn)
 	vals=pyfrp_idx_module.ind2mask(vals,idxCircleX,idxCircleY,valOut)
-			
+	vals=pyfrp_idx_module.ind2mask(vals,idxSquareX,idxSquareY,valIn)
+	
 	#Debugging plot	
 	if debug:
 		

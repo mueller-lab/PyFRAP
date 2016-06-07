@@ -79,7 +79,7 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 		
 		* Applies initial conditions defined in ``simulation.ICmode``.
 		* Simulates FRAP experimment.
-		
+	
 	Args: 
 		simulation (pyfrp.subclasses.pyfrp_simulation.simulation): Simulation object.
 	
@@ -151,10 +151,12 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	elif simulation.ICmode==3:
 		phi=applyInterpolatedICs(phi,simulation,debug=False)
 		
+	elif simulation.ICmode==4:
+		phi=applyIdealICs(phi,simulation,bleachedROI=simulation.bleachedROI,valOut=simulation.valOut)
+		
 	#Remember ICs
 	simulation.IC=np.asarray(phi.value).copy()
 	
-
 	#Defining Type of equation
 	eq = TransientTerm() == DiffusionTerm(coeff=simulation.D)+simulation.prod-simulation.degr*phi
 
@@ -170,8 +172,9 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	
 	#ax=None
 	#for r in simulation.embryo.ROIs:
+		#print r.name
 		#ax=r.plotSimConcProfile(phi,ax=ax)
-		
+
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	#Solving PDE
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -224,6 +227,52 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	
 	return simulation
 
+def applyIdealICs(phi,simulation,bleachedROI=None,valOut=None):
+	
+	"""Applies ideal initial conditions.
+	
+	That is, everything falling inside the bleached ROI in 
+	x-y-direction will be set its initial dataVec value,
+	everything else will be set equal to valOut.
+	
+	.. note:: The ``bleachedROI`` and valOut are often stored inside the simulation
+	   object. If those two cannot be found, will try to find a ROI called *Bleached Square*
+	   for the bleached ROI and set valOut to ``concRim``. If this again fails, will return
+	   error.
+	
+	Args:
+		phi (fipy.CellVariable): PDE solution variable.
+		simulation (pyfrp.subclasses.pyfrp_simulation.simulation): Simulation object.
+		
+	Keyword Args:
+		bleachedROI (pyfrp.subclasses.pyfrp_ROI.ROI): Bleached ROI.
+		valOut (float): Value to be assigned outside of bleached ROI.
+		
+	Returns:
+		fipy.CellVariable: Updated solution variable.	
+	
+	"""
+	
+	if bleachedROI==None:
+		bleachedROI=simulation.embryo.getROIByName("Bleached Square")
+		if bleachedROI==None:
+			printError("No bleachedROI can be found in applyIdealICs.")
+			return phi
+		
+	if valOut=None:
+		if simulation.embryo.analysis.concRim!=None:
+			valOut=simulation.embryo.analysis.concRim
+		else:
+			printError("No bleachedROI can be found in applyIdealICs.")
+			return phi
+	
+	phi.setValue(valOut)
+	phi.value[r.meshIdx]=bleachedROI.dataVec[0]
+	
+	return phi	
+		
+	
+	
 def applyRadialICs(phi,simulation,radSteps=15,debug=False):
 	
 	"""Applies radially averaged image data to solution variable as IC.
@@ -235,11 +284,12 @@ def applyRadialICs(phi,simulation,radSteps=15,debug=False):
 		phi (fipy.CellVariable): PDE solution variable.
 		simulation (pyfrp.subclasses.pyfrp_simulation.simulation): Simulation object.
 	
-	Keyword Args:
+	
 		radSteps (int): Number of radial levels.
 		debug (bool): Print debugging messages.
 		
-	
+	Returns:
+		fipy.CellVariable: Updated solution variable.
 	
 	"""
 	
@@ -302,7 +352,7 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False):
 	#Get image resolution and center of geometry
 	res=simulation.ICimg.shape[0]
 	center=simulation.embryo.geometry.getCenter()
-		
+	
 	#Define x/y coordinates of interpolation
 	if 'quad' in simulation.embryo.analysis.process.keys():
 		#Shift everything by center to fit with the mesh
@@ -343,7 +393,8 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False):
 		
 	else:	
 		concRim=simulation.embryo.analysis.concRim
-		
+	
+
 	#Set all values of solution variable to concRim
 	phi.setValue(concRim)
 	
@@ -363,10 +414,6 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False):
 	values outside of masterROI (generally just background) to nodes that lie INSIDE image, but OUTSIDE of masterROI.
 	"""
 	
-	print "Before matching",  len(ind)
-	
-	print max(ind)
-	
 	if matchWithMaster:
 		
 		masterROI=simulation.embryo.getMasterROI()
@@ -380,16 +427,9 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False):
 		ind=ind[np.where(ins)[0]]
 		ind=list(ind)
 		
-		
-	print max(ind)
-		
-		
-	print "After matching", len(ind)
-
-	
 	#Apply interpolation
 	phi.value[ind]=f.ev(x[ind],y[ind])
-
+	
 	return phi
 
 	
