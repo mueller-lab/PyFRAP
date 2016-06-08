@@ -93,9 +93,10 @@ class simulationSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		
 		#ComboBox
 		self.comboIC = QtGui.QComboBox(self)
-		self.comboIC.addItem("Ideal")
+		self.comboIC.addItem("By ROI")
 		self.comboIC.addItem("Radial")
 		self.comboIC.addItem("Interpolation")
+		self.comboIC.addItem("Ideal")
 		
 		self.comboTS = QtGui.QComboBox(self)
 		self.comboTS.addItem("Linear")

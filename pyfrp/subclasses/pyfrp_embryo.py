@@ -2102,7 +2102,6 @@ class embryo:
 		"""Prints out interpolation error by ROI.
 		"""
 		
-		
 		for r in self.ROIs:
 			print r.name, r.getInterpolationError()
 	

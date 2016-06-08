@@ -363,7 +363,7 @@ def matchVals(l1,l2):
 	
 	return list(set(l1).intersection(l2))
 
-def vars2dict(var,loc):	
+def vars2dict(var,loc,filt=[]):	
 
 	"""Builds dict of list of variables (only works if vars are in locals()).
 	
@@ -380,6 +380,34 @@ def vars2dict(var,loc):
 		dic[name]=loc[name]
 		
 	return {name: loc[name] for name, val in var.iteritems()}
+
+def objAttr2Dict(obj,attr=[]):
+	
+	"""Writes all object attributes with names defined in list in the 
+	form attributeName = attributeValue into dictionary.
+	
+	If ``attr=[]``, all attributes are written into dictionary, otherwise
+	only the ones specified in ``attr``.
+	
+	Args:
+		obj (object): Object to be printed.
+	
+	Keyword Args:
+		maxL (int): Maximum length threshhold.
+	
+	"""
+	
+	dic={}
+	for item in vars(obj):
+		if attr==[]:
+			dic[item]=vars(obj)[str(item)]
+		else:
+			if item in attr:
+				dic[item]=vars(obj)[str(item)]
+		
+		
+	return dic
+
 
 def dict2string(dic,sep="=",newline=False):
 	

@@ -515,7 +515,7 @@ def checkInsideSquare(x,y,offset,sidelength):
 			
 	"""
 	
-	return x<=offset[0]+sidelength and offset[0]<=x and y<=offset[1]+sidelength and offset[1]<=y
+	return (x<=offset[0]+sidelength) * (offset[0]<=x) * (y<=offset[1]+sidelength) * (offset[1]<=y)
 		
 def checkInsideRectangle(x,y,offset,sidelengthX,sidelengthY):
 	

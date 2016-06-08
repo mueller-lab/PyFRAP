@@ -358,6 +358,20 @@ class fit:
 		
 		return True
 	
+	def resultsToDict(self):
+		
+		"""Extracts all important results into dictionary, making
+		it easier for printout or csv extraction.
+		
+		"""
+		
+		parms=["DOptMu","DOptPx","prodOpt","degrOpt","success","Rsq","MeanRsq","fitDegr","fitProd","fitPinned","equOn"]
+		
+		dic=pyfrp_misc_module.objAttr2Dict(self,attr=parms)
+		
+		return dic
+		
+	
 	def setOptMeth(self,m):
 		
 		"""Sets optimization method.
@@ -514,128 +528,405 @@ class fit:
 		return self.cutOffT
 	
 	def setMaxfun(self,m):
+		
+		"""Sets maximum number of function evaluations at 
+		which optimization algorithm stops.
+		
+		Args:
+			m (int): New maximum number of function evaluations.
+		
+		"""
+		
 		self.maxfun=m
 		return self.maxfun
 	
 	def setOptTol(self,m):
+		
+		"""Sets tolerance level at which optimization algorithm stops.
+		
+		Args:
+			m (float): New tolerance level.
+		
+		"""
+		
 		self.optTol=m
 		return self.optTol
 	
 	def setLBD(self,b):
+		
+		"""Sets the lower bound for the diffusion rate.
+		
+		Args:
+			b (float): New lower bound for diffusion rate.
+		
+		"""
+		
 		self.LBD=b
 		return self.LBD
 	
 	def setLBProd(self,b):
+		
+		"""Sets the lower bound for the production rate.
+		
+		Args:
+			b (float): New lower bound for production rate.
+		
+		"""
+		
 		self.LBProd=b
 		return self.LBProd
 	
 	def setLBDegr(self,b):
+		
+		"""Sets the lower bound for the degradation rate.
+		
+		Args:
+			b (float): New lower bound for degradation rate.
+		
+		"""
+		
 		self.LBDegr=b
 		return self.LBDegr
 	
 	def setUBD(self,b):
+		
+		"""Sets the upper bound for the diffusion rate.
+		
+		Args:
+			b (float): New upper bound for diffusion rate.
+		
+		"""
+		
 		self.UBD=b
 		return self.UBD
 	
 	def setUBProd(self,b):
+		
+		"""Sets the upper bound for the production rate.
+		
+		Args:
+			b (float): New upper bound for production rate.
+		
+		"""
+		
 		self.UBProd=b
 		return self.UBProd
 	
 	def setUBDegr(self,b):
+		
+		"""Sets the upper bound for the degradation rate.
+		
+		Args:
+			b (float): New upper bound for degradation rate.
+		
+		"""
+		
 		self.UBDegr=b
 		return self.UBDegr
 			
 	def getEqu(self):
+		
+		"""Returns equalization flag.
+			
+		Returns:
+			bool: Current flag value.
+		
+		"""
+		
 		return self.equOn
 	
 	def getFitPinned(self):
+		
+		"""Returns flag controlling if pinned timeseries are supposed to be used 
+		for fitting.
+			
+		Returns:
+			bool: Current flag value.
+		
+		"""
+		
 		return self.fitPinned
 	
 	def getFitProd(self):
+		
+		"""Returns flag controlling if a production term is supposed to be used 
+		for fitting.
+			
+		Returns:
+			bool: Current flag value.
+		
+		"""
+		
 		return self.fitProd
 	
 	def getFitDegr(self):
+		
+		"""Returns flag controlling if a degredation term is supposed to be used 
+		for fitting.
+			
+		Returns:
+			bool: Current flag value.
+		
+		"""
+		
+		
 		return self.fitDegr
 	
 	def getSaveTrack(self):
+			
+		"""Returns flag controlling if whole fitting process is supposed to be saved
+		in fit object.
+			
+		Returns:
+			bool: Current flag value.
+		
+		"""
+		
 		return self.saveTrack
 	
 	def getFitCutOffT(self):
+			
+		"""Returns flag controlling if only the first ``cutOffT`` timesteps are supposed to be fitted.
+		
+		.. warning:: This option is currently VERY experimental. Fitting might
+		   crash.
+		
+		Returns:
+			bool: Current flag value.
+		
+		"""
+		
 		return self.fitCutOffT
 	
 	def getCutOffT(self):
+		
+		"""Returns timepoint at which timeseries are cut if ``fitCutOffT`` is turned on.
+		
+		.. warning:: This option is currently VERY experimental. Fitting might
+		   crash.
+		
+		Returns:
+			float: Timepoint.
+		
+		"""
+		
 		return self.cutOffT
 	
 	def getMaxfun(self):
+		
+		"""Returns maximum number of function evaluations at 
+		which optimization algorithm stops.
+		
+		Returns:
+			int: Current maximum number of function evaluations.
+		
+		"""
+		
 		return self.maxfun
 	
 	def getOptTol(self):
+		
+		"""Returns tolerance level at which optimization algorithm stops.
+		
+		Returns:
+			float: Current tolerance level.
+		
+		"""
+		
 		return self.optTol
 	
 	def getLBD(self):
+		
+		"""Returns the lower bound for the diffusion rate.
+		
+		Returns:
+			float: Current lower bound for diffusion rate.
+		
+		"""
+		
 		return self.LBD
 	
 	def getLBProd(self):
+		
+		"""Returns the lower bound for the production rate.
+		
+		Returns:
+			float: Current lower bound for production rate.
+		
+		"""
+		
+		
 		return self.LBProd
 	
 	def getLBDegr(self):
+		
+		"""Returns the lower bound for the degradation rate.
+		
+		Returns:
+			float: Current lower bound for degradation rate.
+		
+		"""
+		
 		return self.LBDegr
 	
 	def getUBD(self):
+		
+		"""Returns the upper bound for the diffusion rate.
+		
+		Returns:
+			float: Current upper bound for diffusion rate.
+		
+		"""
+		
 		return self.UBD
 	
 	def getUBProd(self):
+		
+		"""Returns the upper bound for the production rate.
+		
+		Returns:
+			float: Current upper bound for production rate.
+		
+		"""
+		
 		return self.UBProd
 	
 	def getUBDegr(self):
+		
+		"""Returns the upper bound for the degradation rate.
+		
+		Returns:
+			float: Current upper bound for degradation rate.
+		
+		"""
+		
 		return self.UBDegr
 	
 	def setKineticTimeScale(self,s):
+		
+		"""Sets the kinetic time scale factor used for fitting.
+		
+		Args:
+			s (float): New kinetic time scale factor.
+			
+		"""
+		
 		self.kineticTimeScale=s
 		return self.kineticTimeScale
 	
 	def getKineticTimeScale(self):
+		
+		"""Returns the kinetic time scale factor used for fitting.
+		
+		Returns:
+			float: Current kinetic time scale factor.
+			
+		"""
+		
 		return self.kineticTimeScale
 	
 	def setName(self,s):
+			
+		"""Sets name of fit.
+		
+		Args:
+			s (str): New name of fit.
+			
+		"""
+		
 		self.name=s
 		return self.name
 	
 	def getName(self):
+		
+		"""Returns name of fit.
+		
+		Returns:
+			str: Name of fit.
+			
+		"""
+		
 		return self.name
 		
 	def setX0D(self,x):
+		
+		"""Sets the initial guess for the diffusion rate.
+		
+		Args:
+			x (float): Initial guess for diffusion rate.
+		"""
+		
 		self.x0[0]=x
 		return self.x0[0]
 	
 	def setX0Prod(self,x):
+		
+		"""Sets the initial guess for the production rate.
+		
+		Args:
+			x (float): Initial guess for production rate.
+		"""
+		
 		self.x0[1]=x
 		return self.x0[1]
 	
 	def setX0Degr(self,x):
+		
+		"""Sets the initial guess for the degradation rate.
+		
+		Args:
+			x (float): Initial guess for degradation rate.
+		"""
+		
 		self.x0[2]=x
 		return self.x0[2]
 	
 	def getX0D(self):
+		
+		"""Returns the initial guess for the diffusion rate.
+		
+		Returns:
+			float: Initial guess for diffusion rate.
+		"""
+		
 		return self.x0[0]
 	
 	def getX0Prod(self):
+		
+		"""Returns the initial guess for the production rate.
+		
+		Returns:
+			float: Initial guess for production rate.
+		"""
+		
 		return self.x0[1]
 	
 	def getX0Degr(self):
+		
+		"""Returns the initial guess for the degradation rate.
+		
+		Returns:
+			float: Initial guess for degration rate.
+		"""
+		
 		return self.x0[2]
 	
 	def setX0(self,x):
 		
 		"""Sets the initial guess ``x0``.
 		
-		Argument 
+		Argument ``x`` needs to have length 3, otherwise it is being rejected. 
 		
 		.. note:: If ``fitProd`` or ``fitDegr`` are not chosen, the values in
 		   ``x0`` are going to be used as static parameters.
 		
 		
-		
+		Args:
+			x (list): New desired initial guess.
+			
+		Returns:
+			list: New initial guess.
+			
 		
 		"""
 		

@@ -85,8 +85,6 @@ class simulation(object):
 		self.stepsSim=3000
 		self.tvecSim=np.linspace(self.embryo.tStart,self.embryo.tEnd,self.stepsSim)
 		
-		
-		
 		#Integration specific (deprecated)
 		#self.avgMode=0
 		#self.addRimSim=0
@@ -114,7 +112,33 @@ class simulation(object):
 				printWarning("valOut is not set yet. This might lead to problems later.")
 		
 		return self.ICmode
+	
+	def setBleachedROI(self,r):
 		
+		"""Sets bleached ROI that is used when ideal ICs (ICmode=4) is selected.
+		
+		Args:
+			r (pyfrp.subclasses.pyfrp_ROI.ROI): ROI to be set bleached ROI.
+			
+		"""
+		
+		self.bleachedROI=r
+		
+		return self.bleachedROI
+	
+	def setValOut(self,v):
+		
+		"""Sets valOut that is used when ideal ICs (ICmode=4) is selected.
+		
+		Args:
+			v (float): Value that is to assigned outside of bleachedROI.
+		
+		"""
+		
+		self.valOut=v
+		
+		return self.valOut
+	
 	def run(self,signal=None,embCount=None,showProgress=True,debug=False):
 		
 		if not self.embryo.checkROIIdxs()[1]:

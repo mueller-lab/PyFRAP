@@ -662,6 +662,27 @@ class ROI(object):
 	
 	def plotSolutionVariable(self,phi,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True):
 		
+		"""Plots simulation solution variable over all indices of ROI as 2D contour plot.
+		
+		.. note:: If no ``ax`` is given, will create new one.
+		
+		See also http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.tricontourf .
+		
+		Args:
+			phi (fipy.CellVariable): Solution variable.
+			
+		Keyword Args:
+			ax (matplotlib.axes): Axes used for plotting.
+			vmin (float): Minimum value displayed in contour plot.
+			vmax (float): Maximum value displayed in contour plot.
+			nlevels (int): Number of contour levels.
+			colorbar (bool): Display color bar.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
 		if hasattr(phi,'value'):
 			val=phi.value
 		else:
@@ -777,6 +798,21 @@ class ROI(object):
 		return fitted
 	
 	def getInterpolationError(self):
+		
+		"""Prints out interpolation error for the volume of this ROI.
+		
+		Interpolation error is defined as:
+		
+		``dataVec[0]/simVec[0]``,
+		
+		That is, by how much does the first simulation value defer from first data
+		value.
+		
+		Returns:
+			float: Interpolation error.
+		
+		"""
+		
 		if self.isSimulated() and self.isAnalyzed():
 			try:
 				return self.dataVec[0]/self.simVec[0]

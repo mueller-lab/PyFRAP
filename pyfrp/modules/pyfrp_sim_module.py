@@ -170,11 +170,21 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	for r in simulation.embryo.ROIs:
 		r.getSimConc(phi,append=True)
 	
+	#for r in simulation.embryo.ROIs:
+		#if "Slice" in r.name:
+			#print r.name, r.getNMeshNodes(), r.getZExtend(), r.simVec[0]
+			#r.plotSolutionVariable(phi)
+			
+			
+			#simulation.embryo.getROIByName("Slice").plotSolutionVariable(phi)
+	
 	#ax=None
 	#for r in simulation.embryo.ROIs:
 		#print r.name
 		#ax=r.plotSimConcProfile(phi,ax=ax)
-
+	
+	#raw_input()
+	
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	#Solving PDE
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -259,15 +269,22 @@ def applyIdealICs(phi,simulation,bleachedROI=None,valOut=None):
 			printError("No bleachedROI can be found in applyIdealICs.")
 			return phi
 		
-	if valOut=None:
+	if valOut==None:
 		if simulation.embryo.analysis.concRim!=None:
 			valOut=simulation.embryo.analysis.concRim
 		else:
 			printError("No bleachedROI can be found in applyIdealICs.")
 			return phi
 	
+	#Set all values in mesh to valOut
 	phi.setValue(valOut)
-	phi.value[r.meshIdx]=bleachedROI.dataVec[0]
+	
+	#Find indices of all nodes that lie inside bleachedROI in x-y-direction
+	x,y,z=simulation.mesh.mesh.getCellCenters()
+	ind=bleachedROI.checkXYInside(np.asarray(x),np.asarray(y))
+	
+	#Set these nodes equal to first dataVec entry
+	phi.value[ind]=bleachedROI.dataVec[0]
 	
 	return phi	
 		
