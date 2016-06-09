@@ -389,7 +389,7 @@ def getRectangleIdxMesh(sidelengthX,sidelengthY,offset,mesh,zmin="-inf",zmax="in
 	indSlice=getSliceIdxMesh(z,zmin,zmax)
 	
 	#Get matches indices
-	indFinal=pyfrp_misc.matchVals(indSlice,indFinal)
+	indFinal=pyfrp_misc.matchVals(indSlice,indSquare)
 	
 	return indFinal
 

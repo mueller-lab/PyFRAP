@@ -345,7 +345,33 @@ class geometry(object):
 		for v in domain.vertices:
 			z.append(v.x[2])	
 		
-		return min(zmin), max(zmin) 
+		return min(z), max(z) 
+	
+	def getXYExtend(self):
+		
+		"""Returns extend in x/y-direction by reading out vertices from 
+		.geo file and returning maximum and minimum x/y-coordinates.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xmin (float): Minimum x-coordinate.
+				* xmax (float): Maximum x-coordinate.
+				* ymin (float): Minimum y-coordinate.
+				* ymax (float): Maximum y-coordinate.
+				
+		"""
+		
+		domain=self.readGeoFile()
+		
+		x=[]
+		y=[]
+		for v in domain.vertices:
+			x.append(v.x[0])	
+			y.append(v.x[1])	
+		
+		return min(x), max(x) , min(y), max(y)
+		
 	
 	def printDetails(self):
 		
@@ -567,12 +593,31 @@ class zebrafishDomeStage(geometry):
 	
 	def getZExtend(self):
 		
-		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.getZExtend`.
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getZExtend`.
 		
 		By default, zebrafish geometry is set to range from ``-outerRadius`` to ``0``. 
 		"""
 		
 		return -self.outerRadius,0
+	
+	def getXYExtend(self):
+		
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getXYExtend`.
+		
+		By default, zebrafish geometry is set to range from ``center[i]-outerRadius`` to ``center[i]+outerRadius``. 
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xmin (float): Minimum x-coordinate.
+				* xmax (float): Maximum x-coordinate.
+				* ymin (float): Minimum y-coordinate.
+				* ymax (float): Maximum y-coordinate.
+		
+		"""
+		
+		return self.center[0]-self.outerRadius,self.center[0]+self.outerRadius,self.center[1]-self.outerRadius,self.center[1]+self.outerRadius
+	
 	
 class zebrafishDomeStageQuad(zebrafishDomeStage):
 	
@@ -694,12 +739,31 @@ class cylinder(geometry):
 	
 	def getZExtend(self):
 		
-		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.getZExtend`.
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getZExtend`.
 		
 		By default, cylinder geometry is set to range from ``-height`` to ``0``. 
 		"""
 		
 		return -self.height,0
+	
+	def getXYExtend(self):
+		
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getXYExtend`.
+		
+		By default, cylinder geometry is set to range from ``center[i]-radius`` to ``center[i]+radius``. 
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xmin (float): Minimum x-coordinate.
+				* xmax (float): Maximum x-coordinate.
+				* ymin (float): Minimum y-coordinate.
+				* ymax (float): Maximum y-coordinate.
+		
+		"""
+		
+		return self.center[0]-self.radius,self.center[0]+self.radius,self.center[1]-self.radius,self.center[1]+self.radius
+	
 	
 class cylinderQuad(cylinder):
 	
@@ -859,12 +923,30 @@ class xenopusBall(geometry):
 	
 	def getZExtend(self):
 		
-		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.getZExtend`.
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getZExtend`.
 		
 		By default, ball geometry is set to range from ``-imagingRadius`` to ``0``. 
 		"""
 		
 		return -self.imagingRadius,0
+	
+	def getXYExtend(self):
+		
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getXYExtend`.
+		
+		By default, ball geometry is set to range from ``center[i]-radius`` to ``center[i]+radius``. 
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xmin (float): Minimum x-coordinate.
+				* xmax (float): Maximum x-coordinate.
+				* ymin (float): Minimum y-coordinate.
+				* ymax (float): Maximum y-coordinate.
+		
+		"""
+		
+		return self.center[0]-self.radius,self.center[0]+self.radius,self.center[1]-self.radius,self.center[1]+self.radius
 	
 class xenopusBallQuad(xenopusBall):
 	
@@ -1045,13 +1127,34 @@ class cone(geometry):
 	
 	def getZExtend(self):
 		
-		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.getZExtend`.
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getZExtend`.
 		
 		By default, cone geometry is set to range from ``-height`` to ``0``. 
 		"""
 		
 		return -self.height,0
 
+	def getXYExtend(self):
+		
+		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getXYExtend`.
+		
+		By default, cone geometry is set to range from ``center[i]-max([self.upperRadius,self.lowerRadius])`` 
+		to ``center[i]+max([self.upperRadius,self.lowerRadius])``. 
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xmin (float): Minimum x-coordinate.
+				* xmax (float): Maximum x-coordinate.
+				* ymin (float): Minimum y-coordinate.
+				* ymax (float): Maximum y-coordinate.
+		
+		"""
+		
+		maxRadius=max([self.upperRadius,self.lowerRadius])
+		
+		return self.center[0]-maxRadius,self.center[0]+maxRadius,self.center[1]-maxRadius,self.center[1]+maxRadius
+	
 	
 class custom(geometry):
 	

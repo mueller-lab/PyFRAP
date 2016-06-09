@@ -1,0 +1,14 @@
+- Added methods to get x/y extend of geometry
+- Added option to slice embryo in x/y direction
+- Fixed bugs in rectangleROI.computeMeshIdx
+- Fixed bugs in pyfrp_idx_module.getRectangleMeshIdx
+- extended pyfrp_ROI.plotSolutionVariable to be able to plot in all planes
+- Added functions to get nlargest numbers/ indices of those in pyfrp_misc_module
+- Added pyfrp_ROI.getExtend and pyfrp_ROI.getMaxExtendPlane and pyfrp_ROI.getPlaneMidCoordinate
+- extended pyfrp_ROI.plotSolutionVariable to also allow for 3D plotting
+- Added pyfrp_sim.plotICStack for full IC plotting in 3D.
+
+
+
+
+

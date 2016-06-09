@@ -374,3 +374,44 @@ class simulation(object):
 		
 		return not round(np.diff(self.tvecSim)[0],5)==round(np.diff(self.tvecSim)[-1],5)
 	
+	def plotICStack(self,ROIs,withGeometry=True,vmin=None,vmax=None,ax=None,colorbar=False):
+		
+		if ax==None:
+			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Simulation IC stack"],proj=['3d'])
+			ax=axes[0]
+		
+		#Plot geometry
+		if withGeometry:
+			#self.embryo.geometry.updateGeoFile()
+			ax=self.embryo.geometry.plotGeometry(ax=ax)
+		
+		#Find vmin/vmax over all ROIs
+		vminNew=[]
+		vmaxNew=[]
+		for r in ROIs:
+			vminNew.append(min(self.IC[r.meshIdx]))
+			vmaxNew.append(max(self.IC[r.meshIdx]))
+		
+		if vmin==None:
+			vmin=min(vminNew)	
+		if vmax==None:
+			vmax=min(vmaxNew)
+			
+		for r in ROIs:
+			plane=r.getMaxExtendPlane()
+			zs=r.getPlaneMidCoordinate()
+			zdir=r.getOrthogonal2Plane()
+			
+			try:
+				ax=r.plotSolutionVariable(self.IC,ax=ax,vmin=vmin,vmax=vmax,plane=plane,zs=zs,zdir=zdir,colorbar=colorbar)
+			except:
+				printWarning("Failed to plot ROI "+ r.name)
+				
+		return ax	
+		
+		
+		
+		
+		
+		
+	

@@ -660,11 +660,107 @@ class ROI(object):
 	def isMaster(self):
 		return self==self.embryo.getMasterROI()
 	
-	def plotSolutionVariable(self,phi,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True):
+	def getMaxExtendPlane(self):
+		
+		"""Returns in which plane ("xy","xz","yz") the ROI has the biggest extend.
+		
+		Returns:
+			str: Plane with largest extend.
+		"""
+		
+		#Compute extend for all three coordinat4e
+		xmin,xmax,ymin,ymax,zmin, zmax = self.getExtend()
+		ext=[abs(xmax-xmin),abs(ymax-ymin),abs(zmax-zmin)]
+		
+		#Get 2 largest values
+		mExts,indExts=pyfrp_misc_module.getIdxOfNLargest(ext,2)
+		
+		plane=""
+		if 0 in indExts:
+			plane=plane+"x"
+		if 1 in indExts:
+			plane=plane+"y"
+		if 2 in indExts:
+			plane=plane+"z"
+			
+		if len(plane)!=2:
+			printWarning("Something went wrong finding plane. Plane is " + plane)
+		
+		return plane
+	
+	def getPlaneMidCoordinate(self):
+		
+		"""Returns midpoint of extend orthogonal to plane of maximum extension.
+		
+		Returns:
+			float: Midpoint.
+		
+		"""
+		
+		plane=self.getMaxExtendPlane()
+		xmin,xmax,ymin,ymax,zmin, zmax = self.getExtend()
+		
+		if plane=='xy':
+			return (zmax+zmin)/2.
+			
+		elif plane=='xz':
+			return (ymax+ymin)/2.
+			
+		elif plane=='yz':
+			return (xmax+xmin)/2.
+	
+	def getOrthogonal2Plane(self):
+		
+		"""Returns orthogonal direction to plane of maximum extension.
+		
+		See also :py:func:`pyfrp.subclasses.pyfrp_ROI.ROI.getPlaneMidCoordinate` and
+		:py:func:`pyfrp.subclasses.pyfrp_ROI.ROI.getMaxExtendPlane` .
+		
+		Returns:
+			str: Direction.
+		
+		"""
+		
+		plane=self.getMaxExtendPlane()
+		
+		if plane=='xy':
+			return 'z'
+			
+		elif plane=='xz':
+			return 'y'
+			
+		elif plane=='yz':
+			return 'x'
+		
+	def getExtend(self):
+		
+		"""Returns x-/y-/z-extend of ROI.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xmin (float): Minimum x-coordinate.
+				* xmax (float): Maximum x-coordinate.
+				* ymin (float): Minimum y-coordinate.
+				* ymax (float): Maximum y-coordinate.
+				* zmin (float): Minimum z-coordinate.
+				* zmax (float): Maximum z-coordinate.
+					
+		"""
+		
+		[xmin,xmax],[ymin,ymax] = self.computeXYExtend()
+		zmin, zmax = self.getZExtend()
+		
+		return xmin,xmax,ymin,ymax,zmin, zmax 
+		
+	def plotSolutionVariable(self,phi,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True,plane='xy',zs=None,zdir=None):
 		
 		"""Plots simulation solution variable over all indices of ROI as 2D contour plot.
 		
 		.. note:: If no ``ax`` is given, will create new one.
+		
+		``plane`` variable controls in which plane the solution variable is supposed to be plotted. 
+		Acceptable input variables are ``"xy","xz","yz"``.
 		
 		See also http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.tricontourf .
 		
@@ -677,6 +773,7 @@ class ROI(object):
 			vmax (float): Maximum value displayed in contour plot.
 			nlevels (int): Number of contour levels.
 			colorbar (bool): Display color bar.
+			plane (str): Plane in which solution variable is supposed to be plotted.
 			
 		Returns:
 			matplotlib.axes: Axes used for plotting.
@@ -701,7 +798,34 @@ class ROI(object):
 		
 		levels=np.linspace(vmin,1.01*vmax,nlevels)
 		
-		solPlot=ax.tricontourf(x[self.meshIdx],y[self.meshIdx],val[self.meshIdx],vmin=vmin,vmax=vmax,levels=levels)
+		print self.name
+		print len(x[self.meshIdx]),len(y[self.meshIdx]),len(val[self.meshIdx])
+		
+		#if min(val[self.meshIdx])==max(val[self.meshIdx]):
+			#print "bla"
+			#print min(val[self.meshIdx]),max(val[self.meshIdx])
+			#val[self.meshIdx]=np.random.rand(np.shape(val[self.meshIdx])[0])
+			#print min(val[self.meshIdx]),max(val[self.meshIdx])
+		
+		if plane=='xy':
+		
+			solPlot=ax.tricontourf(x[self.meshIdx],y[self.meshIdx],val[self.meshIdx],vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir)
+			ax.set_xlabel('x')
+			ax.set_ylabel('y')
+			
+		elif plane=='xz':
+			solPlot=ax.tricontourf(x[self.meshIdx],z[self.meshIdx],val[self.meshIdx],vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir)
+			ax.set_xlabel('x')
+			ax.set_ylabel('z')
+			
+		elif plane=='yz':
+			solPlot=ax.tricontourf(y[self.meshIdx],z[self.meshIdx],val[self.meshIdx],vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir)
+			ax.set_xlabel('y')
+			ax.set_ylabel('z')
+		else:
+			printError("Don't understand plane="+plane+". Will not plot.")
+			return ax
+		
 		ax.autoscale(enable=True, axis='both', tight=True)
 		
 		if colorbar:
@@ -1419,7 +1543,7 @@ class rectangleROI(ROI):
 		return self.imgIdxX,self.imgIdxY
 	
 	def computeMeshIdx(self,mesh):
-		self.meshIdx=pyfrp_idx_module.getRectangleIdxMesh(self.sidelength,self.offset,mesh,zmin=self.zmin,zmax=self.zmax)
+		self.meshIdx=pyfrp_idx_module.getRectangleIdxMesh(self.sidelengthX,self.sidelengthY,self.offset,mesh,zmin=self.zmin,zmax=self.zmax)
 		return self.meshIdx
 	
 	def showBoundary(self,color=None,linewidth=3,ax=None):

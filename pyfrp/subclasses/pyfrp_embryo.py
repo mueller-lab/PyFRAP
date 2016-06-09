@@ -2193,7 +2193,7 @@ class embryo:
 			printError("Failed to clearAllAttributes in embryo" + self.name +" .")
 			return False
 				
-	def sliceEmbryo(self,nSlices):
+	def sliceEmbryo(self,nSlices,direction='z'):
 		
 		"""Slices embryo in z-direction in ``nSlices``.
 		
@@ -2211,15 +2211,35 @@ class embryo:
 		
 		"""
 		
-		#Get zExtend and height of geometry
-		zmin,zmax = self.geometry.getZExtend()
-		height=abs(zmax-zmin)
-		
-		sliceWidth = height/nSlices
-		
-		for i in range(nSlices):
-			self.newSliceROI("Slice"+str(i),self.getFreeROIId(),zmin+(i+0.5)*sliceWidth,sliceWidth,False,color=[1,1/(i+2.),0.])
+		if direction=='z':
+			#Get zExtend and height of geometry
+			zmin,zmax = self.geometry.getZExtend()
+			height=abs(zmax-zmin)
 			
+			sliceWidth = height/nSlices
+			
+			for i in range(nSlices):
+				self.newSliceROI("Slice"+str(i),self.getFreeROIId(),zmin+(i+0.5)*sliceWidth,sliceWidth,False,color=[1,1/(i+2.),0.])
+		
+		elif direction=='x':
+			xmin,xmax,ymin,ymax = self.geometry.getXYExtend()
+			xwidth=abs(xmax-xmin)
+			ywidth=abs(ymax-ymin)
+			sliceWidth = xwidth/nSlices
+			
+			for i in range(nSlices):
+				self.newRectangleROI("Slice"+str(i),self.getFreeROIId(),[xmin+i*sliceWidth,ymin],sliceWidth,ywidth,color=[1,1/(i+2.),0.])
+				
+		elif direction=='y':
+			xmin,xmax,ymin,ymax = self.geometry.getXYExtend()
+			xwidth=abs(xmax-xmin)
+			ywidth=abs(ymax-ymin)
+			sliceWidth = ywidth/nSlices
+			
+			for i in range(nSlices):
+				self.newRectangleROI("Slice"+str(i),self.getFreeROIId(),[xmin,ymin+i*sliceWidth],xwidth,sliceWidth,color=[1,1/(i+2.),0.])
+				
+				
 		return self.ROIs
 
 	

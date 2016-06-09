@@ -270,6 +270,11 @@ def readLine(line,parmDic,domain):
 		#This line is a comment, return parmDic
 		return parmDic, "comment", -1, [],domain
 	
+	if "[" in line or "]" in line:
+		#This is a field line
+		return parmDic, "field", -3, [], domain
+		
+	
 	if "{" in line or "}" in line:
 		#This line is some sort of object
 		
@@ -294,7 +299,8 @@ def readLine(line,parmDic,domain):
 			pass
 		
 		return parmDic, typ, Id , vals,domain
-			
+	
+	
 	else:
 		#Check if line is empty
 		if len(line.strip())>0:

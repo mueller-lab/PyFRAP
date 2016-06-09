@@ -1399,7 +1399,48 @@ def translateNPFloat(x):
 	
 	return np.float(x)
 		
+def getNLargest(x,N):
+	
+	"""Returns N largest values in array/list.
+	
+	Args:
+		x (numpy.nparray): An array.
+		N (int): Number of values.
+		
+	Returns:
+		list: List containing N largest numbers.
+	"""
+	
+	x=list(x)
+	
+	return sorted(x)[-N:]
 
+def getIdxOfNLargest(x,N):
 	
+	"""Returns indices of N largest values in array/list.
 	
+	Args:
+		x (numpy.nparray): An array.
+		N (int): Number of values.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* list: List containing N largest numbers.
+			* list: List containing indices of N largest numbers.
+			
+	"""
 	
+	x=list(x)
+	nLargest=getNLargest(x,N)
+	
+	indices=[]
+	for n in nLargest:
+		indices.append(x.index(n))
+		
+		#Need to fill current index with None, in case there are
+		#some value is multiple times in x
+		x[indices[-1]]=None
+		
+	return nLargest, indices
+
