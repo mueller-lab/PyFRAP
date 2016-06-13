@@ -36,6 +36,7 @@ Contains functions and classes that are often used by PyFRAP toolbox and simplif
 
 #numpy
 import numpy as np
+import scipy.interpolate
 
 #Plotting
 from mpl_toolkits.mplot3d import Axes3D
@@ -50,6 +51,7 @@ import os
 #PyFRAP
 import pyfrp_img_module
 from pyfrp_term_module import *
+from pyfrp.modules import pyfrp_idx_module
 
 #===========================================================================================================================================================================
 #Module Functions
@@ -627,4 +629,149 @@ def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,leg
 	
 	return ax
 
+def plotSolutionVariable(x,y,val,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True,plane='xy',zs=None,zdir=None,title="Solution Variable",sup="",dThresh=None,nPts=1000,mode='normal'):
+		
+	"""Plots simulation solution variable as 2D contour plot.
+	
+	.. note:: If no ``ax`` is given, will create new one.
+	
+	.. note:: ``x`` and ``y`` do not necessarily have to be coordinates in x/y-direction, but rather correspond to 
+	   the two directions defined in ``plane``. 
+	
+	``plane`` variable controls in which plane the solution variable is supposed to be plotted. 
+	Acceptable input variables are ``"xy","xz","yz"``. See also
+	:py:func:`pyfrp.subclasses.pyfrp_ROI.ROI.getMaxExtendPlane`.
+	
+	``mode`` controls which contour function is used:
+	
+		* ``normal``: Will create rectangular grid and use ``scipy.interpolate.gridddata`` and interpolate solution onto it,
+		  then plot using ``matplotlib.pyplot.contourf``, see also http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.contourf and
+		  http://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.interpolate.griddata.html#scipy.interpolate.griddata .
+		
+		* ``tri``: Will plot irregular grid using ``matplotlib.pyplot.tricontourf``. See also 
+		  http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.tricontourf .
+	
+	.. warning:: ``matplotlib.pyplot.tricontourf`` has problems when ``val`` only is in a single level of contour plot.
+		To avoid this, we currently add some noise in this case just to make it plottable. This is not the most elegant
+		solution. (only in case of 3D plotting)
+	
+	Args:
+		x (numpy.ndarray): x-coordinates.
+		y (numpy.ndarray): y-coordinates.
+		val (numpy.ndarray): Solution variable values.
+		
+	Keyword Args:
+		ax (matplotlib.axes): Axes used for plotting.
+		vmin (float): Minimum value displayed in contour plot.
+		vmax (float): Maximum value displayed in contour plot.
+		nlevels (int): Number of contour levels.
+		colorbar (bool): Display color bar.
+		plane (str): Plane in which solution variable is supposed to be plotted.
+		zs (float): In case of a 3D plot, height in direction zdir where to put contour.
+		zdir (str): Orthogonal direction to plane.
+		nPts (int): Number of points used for interpolating (only if ``mode=normal``).
+		mode (str): Which contour function to use.
+		
+	Returns:
+		matplotlib.axes: Axes used for plotting.
+	
+	"""
+	
+	#Make axes if necessary
+	if ax==None:
+		if zs!=None and zdir!=None:
+			print "bla"
+			fig,axes = makeSubplot([1,1],titles=[title],sup=sup,proj=['3d'])
+		else:	
+			fig,axes = makeSubplot([1,1],titles=[title],sup=sup)
+		
+		ax=axes[0]
+	else:
+		ax.set_title(title)
+		
+	
+	#vmin/vmax/levels
+	vmin,vmax,levels=makeFittingLevels(vmin,vmax,val,nlevels,buff=1.01)
+	
+	#Make grid
+	grid = np.meshgrid(np.linspace(min(x), max(x), nPts),np.linspace(min(y), max(y), nPts))
+	
+	#Interpolate
+	xy=np.vstack((x,y))
+	valPlot = scipy.interpolate.griddata(xy.T, val, tuple(grid), 'linear')
+	
+	#If dThresh is given, filter all nodes that are further apart from their neighbor than dThresh
+	if dThresh!=None:
+		idxs=pyfrp_idx_module.maskMeshByDistance(x,y,dThresh,grid)
+		valPlot[idxs]=np.nan
+		
+	#Stupid fix for tricontourf 3D problem
+	if zs!=None and zdir!=None and mode=='tri':
+		if min(val)==max(val):
+			
+			"""IDEA:
+			Add a little bit of noise to make it work. Not best solution ever. Needs to be changed.
+			"""
+
+			add=(1.01*vmax-vmin)/(nlevels)*np.random.randn(np.shape(val)[0])
+			val=val+add
+	
+	#Plot 
+	if mode=='tri':
+		solPlot=ax.tricontourf(x,y,val,vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir,extend='both')
+	else:
+		solPlot=ax.contourf(grid[0],grid[1],valPlot,vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir)	
+	
+	#Label
+	if len(plane)!=2:
+		printError("Don't understand plane="+plane+". Will not plot.")
+		return ax	
+	else:
+		ax.set_xlabel(plane[0])
+		ax.set_ylabel(plane[1])
+
+	ax.autoscale(enable=True, axis='both', tight=True)
+	
+	if colorbar:
+		cb=plt.colorbar(solPlot,orientation='horizontal',pad=0.05)
+	
+	#plt.draw()
+	ax.get_figure().canvas.draw()
+	
+	return ax	
+
+def makeFittingLevels(vmin,vmax,val,nlevels,buff=0.01):
+	
+	"""Generates array with fitting levels for contour plots.
+	
+	.. note:: If ``vmin=None`` or ``vmax=None``, will pick the minimum/maximum 
+	   value of ``val``.
+	
+	Args:
+		val (numpy.ndarray): Array to be plotted.
+		vmin (float): Minimum value displayed in contour plot.
+		vmax (float): Maximum value displayed in contour plot.
+		nlevels (int): Number of contour levels.
+		
+	Keyword Args:	
+		buff (float): Percentage buffer to be added to both sides of the array.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* vmin (float): Minimum value displayed in contour plot.
+			* vmax (float): Maximum value displayed in contour plot.
+			* levels (numpy.ndarray): Level array to be handed to contour function.
+	
+	"""
+	
+	
+	if vmin==None:
+		vmin=min(val)
+	if vmax==None:
+		vmax=max(val)
+	levels=np.linspace((1-buff)*vmin,(1+buff)*vmax,nlevels)
+	
+	return vmin,vmax,levels
+	
 	

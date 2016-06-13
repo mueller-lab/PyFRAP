@@ -376,6 +376,63 @@ class simulation(object):
 	
 	def plotICStack(self,ROIs,withGeometry=True,vmin=None,vmax=None,ax=None,colorbar=False):
 		
+		"""Plots a stack of the initial conditions in a given list of ROIs.
+		
+		Will automatically compute the direction in which ROI lies in the 3D space and
+		reduce the ROI into this plane for contour plot.
+		
+		If ``vmin=None`` or ``vmax=None``, will compute overall maximum and minimum values
+		over all ROIs.
+		
+		Args:
+			phi (fipy.CellVariable): Simulation solution variable (or numpy array).
+			ROIs (list): List of :py:class:`pyfrp.subclasses.pyfrp_ROI.ROI` objects.
+			
+		Keyword Args:
+			withGeometry (bool): Show geometry inside plot.
+			vmin (float): Overall minimum value to be displayed in plot.
+			vmax (float): Overall maximum value to be displayed in plot.
+			ax (matplotlib.axes): Axes used for plotting.
+			colorbar (bool): Display color bar.
+		
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
+		ax = self.plotSolStack(self.IC,ROIs,withGeometry=withGeometry,vmin=vmin,vmax=vmax,ax=ax,colorbar=colorbar)
+		
+		return ax 
+	
+	
+		
+	def plotSolStack(self,phi,ROIs,withGeometry=True,vmin=None,vmax=None,ax=None,colorbar=False):
+			
+		"""Plots a stack of the solution variable in a given list of ROIs.
+		
+		Will automatically compute the direction in which ROI lies in the 3D space and
+		reduce the ROI into this plane for contour plot.
+		
+		If ``vmin=None`` or ``vmax=None``, will compute overall maximum and minimum values
+		over all ROIs.
+		
+		Args:
+			phi (fipy.CellVariable): Simulation solution variable (or numpy array).
+			ROIs (list): List of :py:class:`pyfrp.subclasses.pyfrp_ROI.ROI` objects.
+			
+		Keyword Args:
+			withGeometry (bool): Show geometry inside plot.
+			vmin (float): Overall minimum value to be displayed in plot.
+			vmax (float): Overall maximum value to be displayed in plot.
+			ax (matplotlib.axes): Axes used for plotting.
+			colorbar (bool): Display color bar.
+		
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+			
+			
 		if ax==None:
 			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Simulation IC stack"],proj=['3d'])
 			ax=axes[0]
@@ -389,8 +446,8 @@ class simulation(object):
 		vminNew=[]
 		vmaxNew=[]
 		for r in ROIs:
-			vminNew.append(min(self.IC[r.meshIdx]))
-			vmaxNew.append(max(self.IC[r.meshIdx]))
+			vminNew.append(min(phi[r.meshIdx]))
+			vmaxNew.append(max(phi[r.meshIdx]))
 		
 		if vmin==None:
 			vmin=min(vminNew)	
@@ -402,14 +459,9 @@ class simulation(object):
 			zs=r.getPlaneMidCoordinate()
 			zdir=r.getOrthogonal2Plane()
 			
-			try:
-				ax=r.plotSolutionVariable(self.IC,ax=ax,vmin=vmin,vmax=vmax,plane=plane,zs=zs,zdir=zdir,colorbar=colorbar)
-			except:
-				printWarning("Failed to plot ROI "+ r.name)
+			ax=r.plotSolutionVariable(phi,ax=ax,vmin=vmin,vmax=vmax,plane=plane,zs=zs,zdir=zdir,colorbar=colorbar)
 				
-		return ax	
-		
-		
+		return ax
 		
 		
 		

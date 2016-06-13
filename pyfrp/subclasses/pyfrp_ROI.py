@@ -753,16 +753,22 @@ class ROI(object):
 		
 		return xmin,xmax,ymin,ymax,zmin, zmax 
 		
-	def plotSolutionVariable(self,phi,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True,plane='xy',zs=None,zdir=None):
+	def plotSolutionVariable(self,phi,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True,plane='xy',zs=None,zdir=None,mask=True,nPts=1000,mode='normal'):
 		
 		"""Plots simulation solution variable over all indices of ROI as 2D contour plot.
 		
 		.. note:: If no ``ax`` is given, will create new one.
 		
 		``plane`` variable controls in which plane the solution variable is supposed to be plotted. 
-		Acceptable input variables are ``"xy","xz","yz"``.
+		Acceptable input variables are ``"xy","xz","yz"``. See also
+		:py:func:`pyfrp.subclasses.pyfrp_ROI.ROI.getMaxExtendPlane`.
 		
 		See also http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.tricontourf .
+		
+		
+		.. warning:: ``matplotlib.pyplot.tricontourf`` has problems when ``phi`` only is in a single level of contour plot.
+		   To avoid this, we currently add some noise in this case just to make it plottable. This is not the most elegant
+		   solution.
 		
 		Args:
 			phi (fipy.CellVariable): Solution variable.
@@ -774,64 +780,49 @@ class ROI(object):
 			nlevels (int): Number of contour levels.
 			colorbar (bool): Display color bar.
 			plane (str): Plane in which solution variable is supposed to be plotted.
+			zs (float): In case of a 3D plot, height in direction zdir where to put contour.
+			zdir (str): Orthogonal direction to plane.
 			
 		Returns:
 			matplotlib.axes: Axes used for plotting.
 		
 		"""
 		
+		#Get values of phi if necessary
 		if hasattr(phi,'value'):
-			val=phi.value
+			val=np.asarray(phi.value)
 		else:
-			val=phi
+			val=np.asarray(phi)
 		
-		if ax==None:
-			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Solution Variable"],sup=self.name+" phi")
-			ax=axes[0]
-		
+		#Get x/y/z/values coordinates in ROI
 		x,y,z=self.embryo.simulation.mesh.mesh.getCellCenters()
+		x=x[self.meshIdx]
+		y=y[self.meshIdx]
+		z=z[self.meshIdx]
+		val=val[self.meshIdx]
 		
-		if vmin==None:
-			vmin=min(val[self.meshIdx])
-		if vmax==None:
-			vmax=max(val[self.meshIdx])
-		
-		levels=np.linspace(vmin,1.01*vmax,nlevels)
-		
-		print self.name
-		print len(x[self.meshIdx]),len(y[self.meshIdx]),len(val[self.meshIdx])
-		
-		#if min(val[self.meshIdx])==max(val[self.meshIdx]):
-			#print "bla"
-			#print min(val[self.meshIdx]),max(val[self.meshIdx])
-			#val[self.meshIdx]=np.random.rand(np.shape(val[self.meshIdx])[0])
-			#print min(val[self.meshIdx]),max(val[self.meshIdx])
+		#Finding distance threshhold later used for masking nodes.
+		dmaxX,dmaxY,dmaxZ=self.getMaxNodeDistance()
+		dFact=1.5
 		
 		if plane=='xy':
-		
-			solPlot=ax.tricontourf(x[self.meshIdx],y[self.meshIdx],val[self.meshIdx],vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir)
-			ax.set_xlabel('x')
-			ax.set_ylabel('y')
-			
-		elif plane=='xz':
-			solPlot=ax.tricontourf(x[self.meshIdx],z[self.meshIdx],val[self.meshIdx],vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir)
-			ax.set_xlabel('x')
-			ax.set_ylabel('z')
-			
+			X=x
+			Y=y
+			D=dFact*max([dmaxX,dmaxY])
+		elif plane=='xz':	
+			X=x
+			Y=z
+			D=dFact*max([dmaxX,dmaxZ])
 		elif plane=='yz':
-			solPlot=ax.tricontourf(y[self.meshIdx],z[self.meshIdx],val[self.meshIdx],vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir)
-			ax.set_xlabel('y')
-			ax.set_ylabel('z')
+			X=y 
+			Y=z
+			D=dFact*max([dmaxY,dmaxZ])
 		else:
 			printError("Don't understand plane="+plane+". Will not plot.")
-			return ax
+			return None
 		
-		ax.autoscale(enable=True, axis='both', tight=True)
-		
-		if colorbar:
-			cb=plt.colorbar(solPlot,orientation='horizontal',pad=0.05)
-		
-		ax.get_figure().canvas.draw()
+		ax=pyfrp_plot_module.plotSolutionVariable(x,y,val,ax=ax,vmin=vmin,vmax=vmax,nlevels=nlevels,colorbar=colorbar,
+					    plane=plane,zs=zs,zdir=zdir,sup=self.name,dThresh=D,nPts=nPts,mode=mode)
 		
 		return ax
 	
@@ -1148,9 +1139,25 @@ class ROI(object):
 		
 		return len(self.imgIdxX)
 	
-
-	
-	
+		
+	def getMaxNodeDistance(self):
+		
+		"""Returns maximum node distance in x/y/z direction 
+		for all nodes in ROI.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* dmaxX (float): Maximum distance in x-direction
+				* dmaxY (float): Maximum distance in y-direction
+				* dmaxZ (float): Maximum distance in z-direction
+				
+		"""
+		
+		distances=self.embryo.simulation.mesh.mesh.cellDistanceVectors
+		
+		return max(distances[0][self.meshIdx]),max(distances[1][self.meshIdx]),max(distances[2][self.meshIdx])
+		
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Radial ROI class

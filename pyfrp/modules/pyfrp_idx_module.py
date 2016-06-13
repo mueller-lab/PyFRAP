@@ -47,8 +47,10 @@ of *check* functions that help to figure out if a list of coordinates is inside 
 #Improting necessary modules
 #===========================================================================================================================================================================
 
-#numpy
+#numpy/Scipy
 import numpy as np
+from scipy.interpolate.interpnd import _ndim_coords_from_arrays
+from scipy.spatial import cKDTree
 
 #Plotting
 from matplotlib import cm
@@ -538,7 +540,7 @@ def checkInsideRectangle(x,y,offset,sidelengthX,sidelengthY):
 			
 	"""
 	
-	return x<=offset[0]+sidelengthX and offset[0]<=x and y<=offset[1]+sidelengthY and offset[1]<=y	
+	return (x<=offset[0]+sidelengthX) * (offset[0]<=x) * (y<=offset[1]+sidelengthY) * (offset[1]<=y)
 	
 def checkInsideImg(x,y,res,offset=[0,0]):
 	
@@ -1079,7 +1081,42 @@ def remRepeatedImgIdxs(idxX,idxY,debug=False):
 	idxX,idxY=pyfrp_misc.unzipLists(idx)
 	return idxX,idxY
 
+def maskMeshByDistance(x,y,d,grid):
 	
+	"""Filters all (x,y) coordinates that are more than d 
+	in meshgrid given some actual coordinates (x,y).
+	
+	Args:
+		x (numpy.ndarray): x-coordinates.
+		y (numpy.ndarray): y-coordinates.
+		d (float): Maximum distance.
+		grid (numpy.ndarray): Numpy meshgrid.
+	
+	Returns:
+		idxs (list): List of booleans.
+			
+	"""
+	
+	#Convert x/y into useful array
+	xy=np.vstack((x,y))
+	
+	#Compute distances to nearest neighbors
+	tree = cKDTree(xy.T)
+	xi = _ndim_coords_from_arrays(tuple(grid))
+	dists, indexes = tree.query(xi)
+	
+	#Get indices of distances that are further apart than d
+	idxs = (dists > d)
+	
+	return idxs,
+
+	
+	
+
+			
+
+
+
 				
 				
 	

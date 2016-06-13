@@ -533,7 +533,7 @@ class zebrafishDomeStage(geometry):
 		
 		.. math:: r_{\mathrm{outer}}=\frac{r_{\mathrm{imaging}}^2+h_{\mathrm{imaging}}^2}{-2 h_{\mathrm{imaging}}},\\
 		   r_{\mathrm{inner}}=s_{\mathrm{radius}}r_{\mathrm{outer}},\\
-		   d_{\mathrm{center}}=\sqrt{r_{\mathrm{inner}}-r_{\mathrm{outer}}},
+		   d_{\mathrm{center}}=\sqrt{r_{\mathrm{inner}}^2-r_{\mathrm{outer}}^2},
 		   
 		where :math:`r_{\mathrm{outer}}` is the ``outerRadius``, :math:`r_{\mathrm{inner}}` is the ``innerRadius``, :math:`h_{\mathrm{imaging}}` 
 		is the ``imagingHeight`` and :math:`r_{\mathrm{imaging}}` is the ``imagingRadius``.

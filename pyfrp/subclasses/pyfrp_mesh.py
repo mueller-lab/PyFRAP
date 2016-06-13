@@ -745,7 +745,22 @@ class mesh(object):
 		
 		return fnOut
 	
+	def getMaxNodeDistance(self):
+		
+		"""Returns maximum node distance in x/y/z direction.
+		
+		Returns:
+			tuple: Tuple containing:
 			
+				* dmaxX (float): Maximum distance in x-direction
+				* dmaxY (float): Maximum distance in y-direction
+				* dmaxZ (float): Maximum distance in z-direction
+				
+		"""
+		
+		distances=self.mesh.cellDistanceVectors
+		
+		return max(distances[0]),max(distances[1]),max(distances[2])
 		
 		
 		
