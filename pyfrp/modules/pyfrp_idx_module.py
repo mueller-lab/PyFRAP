@@ -49,8 +49,6 @@ of *check* functions that help to figure out if a list of coordinates is inside 
 
 #numpy/Scipy
 import numpy as np
-from scipy.interpolate.interpnd import _ndim_coords_from_arrays
-from scipy.spatial import cKDTree
 
 #Plotting
 from matplotlib import cm
@@ -60,6 +58,11 @@ import matplotlib.patches as ptc
 #Misc
 import os, os.path
 import sys
+
+#Only import scipy functions if environment is not RTD
+if os.environ.get('READTHEDOCS', None) != 'True':
+	from scipy.interpolate.interpnd import _ndim_coords_from_arrays
+	from scipy.spatial import cKDTree
 
 #PyFRAP modules
 import pyfrp_misc_module as pyfrp_misc

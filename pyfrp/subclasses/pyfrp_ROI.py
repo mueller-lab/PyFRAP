@@ -516,14 +516,35 @@ class ROI(object):
 	
 	def getImgMask(self):
 		
+		"""Returns image mask of ROI.
 		
+		Returns:
+			numpy.ndarray: Image mask.
+		
+		"""
 		
 		return self.imgMask
 	
 	def getExtMask(self):
+		
+		"""Returns extended mask of ROI.
+		
+		Returns:
+			numpy.ndarray: Extended mask.
+		
+		"""
+		
 		return self.extMask
 	
 	def computeNumExt(self):
+		
+		"""Computes number of extended pixels of ROI.
+		
+		Returns:
+			int
+			
+		"""
+		
 		self.numExt=len(self.extImgIdxX)
 		return self.numExt
 	
