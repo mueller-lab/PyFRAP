@@ -121,10 +121,32 @@ class ROI(object):
 		return self.Id
 	
 	def setName(self,n):
+		
+		"""Sets name of ROI.
+		
+		Args:
+			n (str): New name.
+			
+		Returns:
+			str: New name.
+		
+		"""
+		
 		self.name=n
 		return self.name
 	
 	def setZExtend(self,zmin,zmax):
+		
+		"""Sets extend in z-direction.
+		
+		Args:
+			zmin (float): Minimum z-coordinate.
+			zmax (float): Maximum z-coordinate.
+		
+		Returns:
+			list: New z-extend given by ``[zmin,zmax]``.
+		
+		"""
 		
 		self.zmin=zmin
 		self.zmax=zmax
@@ -132,34 +154,126 @@ class ROI(object):
 		return [self.zmin,self.zmax]
 	
 	def getZExtend(self):
+		
+		"""Returns extend in z-direction.
+	
+		Returns:
+			list: Z-extend given by ``[zmin,zmax]``.
+		
+		"""
+		
 		return [self.zmin,self.zmax]
 	
 	def getId(self):
+		
+		"""Returns Id of ROI.
+		
+		Returns:
+			int: Id.
+			
+		"""	
+		
 		return self.Id
 	
 	def getName(self):
+		
+		"""Returns name of ROI.
+		
+		Returns:
+			str: Current name.
+		"""	
+		
 		return self.name
 	
 	def getImgIdx(self):
+		
+		"""Returns image indices of ROI.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				
+		"""
+		
 		return self.imgIdxX,self.imgIdxY
 	
 	def getExtImgIdx(self):
+		
+		"""Returns extended image indices of ROI.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* extImgIdxX (list): Extended image indices in x-direction.
+				* extImgIdxY (list): Extended image indices in y-direction.
+				
+		"""
+		
 		return self.extImgIdxX,self.extImgIdxY
 	
 	def getMeshIdx(self):
+		
+		"""Returns mesh indices of ROI.
+		
+		Returns:
+			list: Mesh indices of ROI.
+				
+		"""
+		
 		return self.meshIdx
 	
 	def getMeshDensity(self):
+		
+		r"""Returns average mesh density inside ROI.
+		
+		Mesh density is defined by 
+		
+		.. math:: \rho=N/V,
+		
+		where :math:`N` is the number of mesh nodes inside ROI 
+		and :math:`V` is the volume of ROI, see also 
+		:py:func:`getVolume`.
+		
+		Returns:
+			float: Mesh density.
+				
+		"""
+		
 		volume=self.getVolume()
 		return len(self.meshIdx)/volume
 		
 	def getVolume(self):
+		
+		r"""Returns volume of ROI.
+		
+		Since ROIs only behave linearly in z-direction, volume
+		is given by
+		
+		.. math:: V = A * h,
+		
+		where :math:`h` is ROI height (see :py:func:`getROIHeight`) and 
+		:math:`A` is ROI area (see :py:func:`getArea`).
+		
+		Returns:
+			float: ROI volume.
+		
+		"""
+		
 		area=self.getArea()
 		height=self.getROIHeight()
 		
 		return area*height
 		
 	def getROIHeight(self):
+		
+		"""Returns height of ROI.
+		
+		Returns:
+			float: Height of ROI.
+		
+		"""
 	
 		if np.isfinite(self.zmax):
 			zMax=self.zmax
@@ -174,6 +288,17 @@ class ROI(object):
 		return abs(zMax-zMin)
 	
 	def getArea(self):
+		
+		"""Returns area of ROI.
+		
+		Area is computed as area covered by
+		``imgMask + extMask`` 
+		
+		Returns:
+			float: Area of ROI.
+		
+		"""
+		
 		if self.imgMask==None:
 			self.computeImgMask()
 		if self.extMask==None:
@@ -256,6 +381,14 @@ class ROI(object):
 		return xmin,xmax,ymin,ymax,zmin,zmax
 		
 	def getType(self):
+		
+		"""Returns type of ROI, splitting off all module names etc. .
+		
+		Returns:
+			str: Type of ROI.
+		
+		"""
+		
 		typ=str(type(self))
 		before,typ,after=typ.split("'")
 		typ=typ.replace('pyfrp_ROI.','')
@@ -266,22 +399,72 @@ class ROI(object):
 		return typ
 	
 	def setColor(self,color):
+		
+		"""Sets color of ROI.
+		
+		Color can be either ``str``, ``float`` or ``tuple``. See also: 
+		http://matplotlib.org/api/colors_api.html
+		
+		Args:
+			color (str): New color.
+		
+		Returns:
+			str: New color.
+		
+		"""
+		
 		self.color=color
 		return self.color
 	
 	def setUseForRim(self,b):
+		
+		"""Marks the ROI to be used for rim calculation.
+		
+		Args:
+			b (bool): True if ROI should be used, False else.
+		
+		Returns:
+			bool: Current flag value.
+		
+		"""
+		
 		if self.numExt>0 and b==True:
 			printWarning('Be careful, region '+self.name+' is set for rim calculation but has indices outside of image.')
 		self.useForRim=b
 		return self.useForRim
 	
 	def getUseForRim(self):
+		
+		"""Returns if the ROI is used for rim calculation.
+		
+		Returns:
+			bool: Current flag value.
+		
+		"""
+		
 		return self.useForRim
 	
 	def getColor(self):
+		
+		"""Returns color of ROI.
+		"""
+		
 		return self.color
 	
 	def emptyIdxs(self):
+		
+		"""Flushes all indices, inserting empty lists for 
+		all of them.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				* meshIdx (list): Mesh indices.
+		
+			
+		"""
 		
 		self.imgIdxX=[]
 		self.imgIdxY=[]
@@ -290,6 +473,22 @@ class ROI(object):
 		return self.getAllIdxs()
 	
 	def copyIdxs(self,r):
+		
+		"""Copies indices of other ROI and inserts them into ROI.
+		
+		Args:
+			r (pyfrp.subclasses.pyfrp_ROI.ROI): ROI to take indices from.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				* meshIdx (list): Mesh indices.
+			
+		"""
+		
+		
 		self.imgIdxX=r.imgIdxX
 		self.imgIdxY=r.imgIdxY
 		
@@ -301,9 +500,24 @@ class ROI(object):
 		return self.getAllIdxs()
 	
 	def getAllIdxs(self):
+		
+		"""Returns all index arrays of ROI.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				* meshIdx (list): Mesh indices.
+		
+		"""
+		
 		return self.imgIdxX,self.imgIdxY,self.meshIdx
 	
 	def getImgMask(self):
+		
+		
+		
 		return self.imgMask
 	
 	def getExtMask(self):
@@ -579,6 +793,7 @@ class ROI(object):
 		return axes
 	
 	def checkSymmetry(self,debug=False):
+			
 		img=np.zeros((self.embryo.dataResPx,self.embryo.dataResPx))
 		img[self.imgIdxX,self.imgIdxY]=1
 		return pyfrp_img_module.symmetryTest(img,debug=debug)
@@ -602,14 +817,36 @@ class ROI(object):
 		return self.computeIdxs()
 	
 	def resetDataVec(self):
+		
+		"""Resets data vector to an empty list"""
+		
 		self.setDataVec([])
 		return self
 	
 	def resetSimVec(self):
+		
+		"""Resets simulation vector to an empty list"""
+		
 		self.setSimVec([])
 		return self
 	
 	def plotData(self,ax=None,color=None,linewidth=1,legend=True,linestyle='-'):
+		
+		"""Plot data vector of ROI.
+		
+		If no color is specified, will use color specified in ``ROI.color``.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+			color (str): Color of plot.
+			linestyle (str): Linestyle of plot.
+			linewidth (float): Linewidth of plot.
+			legend (bool): Show legend.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.	
+		
+		"""
 		
 		if color==None:
 			color=self.color
@@ -621,6 +858,22 @@ class ROI(object):
 	
 	def plotDataPinned(self,ax=None,color=None,linewidth=1,legend=True,linestyle='-'):
 		
+		"""Plot pinned data vector of ROI.
+		
+		If no color is specified, will use color specified in ``ROI.color``.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+			color (str): Color of plot.
+			linestyle (str): Linestyle of plot.
+			linewidth (float): Linewidth of plot.
+			legend (bool): Show legend.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.	
+		
+		"""
+		
 		if color==None:
 			color=self.color
 		
@@ -630,6 +883,22 @@ class ROI(object):
 		return ax
 	
 	def plotSim(self,ax=None,color=None,linewidth=1,legend=True,linestyle='--'):
+		
+		"""Plot simulation vector of ROI.
+		
+		If no color is specified, will use color specified in ``ROI.color``.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+			color (str): Color of plot.
+			linestyle (str): Linestyle of plot.
+			linewidth (float): Linewidth of plot.
+			legend (bool): Show legend.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.	
+		
+		"""
 		
 		if color==None:
 			color=self.color
@@ -641,6 +910,22 @@ class ROI(object):
 	
 	def plotSimPinned(self,ax=None,color=None,linewidth=1,legend=True,linestyle='--'):
 		
+		"""Plot pinned simulation vector of ROI.
+		
+		If no color is specified, will use color specified in ``ROI.color``.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+			color (str): Color of plot.
+			linestyle (str): Linestyle of plot.
+			linewidth (float): Linewidth of plot.
+			legend (bool): Show legend.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.	
+		
+		"""
+		
 		if color==None:
 			color=self.color
 		
@@ -650,6 +935,15 @@ class ROI(object):
 		return ax
 
 	def findIncluded(self):
+		
+		"""Returns list of :py:class:`pyfrp.subclasses.pyfrp_ROI.customROI` objects
+		in which ROI is included.
+		
+		Returns:
+			list: List of customROIs.
+		
+		"""
+		
 		incl=[]
 		for r in self.embryo.ROIs:
 			if type(r) is customROI:
@@ -658,6 +952,14 @@ class ROI(object):
 		return incl			
 					
 	def isMaster(self):
+		
+		"""Returns if ROI is masterROI.
+		
+		Returns:
+			bool: True if masterROI.
+			
+		"""	
+		
 		return self==self.embryo.getMasterROI()
 	
 	def getMaxExtendPlane(self):
@@ -753,7 +1055,7 @@ class ROI(object):
 		
 		return xmin,xmax,ymin,ymax,zmin, zmax 
 		
-	def plotSolutionVariable(self,phi,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True,plane='xy',zs=None,zdir=None,mask=True,nPts=1000,mode='normal'):
+	def plotSolutionVariable(self,phi,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True,plane='xy',zs=None,zdir=None,mask=True,nPts=1000,mode='normal',title="Solution Variable"):
 		
 		"""Plots simulation solution variable over all indices of ROI as 2D contour plot.
 		
@@ -770,6 +1072,8 @@ class ROI(object):
 		   To avoid this, we currently add some noise in this case just to make it plottable. This is not the most elegant
 		   solution.
 		
+		You can find a more detailed explanation in the documentation of :py:func:`pyfrp.modules.pyfrp_plot_module.plotSolutionVariable`.
+		
 		Args:
 			phi (fipy.CellVariable): Solution variable.
 			
@@ -782,7 +1086,10 @@ class ROI(object):
 			plane (str): Plane in which solution variable is supposed to be plotted.
 			zs (float): In case of a 3D plot, height in direction zdir where to put contour.
 			zdir (str): Orthogonal direction to plane.
-			
+			nPts (int): Number of points used for interpolating (only if ``mode=normal``).
+			mode (str): Which contour function to use.
+			title (str): Title of plot.
+		
 		Returns:
 			matplotlib.axes: Axes used for plotting.
 		
@@ -821,12 +1128,29 @@ class ROI(object):
 			printError("Don't understand plane="+plane+". Will not plot.")
 			return None
 		
+		if not mask:
+			D=None
+		
 		ax=pyfrp_plot_module.plotSolutionVariable(x,y,val,ax=ax,vmin=vmin,vmax=vmax,nlevels=nlevels,colorbar=colorbar,
-					    plane=plane,zs=zs,zdir=zdir,sup=self.name,dThresh=D,nPts=nPts,mode=mode)
+					    plane=plane,zs=zs,zdir=zdir,sup=self.name,dThresh=D,nPts=nPts,mode=mode,title=title)
 		
 		return ax
 	
 	def getSimConc(self,phi,append=True):
+		
+		"""Computes the simulation concentration over ROI.
+		
+		Args:
+			phi (fipy.CellVariable): Solution variable.
+			
+		Keyword Args:
+			append (bool): Append result to simulation vector.
+		
+		Returns:
+			float: Simulation concentration over ROI.
+		
+		
+		"""
 		
 		cvs=self.embryo.simulation.mesh.mesh.getCellVolumes()
 		
@@ -839,6 +1163,25 @@ class ROI(object):
 	
 	def pinAllTS(self,bkgdVal=None,normVal=None,bkgdValSim=None,normValSim=None,debug=False):
 		
+		"""Pins both data and simulation timeseries of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_fit_module.pinConc`.
+		
+		Keyword Args:
+			bkgdVal (float): Use this background value instead of newly computing it.
+			normVal (float): Use this norming value instead of newly computing it.
+			bkgdValSim (float): Use this background value for simulation timeseries instead of newly computing it.
+			normValSim (float): Use this norming value for simulation timeseries instead of newly computing it.
+			debug (bool): Print debugging messages.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* dataVecPinned (numpy.ndarray): Pinned data vector.
+				* simVecPinned (numpy.ndarray): Pinned simulation vector.
+		
+		"""
+		
 		bkgdValSim=pyfrp_misc_module.assignIfVal(bkgdValSim,bkgdVal,None)
 		normValSim=pyfrp_misc_module.assignIfVal(normValSim,normVal,None)
 		
@@ -848,6 +1191,20 @@ class ROI(object):
 		return self.dataVecPinned,self.simVecPinned
 	
 	def pinDataTS(self,bkgdVal=None,normVal=None,debug=False):
+		
+		"""Pins data timeseries of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_fit_module.pinConc`.
+		
+		Keyword Args:
+			bkgdVal (float): Use this background value instead of newly computing it.
+			normVal (float): Use this norming value instead of newly computing it.
+			debug (bool): Print debugging messages.
+		
+		Returns:	
+			numpy.ndarray: Pinned data vector.		
+		
+		"""
 		
 		if bkgdVal==None or normVal==None:
 			bkgdValTemp,normValTemp = self.embryo.computePinVals(debug=debug)
@@ -860,6 +1217,20 @@ class ROI(object):
 	
 	def pinSimTS(self,bkgdVal=None,normVal=None,debug=False):
 		
+		"""Pins simulation timeseries of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_fit_module.pinConc`.
+		
+		Keyword Args:
+			bkgdVal (float): Use this background value instead of newly computing it.
+			normVal (float): Use this norming value instead of newly computing it.
+			debug (bool): Print debugging messages.
+		
+		Returns:	
+			numpy.ndarray: Pinned simulation vector.		
+		
+		"""
+	
 		if bkgdVal==None or normVal==None:
 			bkgdValTemp,normValTemp = self.embryo.computePinVals(debug=debug)
 			bkgdVal = pyfrp_misc_module.assignIfVal(bkgdVal,bkgdValTemp,None)
@@ -870,6 +1241,21 @@ class ROI(object):
 		return self.simVecPinned
 	
 	def getFittedVec(self,fit):
+		
+		"""Returns fitted simulation vector of ROI of given fit.
+		
+		.. note:: To avoid crashes, function returns empty list
+		   if ROI is in ``ROIsFItted`` but has not been fitted yet.
+		   Also inserts an empty list at the respective index.
+		
+		Args:
+			fit (pyfrp.subclasses.pyfrp_fit): Fit object.
+			
+		Returns:
+			numpy.ndarray: Fitted simulation vector.
+		
+		"""
+		
 		try:
 			return fit.fittedVecs[fit.ROIsFitted.index(self)]
 		except IndexError:
@@ -879,9 +1265,44 @@ class ROI(object):
 			return []
 		
 	def getdataVecFitted(self,fit):
-		return fit.dataVecsFitted[fit.ROIsFitted.index(self)]
 		
-	def plotFit(self,fit,ax=None,color=None,linewidth=1,legend=True,title=None):
+		"""Returns fitted data vector of ROI of given fit.
+		
+		.. note:: To avoid crashes, function returns empty list
+		   if ROI is in ``ROIsFItted`` but has not been fitted yet.
+		   Also inserts an empty list at the respective index.
+		
+		Args:
+			fit (pyfrp.subclasses.pyfrp_fit): Fit object.
+			
+		Returns:
+			numpy.ndarray: Fitted data vector.
+		
+		"""
+		
+		try:
+			return fit.dataVecsFitted[fit.ROIsFitted.index(self)]
+		except IndexError:
+			fit.dataVecsFitted.insert(fit.ROIsFitted.index(self),[])
+			return []
+		
+	def plotFit(self,fit,ax=None,color=None,linewidth=1,legend=True,title=None,linestyles=['-','-.']):
+		
+		"""Plot fit for ROI.
+		
+		If no color is specified, will use color specified in ``ROI.color``.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+			color (str): Color of plot.
+			linestyles (list): Linestyles of data and simulation.
+			linewidth (float): Linewidth of plot.
+			legend (bool): Show legend.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.	
+		
+		"""
 		
 		if color==None:
 			color=self.color
@@ -890,22 +1311,46 @@ class ROI(object):
 			title="Fit"+fit.name
 			
 		ax = pyfrp_plot_module.plotTS(fit.tvecFit,self.getFittedVec(fit),ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' ' + fit.name,title=title,sup=self.name+" fitted",linestyle='-.',legend=legend)
+		label=self.name + ' ' + fit.name,title=title,sup=self.name+" fitted",linestyle=linestyles[1],legend=legend)
 		
 		ax = pyfrp_plot_module.plotTS(fit.tvecFit,self.getdataVecFitted(fit),ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' ' + fit.name,title=title,sup=self.name+" fitted",linestyle='-',legend=legend)
+		label=self.name + ' ' + fit.name,title=title,sup=self.name+" fitted",linestyle=linestyles[0],legend=legend)
 		
 		return ax
 	
 	def isAnalyzed(self):
+		
+		"""Checks if ROI has been analyzed.
+		
+		Returns:
+			bool: True if ROI has been analyzed.
+		
+		"""
+		
 		return len(self.embryo.tvecData)==len(self.dataVec)
 	
 	def isSimulated(self):
+		
+		"""Checks if ROI has been simulated.
+		
+		Returns:
+			bool: True if ROI has been simulated.
+		
+		"""
+		
 		if self.embryo.simulation!=None:
 			return len(self.embryo.simulation.tvecSim)==len(self.simVec)
 		return False
 	
 	def isFitted(self):
+		
+		"""Checks if ROI has been fitted in ALL fits of embryo.
+		
+		Returns:
+			bool: True if ROI has been fitted.
+		
+		"""
+		
 		fitted=False
 		for fit in self.embryo.fits:
 			if self in fit.ROIsFitted and len(self.getFittedVec(fit))>0:
@@ -939,11 +1384,46 @@ class ROI(object):
 			return 0.
 	
 	def getEncapsulatingBox(self):
+		
+		"""Returns encapsulating box of ROI.
+		
+		That is, a box defined by ``[xmin,xmax],[ymin,ymax],[zmin,zmax]``
+		in which ROI lies fully within.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xExtend (list): List describing extend in x-direction (``[xmin,xmax]``).
+				* yExtend (list): List describing extend in y-direction (``[ymin,ymax]``).
+				* zExtend (list): List describing extend in z-direction (``[zmin,zmax]``).
+				
+		"""
+		
 		xExtend,yExtend=self.computeXYExtend()
 		zExtend=self.getZExtend()
 		return xExtend,yExtend,zExtend
 		
 	def refineInMesh(self,factor=3.,addZ=15.,findIdxs=True,debug=False,run=True):
+		
+		"""Refines mesh inside ROI by adding box field to mesh file.
+		
+		The mesh size inside the box is computed by ``mesh.volSizePx/factor``. To ensure
+		that there are enough original nodes inside ROI that then allow refinement from,
+		``addZ`` pixels is added in z-direction both below and above the ROI.
+		
+		See also :py:func:`pyfrp.subclasses.pyfrp_mesh.mesh.addBoxField`.
+		
+		Keyword Args:
+			factor (float): Refinement factor.
+			addZ (float): Number of pixels added above and below ROI for box field.
+			findIdxs (bool): Find mesh indices of ROI after refinement.
+			run (bool): Run Gmsh to generate new mesh after refinement.
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			str: Path to new .geo file.
+			
+		"""
 		
 		xExtend,yExtend,zExtend=self.getEncapsulatingBox()
 		zExtend=[zExtend[0]-addZ,zExtend[1]+addZ]

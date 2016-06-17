@@ -463,17 +463,7 @@ def makeSubplot(size,titles=None,tight=False,sup=None,proj=None,fig=None,show=Tr
 	#How many axes need to be created
 	n_ax=size[0]*size[1]
 	
-	#Check if titles has right size
-	if titles!=None:
-		
-		if len(titles)!=n_ax:
-			print "Warning: len(titles)!=n_ax, will not print titles!"
-			titles=None
-	if proj!=None:
-		if len(proj)!=n_ax:
-			print "Warning: len(proj)!=n_ax, will not do projections!"
-			proj=n_ax*[None]
-	else:
+	if proj==None:
 		proj=n_ax*[None]
 	
 	#Creating figure
@@ -491,16 +481,23 @@ def makeSubplot(size,titles=None,tight=False,sup=None,proj=None,fig=None,show=Tr
 	axes=[]
 	for i in range(n_ax):
 		
-		if proj[i]!=None:
-			ax=fig.add_subplot(size[0],size[1],i+1,projection=proj[i])
-		else:
+		try:
+			if proj[i]!=None:
+				ax=fig.add_subplot(size[0],size[1],i+1,projection=proj[i])	
+			else:
+				ax=fig.add_subplot(size[0],size[1],i+1)
+		except IndexError:
+			printWarning("Axes " + str(i) + "does not have a projection specified. Will create normal 2D plot.")
 			ax=fig.add_subplot(size[0],size[1],i+1)
+				
 		axes.append(ax)
 		
 		#Print titles 
 		if titles!=None:
-			ax.set_title(titles[i])
-	
+			try:
+				ax.set_title(titles[i])
+			except IndexError:
+				printWarning("Axes " + str(i) + " does not have a title specified.")
 	#Draw
 	plt.draw()
 	
@@ -671,6 +668,7 @@ def plotSolutionVariable(x,y,val,ax=None,vmin=None,vmax=None,nlevels=25,colorbar
 		zdir (str): Orthogonal direction to plane.
 		nPts (int): Number of points used for interpolating (only if ``mode=normal``).
 		mode (str): Which contour function to use.
+		title (str): Title of plot.
 		
 	Returns:
 		matplotlib.axes: Axes used for plotting.
@@ -691,7 +689,7 @@ def plotSolutionVariable(x,y,val,ax=None,vmin=None,vmax=None,nlevels=25,colorbar
 		
 	
 	#vmin/vmax/levels
-	vmin,vmax,levels=makeFittingLevels(vmin,vmax,val,nlevels,buff=1.01)
+	vmin,vmax,levels=makeFittingLevels(vmin,vmax,val,nlevels)
 	
 	#Make grid
 	grid = np.meshgrid(np.linspace(min(x), max(x), nPts),np.linspace(min(y), max(y), nPts))
@@ -770,6 +768,7 @@ def makeFittingLevels(vmin,vmax,val,nlevels,buff=0.01):
 		vmin=min(val)
 	if vmax==None:
 		vmax=max(val)
+		
 	levels=np.linspace((1-buff)*vmin,(1+buff)*vmax,nlevels)
 	
 	return vmin,vmax,levels

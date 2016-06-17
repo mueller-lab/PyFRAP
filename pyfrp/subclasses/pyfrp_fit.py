@@ -24,9 +24,9 @@
 #Module Description
 #===========================================================================================================================================================================
 
-#Fit module for PyFRAP toolbox, including following fit objects:
+"""Essential PyFRAP module containing :py:class:`pyfrp.subclasses.pyfrp_fit.fit` class. 
+"""
 
-#(1) fit
 
 #===========================================================================================================================================================================
 #Improting necessary modules
@@ -47,10 +47,58 @@ from pyfrp.modules.pyfrp_term_module import *
 #Time 
 import time
 
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Main fit class
-		
+#===========================================================================================================================================================================
+#Class definitions
+#===========================================================================================================================================================================
+	
 class fit:
+	
+	"""Main fit class of PyFRAP. 
+	
+	The purpose of the fit class is to save all attributes used for fitting PyFRAP simulation results to 
+	data analysis results. The main attributes are:
+	
+		* Fitting algorithm specifics:
+		
+			* Fitting algorithm, see also :py:func:`setOptMeth`.
+			* Stopping criteria, see also :py:func:`setMaxfun` and :py:func:`setOptTol`.
+			* Initial guess, see also :py:func:`getX0`.
+			* Boundaries, see also :py:func:`getBounds`.
+		
+		* Fitting options:
+		
+			* ``fitProd``, see also :py:func:`getFitProd`.
+			* ``fitDegr``, see also :py:func:`getFitDegr`.
+			* ``fitPinned``, see also :py:func:`getFitPinned`.
+			* ``equOn``, see also :py:func:`getEqu`.
+			* ``fitCutOffT``, see also :py:func:`getFitCutOffT`.
+			
+		* The ROIs to be fitted, see also :py:func:`getROIsFitted`.
+		
+		* Fitting results, see also :py:func:`printResults`.
+		
+		* Fitted vectors.
+		
+	The most important methods are:
+	
+		* :py:func:`run`: Runs fitting.
+		* :py:func:`addROIByName`: Adds ROI to be used for fitting.
+		* :py:func:`getX0`: Builds and returns current initial guess.
+		* :py:func:`getBounds`: Builds and returns current bounds.
+		* :py:func:`computeStats`: Compares post-fitting statistics.
+		
+	The fit uses simulation and data vectors stored in all :py:class:`pyfrp.subclasses.pyfrp_ROI.ROI` objects defined in 
+	``ROIsFitted`` list to compute the optimal values for ``DOptMu`` (``prodOpt`` or ``degrOpt`` if ``fitProd`` or ``fitDegr``
+	is selected, respectively).  
+			
+	After calling :py:func:`run`, will automatically compute proper ``x0`` via :py:func:`getX0` and :py:func:`getBounds`.	
+	
+	Args:
+		embryo (pyfrp.subclasses.pyfrp_embryo.embryo): Embryo object that fit belongs to.
+		name (str): Name of fit.
+	
+	"""
+
 	
 	#Create new fit object
 	def __init__(self,embryo,name):
@@ -84,7 +132,7 @@ class fit:
 		self.LBDegr=0.
 		self.UBDegr=100.
 		self.LBD=0.01
-		self.UBD=150.
+		self.UBD=300.
 		self.bounds=None
 		
 		#More settings
@@ -173,6 +221,18 @@ class fit:
 		
 		r=self.embryo.getROIById(Id)
 		return self.addROI(r)
+	
+	def getROIsFitted(self):
+		
+		"""Returns list of ROIs used for fitting.
+		
+		Returns:
+			list: list of ROIs used for fitting.
+		
+		"""
+		
+		return self.ROIsFitted
+		
 	
 	def removeROI(self,r):
 		

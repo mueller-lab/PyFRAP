@@ -395,7 +395,8 @@ def addKineticsToSolution(scaledSimVecs,tvec,prod,degr):
 			rescaledSimVec=scaledSimVec*np.exp(-degr*tvec)
 		
 		#Neither production nor degradation
-		rescaledSimVec=scaledSimVec
+		else:
+			rescaledSimVec=scaledSimVec
 		
 		rescaledSimVecs.append(rescaledSimVec)
 		
@@ -541,7 +542,7 @@ def FRAPObjFunc(x,fit,debug,ax,returnFit):
 			return fit
 		else:	
 			return 100000000
-	
+
 	#Add Kinetics
 	scaledSimVecs =  addKineticsToSolution(scaledSimVecs,tvecData,prod,degr)
 	

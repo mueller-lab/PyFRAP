@@ -589,7 +589,7 @@ class zebrafishDomeStage(geometry):
 		
 		"""
 		
-		return self.embryo.newRadialSliceROI(name,Id,self.getCenter(),self.getOuterRadius(),-np.inf,np.inf,False,color=color,asMaster=asMaster)
+		return self.embryo.newRadialSliceROI(name,Id,self.getCenter(),self.getOuterRadius(),0,np.inf,False,color=color,asMaster=asMaster)
 	
 	def getZExtend(self):
 		

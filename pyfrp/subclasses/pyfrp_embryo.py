@@ -1081,7 +1081,7 @@ class embryo:
 			
 		
 		#Create All ROI
-		allsl=self.newSliceROI("All",self.getFreeROIId(),-np.inf,np.inf,True,color=(0.5,0.3,0.4))
+		allsl=self.newSliceROI("All",self.getFreeROIId(),0,np.inf,False,color=(0.5,0.3,0.4))
 		
 		#Create All Square
 		if bleachedROI!=None:

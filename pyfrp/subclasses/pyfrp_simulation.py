@@ -97,6 +97,34 @@ class simulation(object):
 	def setICMode(self,m):
 		
 		"""Sets the mode of initial conditions.
+		
+		Initial condition modes are defined as:
+		
+			* 0: **ROI-based**: Mesh nodes get assigned the value of the first entry ``dataVec`` of 
+			  the ROI covering them. Note: If a mesh node is covered by two ROIs, will assign the value
+			  of the ROI that is last in embryo's ``ROIs`` list. See also 
+			  :py:func:`pyfrp.modules.pyfrp_sim_module.applyROIBasedICs`.
+			* 1: **Radial**: Concentrations get radially approximated around some center.
+			  See also :py:func:`pyfrp.modules.pyfrp_sim_module.applyRadialICs`.
+			* 2: **Imperfect**: Interpolates ``ICimg`` onto mesh, fills nodes that are not covered
+			  by image with ``embryo.analysis.concRim`` and then mimics imperfect bleaching via sigmoid
+			  function in z-direction.
+			  See also :py:func:`pyfrp.modules.pyfrp_sim_module.applyImperfectICs`.
+			* 3: **Inpterpolated**: Interpolates ``ICimg`` onto mesh, fills nodes that are not covered
+			  by image with ``embryo.analysis.concRim``.
+			  See also :py:func:`pyfrp.modules.pyfrp_sim_module.applyInterpolatedICs`.
+			* 4: **Ideal**: Ideal ICs, that is, single value inside and single value outside of bleached region.
+			  See also :py:func:`pyfrp.modules.pyfrp_sim_module.applyIdealICs`, :py:func:`setValOut` 
+			  and :py:func:`setBleachedROI`.
+		
+		.. note:: The default mode is **Interpolated** (``m=3``) and is highly recommended to obtain most realistic results.
+		
+		Args:
+			m (int): Which mode to be used.
+			
+		Returns:
+			int: Current initial condition mode used.
+		
 		"""
 		
 		if m not in range(5):
@@ -140,6 +168,11 @@ class simulation(object):
 		return self.valOut
 	
 	def run(self,signal=None,embCount=None,showProgress=True,debug=False):
+		
+		"""Runs simulation
+		
+		
+		"""
 		
 		if not self.embryo.checkROIIdxs()[1]:
 			self.embryo.computeROIIdxs()
@@ -383,6 +416,9 @@ class simulation(object):
 		
 		If ``vmin=None`` or ``vmax=None``, will compute overall maximum and minimum values
 		over all ROIs.
+		
+		.. image:: ../imgs/pyfrp_simulation/ICstack.png
+		
 		
 		Args:
 			phi (fipy.CellVariable): Simulation solution variable (or numpy array).

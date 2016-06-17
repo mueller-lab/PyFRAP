@@ -137,16 +137,14 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	
 
 	#Apply initial conditions
-	if simulation.ICmode=='ideal':
-		for r in simulation.embryo.ROIs:
-			phi.value[r.meshIdx]=r.dataVec[0]
+	if simulation.ICmode==0:
+		phi = applyROIBasedICs(phi,simulation)
 		
-	elif simulation.ICmode=='radial':
+	elif simulation.ICmode==1:
 		phi = applyRadialICs(phi,simulation,debug=debug)
 	
 	elif simulation.ICmode==2:
-		phi = CellVariable(name = "solution variable",mesh = embryo.mesh,value = 0.) 
-		phi=mimic_imperfect_bleaching(embryo.slice_height_px[0],embryo.cylinder_height_px,embryo.im_reg_ICs,embryo.conc_rim,embryo.rim,embryo.add_rim_from_radius,embryo.mesh,phi,embryo.side_length_bleached_px,embryo.center_embr_px,1)
+		phi=applyImperfectICs(phi,simulation,simulation.embryo.geometry.getCenter(),100.,simulation.embryo.sliceHeightPx)
 		
 	elif simulation.ICmode==3:
 		phi=applyInterpolatedICs(phi,simulation,debug=False)
@@ -237,6 +235,31 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	
 	return simulation
 
+def applyROIBasedICs(phi,simulation):
+	
+	"""Applies ROI-based initial conditions.
+	
+	First sets concentration on all mesh nodes equal to `simulation.embryo.analysis.concRim`.
+	Afterwards, mesh nodes get assigned the value of the first entry ``dataVec`` of 
+	the ROI covering them. Note: If a mesh node is covered by two ROIs, will assign the value
+	of the ROI that is last in embryo's ``ROIs`` list. See also 
+	:py:func:`pyfrp.subclasses.pyfrp_simulation.setICMode`.
+	
+	Args:
+		phi (fipy.CellVariable): PDE solution variable.
+		simulation (pyfrp.subclasses.pyfrp_simulation.simulation): Simulation object.
+	
+	Returns:
+		fipy.CellVariable: Updated solution variable.	
+	
+	"""
+	
+	phi.setValue(simulation.embryo.analysis.concRim)
+	
+	for r in simulation.embryo.ROIs:
+		phi.value[r.meshIdx]=r.dataVec[0]
+		
+	
 def applyIdealICs(phi,simulation,bleachedROI=None,valOut=None):
 	
 	"""Applies ideal initial conditions.
@@ -449,9 +472,102 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False):
 	
 	return phi
 
+def sigmoidBleachingFct(x,y,z,center,rJump,sliceHeight,maxVal=1.,maxMinValPerc=0.25,minMinValPerc=0.25,rate=0.1):
 	
-
-def mimic_imperfect_bleaching(slice_height,height,im_reg_ICs,conc_rim,rim,add_rim_from_radius,mesh,phi,sidelength,center,debug_opt):
+	r"""Generates sigmoid scaling function for imperfect bleaching at
+	coordinates x/y/z.
+	
+	The idea behind the sigmoid function is:
+	
+		* Through scattering and other effects, the bleached window becomes blurry in larger depths, resulting
+		  in a radial sigmoid scaling function around ``center``. 
+		* Similarly, bleaching intensity increases with depth. Thus, a linear term controls the values close 
+		  to ``center`` of the sigmoid function. Bleaching closer to the laser than the imaged height will 
+		  be rendered stronger, while bleaching effects below will be decreased by *bumping up* the 
+		  bleached window. However, only until some threshhold is reached.
+		  
+	The sigmoid function is given by:	  
+	
+	.. math:: s(r,z) = v_{\mathrm{min}}(z)+(v_{\mathrm{max}}-v_{\mathrm{min}}(z))\frac{1}{1+\exp(-\rho(r-r_\mathrm{Jump}))},
+	
+	where :math:`\rho` is the sigmoid slope given by ``rate``, :math:`r_\mathrm{Jump}` is the radius from ``center``
+	at which sigmoid function has its **jump**, given by ``rJump`` and :math:`r` the radius of coordinate ``[x,y]`` from
+	``center``.
+	
+	:math:`v_{\mathrm{min}}(z)` is a linear function describing how strong the bleaching is dependent on the 
+	depth :math:`z` given by
+	
+	.. math:: v_{\mathrm{min}}(z) = \frac{v_{\mathrm{max}} - v_{\mathrm{max. bleach}}}{h_s} z +  v_{\mathrm{max. bleach}},
+	
+	where :math:`v_{\mathrm{max}}` is the value of the sigmoid function far from ``center``, :math:`v_{\mathrm{max. bleach}}`
+	is the strongest expected bleaching value (mostly at :math:`z=0`) and :math:`h_s` is the height of the imaging slice, given 
+	by ``sliceHeight``. 
+	The maximum rate of bleaching :math:`v_{\mathrm{max. bleach}}` is computed by:
+	
+	.. math:: v_{\mathrm{max. bleach}} = (1-p_{\mathrm{max. bleach}})v_{\mathrm{max}},
+	
+	where :math:`p_{\mathrm{max. bleach}}` is the percentage of maximum expected bleaching compared to the values in the imaging 
+	height, given by ``maxMinValPerc``. That is, by how much has the laser power already decreased on its way from entry point of 
+	the sample to the imaging height.
+	
+	For sample depths deeper than the imaging height, bleaching is expected to be decrease in intensity, thus the bleached area
+	is getting **bumped up**. To avoid bumping the bleached area by too much, eventually even resulting in the bleached
+	area having a higher concentration than the area outside, the sigmoid function has a cut-off: If values of :math:`s(r,z)` pass 
+	
+	.. math:: v_{\mathrm{min. bleach}} = (1+p_{\mathrm{min. bleach}})v_{\mathrm{max}},
+	
+	where :math:`p_{\mathrm{min. bleach}}` is the percentage of bleaching to cut-off, then we set
+	
+	.. math:: s(r,z) = v_{\mathrm{min. bleach}},
+	
+	ultimately resulting in a scaling function given by
+	
+	.. math:: s(r,z) = \left\{\begin{array}{cc} 
+	   v_{\mathrm{min}}(z)+(v_{\mathrm{max}}-v_{\mathrm{min}}(z))\frac{1}{1+\exp(-\rho(r-r_\mathrm{Jump}))} & \mbox{ if } s(r,z) <= v_{\mathrm{min. bleach}} , \\
+	   v_{\mathrm{min. bleach}} & \mbox{ else }
+	   \end{array}
+	   \right.
+	   
+	.. image:: ../imgs/pyfrp_sim_module/sigmoidFct.png
+	
+	Args:
+		x (numpy.ndarray): x-coordinates.
+		y (numpy.ndarray): y-coordinates.
+		z (numpy.ndarray): z-coordinates.
+		center (list): Center of bleaching. 
+		rJump (float): Radius from center where sigmoid jump is expected.
+		sliceHeight (float): Height at which dataset was recorded. 
+		
+	Keyword Args:	
+		maxVal (float): Value of sigmoid function outside of bleached region.
+		maxMinValPerc (float): Percentage of maximum bleaching intensity.
+		minMinValPerc (float): Percentage of minimum bleaching intensity. 
+		rate (float): Rate at which sigmoid increases.
+			
+	Returns:
+		numpy.ndarray: 
+		
+	"""
+	
+	#Calculate linear equation describing how strong bleaching effect decreases as z increases
+	maxMinVal=(1-maxMinValPerc)*maxVal
+	m=(maxVal-maxMinVal)/sliceHeight
+	b=maxMinVal
+	minVal=m*z+b
+	
+	#Compute distance from center for each point
+	r=np.sqrt((x-center[0])**2+(y-center[1])**2)
+	
+	#Compute sigmoid function
+	sigm=minVal+(maxVal-minVal)/(1+np.exp(-rate*(r-rJump)))
+	
+	#Compute cut-off, so we do not amplifiy the bleached region
+	minMinVal=(1+minMinValPerc)*maxVal
+	sigm[np.where(sigm>minMinVal)]=minMinVal
+	
+	return sigm,r
+	
+def applyImperfectICs(phi,simulation,center,rJump,sliceHeight,maxVal=1.,maxMinValPerc=0.25,minMinValPerc=None,rate=0.1,matchWithMaster=True,debug=False):
 	
 	"""Mimic imperfect bleaching through cone approximation, return phi.
 	
@@ -459,161 +575,34 @@ def mimic_imperfect_bleaching(slice_height,height,im_reg_ICs,conc_rim,rim,add_ri
 	
 	"""
 	
-	#Making some variable names shorter
-	sh=-slice_height
-	h=height
+	phi = applyInterpolatedICs(phi,simulation,matchWithMaster=matchWithMaster,debug=debug)
 	
-	#Grabbing image resolution
-	res=shape(im_reg_ICs)[0]
+	#Get cell coordinates
+	x,y,z=simulation.mesh.mesh.getCellCenters()
+	x=np.asarray(x)
+	y=np.asarray(y)
+	z=np.asarray(z)
 	
-	#-----------------------------------------------
-	#Finding outer rim concentration
-	if conc_rim==None:
+	#Compute by how much 
+	if minMinValPerc==None:
+		r=np.sqrt((x-center[0])**2+(y-center[1])**2)
+		inVal=np.mean(phi.value[np.where(r<rJump)])
+		outVal=np.mean(phi.value[np.where(r>=rJump)])
 		
-		conc_sum==0
-		conc_num==0
+		minMinValPerc=inVal/outVal
 		
-		for i in range(res):
-			for j in range(res):
-				if add_rim_from_radius==1:
-					if sqrt((i-center[0])**2+(j-center[1])**2)<=radius and sqrt((i-center[0])**2+(j-center[1])**2)>=radius-rim:
-					
-						conc_sum=conc_sum+im_reg_ICs[i,j]
-						conc_num=conc_num+1
-						
-				elif add_rim_from_radius==0:
-					if sqrt((i-center[0])**2+(j-center[1])**2)<=radius and sqrt((i-center[0])**2+(j-center[1])**2)>=res/2-rim:
-						conc_sum=conc_sum+im_reg_ICs[i,j]
-						conc_num=conc_num+1
-		
-		conc_rim=conc_sum/conc_num
 
-	#-----------------------------------------------
-	#Imperfect bleaching
+		
+	#Compute sigmoid function
+	sigm,r = sigmoidBleachingFct(x,y,z,center,rJump,sliceHeight,maxVal=1.,maxMinValPerc=maxMinValPerc,minMinValPerc=minMinValPerc,rate=rate)
 	
-	#Creating Grid
-	x_grid=arange(0,res,1)
-	y_grid=arange(0,res,1)
 	
-	x_grid, y_grid=meshgrid(x_grid,y_grid)
-	grid_f=zeros(shape(x_grid))
 	
-	#Parameters of sigmoid function
-	max_val=1
-	max_min_val=1.25
-	rate=0.01
-	r_jump=sidelength/2.
-	center_x=center[0]
-	center_y=center[1]
-	
-	#Calculate linear equation describing how strong bleaching effect decreases as z increases
-	m=(max_min_val-1)/((h-sh)/h)
-	b=1-sh*(max_min_val-1)/(h-sh)
-	
-	#Grid of radius values
-	r=sqrt((x_grid-center_x)**2+(y_grid-center_y)**2)
-		
-	#Debugging plots if needed
-	if debug_opt==0:
-		
-		#Range over z-stacks 
-		zs=arange(0,h,1)
-		
-		#Matrix of scaled ics
-		ics_scaled=zeros((res,res,shape(zs)[0]))
-			
-		#Generate z-stack of slices
-		j=0
-		for z in zs:
-			
-			#Apply sigmoid function
-			min_val=m*z/h+b
-			grid_f=min_val+(max_val-min_val)/(1+exp(-rate*(r-r_jump)))
-			ics_scaled[:,:,j]=grid_f*im_reg_ICs
-				
-			#Increasing index	
-			j=j+1
-		
-		#Mesh points where the interpolation is supposed to be evaluated	
-		points=zeros((shape(mesh.x)[0],3))
-		points[:,0]=mesh.x
-		points[:,1]=mesh.y
-		points[:,2]=-mesh.z
-		points=points.T
-		
-		#Start time of timer
-		start_time_inter=time.clock()
-		
-		#Interpolation
-		int_res=ndi.map_coordinates(ics_scaled,points,cval=conc_rim)
-		
-		#End time of timer
-		print "interpolation took:", time.clock()-start_time_inter 
-		print conc_rim
-		phi.value=int_res
-	
-	#-----------------------------------------------
-	#Some debugging outputs		
-	elif debug_opt==1:
-		
-		#Different heights for debugging
-		zs=[0,sh,h]
-		
-		ics_scaled=zeros((res,res,shape(zs)[0]))
-		
-		#Generate z-stack of slices
-		j=0
-		for z in zs:
-			min_val=m*z/h+b
-			grid_f=min_val+(max_val-min_val)/(1+exp(-rate*(r-r_jump)))
-			ics_scaled[:,:,j]=grid_f*im_reg_ICs
-			
-				
-			j=j+1
-		
-		#Plotting slices
-		i=1
-		j=0
-		
-		fig=plt.figure()
-		fig.show()
-		cflevels=linspace(0,im_reg_ICs.max(),25)
+	#Multiplicate solution variable with sigmoid function
+	phi.value = phi.value * sigm
 
-		for z in zs:
-			
-		
-			fid=330+i
-			i=i+1
-			ax=fig.add_subplot(fid)
-			curr_plt=ax.contourf(x_grid,y_grid,grid_f,levels=cflevels)
-			plt.ylabel("z="+str(z))
-			if i==2:
-				plt.title("Scaling sigmoid")
-			
-			plt.colorbar(curr_plt)
-			fid=330+i
-			i=i+1
-			ax=fig.add_subplot(fid)
-			curr_plt=ax.contourf(ics_scaled[:,:,j],levels=cflevels)
-			if i==3:
-				plt.title("Scaled ICs")
-			
-			plt.colorbar(curr_plt)
-			fid=330+i
-			i=i+1
-			ax=fig.add_subplot(fid)
-			diff=ics_scaled[:,:,j]-im_reg_ICs
-			curr_plt=ax.contourf(diff)
-			if i==4:
-				plt.title("Difference between scaled and img")
-			plt.colorbar(curr_plt)
-			
-			j=j+1
-		
-		plt.draw()
-		raw_input()
-	
 	return phi
+	
 	
 
 

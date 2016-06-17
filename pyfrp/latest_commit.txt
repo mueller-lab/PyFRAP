@@ -1,9 +1,10 @@
-- fixed more indexing functions to account for arrays
-- created pyfrp_ROI.ROI.getMaxNodeDistance 
-- created pyfrp_mesh.mesh.getMaxNodeDistance
-- made plotSolutionVariable more flexible and moved it to pyfrp_plot_module
-- added maskMeshByDistance(x,y,d,nPts) to pyfrp_idx_module
-- added pyfrp_simulation.plotICStack/plotSolStack, now works in z-direction
-
-
-
+- fixed bug in pyfrp_fit_module.addKineticsToSolution 
+- added docstrings to pyfrp_simulation
+- added applyIdealICs as seperate function to pyfrp_sim_module
+- added sigmoidBleachingFct
+- added applyImperfectICs
+- fixed bug in pyfrp_plot_module.makeSubplots
+- fixed all ROI NaN bug
+- fixed bug in pyfrp_plot_module.plotSolutionVariable
+- added doctrings to pyfrp_sim_module
+- added docstrings to pyfrp_ROI
