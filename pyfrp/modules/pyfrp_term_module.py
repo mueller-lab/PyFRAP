@@ -174,3 +174,31 @@ def getArrayDetailsString(l):
 	
 	return "Array of shape " + str(l.shape)
 
+def printTable(l,header,col=False):
+	
+	"""Prints table using tabulate package.
+	
+	If ``col=True``, columns are given via ``l``, otherwise rows are given.
+	
+	Args:
+		l (list): List of rows or columns.
+		header (list): List of headers.
+		col (bool): Flag on how rows/columns are given.
+	
+	"""
+	
+	if col:
+		table=[]
+		for i in range(len(l[0])):
+			row=[]
+			for j in range(len(l)):
+				row.append(l[j][i])
+			table.append(row)
+	else:
+		table=l
+		
+	from tabulate import tabulate
+			
+	print tabulate(table,headers=header)
+	
+

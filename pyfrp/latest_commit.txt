@@ -1,0 +1,8 @@
+Added loglikehood, Akaike information criterion, corrected AIC,
+Akaike weight and model comparison functions to pyfrp_stats_module.
+
+Added table printing function to pyfrp_term_module
+
+Added model comparison methods to pyfrp_embryo
+
+Added getNParmsFitted to pyfrp_fit

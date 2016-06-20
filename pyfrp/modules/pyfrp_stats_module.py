@@ -254,4 +254,337 @@ def selectDataByOverlapSubSample(d,n,k,thresh,debug=False):
 				print "Subsamples ", idxs[0][i],idxs[1][i], " generate error ", dError[idxs[0][i],idxs[1][i]]
 			
 	return len(dError[idxs].flatten())>0
+
+def computeLogLikelihood(fit,ROIs=None,neg=True,sigma=1):
+	
+	r"""Computes log-likelihood of fit assuming
+	normal distribution of data around fit.
+	
+	Generally we assume that the data is distributed normally around
+	the fitted model, that is
+	
+	.. math:: (m-d) \sim \mathcal{N}(0,\sigma)
+	
+	Assuming that all measurements are independent, this results in 
+	a likelihood function of
+	
+	.. math:: \prod\limits_{j=1}^{n} \frac{1}{\sigma \sqrt{2\pi}} \exp\left(-\frac{(m_j-d_j)^2}{2\sigma^2}\right) 
+	
+	resulting in a log-likelihood function of
+	
+	.. math:: - \frac{n}{2} \log (2\pi) - \frac{\sum\limits{j=1}^{n}(m_j-d_j)^2}{2\sigma^2}
+	
+	Function allows to compute both negative and positive log-likelihood by ``neg`` flag.
+	
+	If the standard deviation :math:`sigma` is unknown, but the log-likelihood is
+	only needed for model comparison reasons over the same dataset, all `sigma` dependent
+	terms can be ignored. Thus this function returns both SSD and log-likelihood.
+	
+	.. note:: If ``ROIs=None``, will use all ROIs defined in ``fit.ROIsFitted``. If ``ROIs`` are
+	   specified, but not in ``fit.ROIsFitted``, will simply skip them.
+	
+	Args:
+		fit (pyfrp.subclasses.pyfrp_fit.fit): Fit object.
+		
+	Keyword Args:	
+		ROIs (list): List of ROIs to be considered for computation.
+		neg (bool): Compute negative log-likehood.
+		sigma (float): Standard deviation of normal distribution if known.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* sign (float): Sign of likelihood function (-1/1).
+			* SSD (float): SSD of fit over all ROIs specified in ROIs.
+			* logLL (float): Log-likehood function at ``sigma=sigma``
+	
+	"""
+	
+	#Recompute SSD
+	ssds=[]
+	for i,r in enumerate(fit.ROIsFitted):
+		if ROIs!=None:
+			if r not in ROIs:
+				continue
+		
+		ssds.append(computeSSD(fit.dataVecsFitted[i],fit.fittedVecs[i]))
+	
+	SSD=sum(ssds)
+	
+	#Compute log likelihood
+	n = len(fit.dataVecsFitted[0])
+	sign = (2*int(neg)-1)
+	const = n/2.*np.log(2*np.pi)
+	
+	logLL=sign * ( const + SSD/(2*sigma))
+	
+	return sign,SSD,logLL
+
+def computeAIC(fit,ROIs=None,sigma=1,fromSSD=True):
+	
+	r"""Computes Akaike Information Criterion of fit.
+	
+	The AIC is defined by
+	
+	.. math:: AIC= 2k - 2\log(L),
+	
+	:math:`k` is the number of free parameters of the model used in 
+	``fit`` and :math:`L` is the maximum likelihood function of the
+	model, see also :py:func:`computeLogLikelihood`.
+	
+	Since generally the AIC is only used for model comparison and a normal
+	distribution of the data around the model is assumed, one simply
+	can use the SSD as a log-likelihood function. ``fromSSD`` controls if
+	just the SSD is used. This is also useful, since :math:`sigma` is not 
+	necessarily known if the objective function of the fit was not a
+	maximum likelihood function.
+	
+	.. note:: If ``ROIs=None``, will use all ROIs defined in ``fit.ROIsFitted``. If ``ROIs`` are
+	   specified, but not in ``fit.ROIsFitted``, will simply skip them.
+	   
+	If the AIC or the AICc should be used can be determined using :py:func:`useAIC`.
+	
+	Args:
+		fit (pyfrp.subclasses.pyfrp_fit.fit): Fit object.
+		
+	Keyword Args:	
+		ROIs (list): List of ROIs to be considered for computation.
+		sigma (float): Standard deviation of normal distribution if known.
+		fromSSD (bool): Simply use SSD as maximum likelihood.
+		
+	Returns:
+		float: AIC of fit.
+	
+	"""
+		
+	AIC=2*(fit.getNParmsFitted())+2*computeLogLikelihood(fit,ROIs=ROIs)[2-int(fromSSD)]
+	
+	return AIC
+
+def computeCorrAIC(fit,ROIs=None,sigma=1,fromSSD=True):
+	
+	r"""Computes corrected Akaike Information Criterion of fit.
+	
+	The AICc is defined by
+	
+	.. math:: AICc= AIC + \frac{2k(k+1)}{n-k-1},
+	
+	where :math:`n` is the number of datapoints used for the fit and 
+	:math:`k` is the number of free parameters. For the computation of the
+	AIC, please refer to the documentation of :py:func:`computeAIC`.
+	
+	.. note:: If ``ROIs=None``, will use all ROIs defined in ``fit.ROIsFitted``. If ``ROIs`` are
+	   specified, but not in ``fit.ROIsFitted``, will simply skip them.
+	   
+	If the AIC or the AICc should be used can be determined using :py:func:`useAIC`.
+	
+	Args:
+		fit (pyfrp.subclasses.pyfrp_fit.fit): Fit object.
+		
+	Keyword Args:	
+		ROIs (list): List of ROIs to be considered for computation.
+		sigma (float): Standard deviation of normal distribution if known.
+		fromSSD (bool): Simply use SSD as maximum likelihood.
+		
+	Returns:
+		float: AICc of fit.
+	
+	"""
+	
+	n = len(fit.dataVecsFitted[0])
+	AIC=computeAIC(fit,ROIs=ROIs,sigma=sigma,fromSSD=fromSSD)
+	k=fit.getNParmsFitted()
+	
+	corrAIC=AIC + 2*k*(k+1)/(n-k-1)
+	
+	return corrAIC
+	
+def useAIC(n,k):
+
+	r"""Returns if corrected or not corrected version of the 
+	AIC should be used.
+	
+	Rule of thumb is that AIC should be used if
+	
+	.. math:: \frac{n}{k}>40,
+	
+	where :math:`n` is the number of datapoints used for the fit and 
+	:math:`k` is the number of free parameters.
+	
+	Returns:
+		bool: ``True``, use AIC, ``False`` use AICc.
+	
+	"""
+	
+	return n/k>40
+
+def compareFitsByAIC(fits,ROIs=None,sigma=1,fromSSD=True,thresh=None):
+	
+	r"""Computes AIC and Akaike weights for all fits in a list
+	and returning best models given certain criteria.
+	
+	For the computation of the AIC see :py:func:`computeAIC` and 
+	the computation of the Akaike weights :py:func:`computeAkaikeWeights`.
+	
+	If threshhold ``thresh=None``, then will select model with maximum
+	Akaike weight as best model, that is, the model with the highest likelihood
+	of being the best model.
+	If ``thresh`` is given, will return list of acceptable models based on
+	
+	.. math:: w_{\mathrm{max}}-w_i<thresh,
+	
+	that is, all models that are within a given range of probability of
+	the most likely one.
+	
+	Args:
+		fits (list): List of fit objects.
+		
+	Keyword Args:	
+		ROIs (list): List of ROIs to be considered for computation.
+		sigma (float): Standard deviation of normal distribution if known.
+		fromSSD (bool): Simply use SSD as maximum likelihood.
+		thresh (float): Probability range for model selection.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* AICs (list): List of AIC values of the respective fits.
+			* deltaAICs (numpy.ndarray): List of Akaike difference values of the respective fits.
+			* weights (numpy.ndarray): List of Akaike difference weights of the respective fits.
+			* acc (list): List of acceptable fits by model selection.
+	
+	"""
+	
+	AICs=[]
+	for fit in fits:
+		AICs.append(computeAIC(fit,ROIs=ROIs,sigma=1,fromSSD=fromSSD))
+		
+	deltaAIC=np.asarray(AICs)-min(AICs)	
+	
+	weights = computeAkaikeWeights(AICs)
+	
+	acc=[]
+	if thresh==None:
+		
+		idx=list(weights).index(max(weights))
+		
+		acc=[fits[idx]]
+	
+	else:
+		relWeights=abs(weights-max(weights))
+		for i in np.where(list(relWeights<thresh))[0]:
+			acc.append(fits[i])
+	
+	
+	return AICs, deltaAIC,weights, acc
+
+def compareFitsByCorrAIC(fits,ROIs=None,sigma=1,fromSSD=True,thresh=None):
+	
+	r"""Computes AICc and Akaike weights for all fits in a list
+	and returning best models given certain criteria.
+	
+	For the computation of the corrected AIC see :py:func:`computeCorrAIC` and 
+	the computation of the Akaike weights :py:func:`computeAkaikeWeights`.
+	
+	If threshhold ``thresh=None``, then will select model with maximum
+	Akaike weight as best model, that is, the model with the highest likelihood
+	of being the best model.
+	If ``thresh`` is given, will return list of acceptable models based on
+	
+	.. math:: w_{\mathrm{max}}-w_i<thresh,
+	
+	that is, all models that are within a given range of probability of
+	the most likely one.
+	
+	Args:
+		fits (list): List of fit objects.
+		
+	Keyword Args:	
+		ROIs (list): List of ROIs to be considered for computation.
+		sigma (float): Standard deviation of normal distribution if known.
+		fromSSD (bool): Simply use SSD as maximum likelihood.
+		thresh (float): Probability range for model selection.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* AICs (list): List of AICc values of the respective fits.
+			* deltaAICs (numpy.ndarray): List of Akaike difference values of the respective fits.
+			* weights (numpy.ndarray): List of Akaike difference weights of the respective fits.
+			* acc (list): List of acceptable fits by model selection.
+	
+	"""
+	
+	AICs=[]
+	for fit in fits:
+		AICs.append(computeCorrAIC(fit,ROIs=ROIs,sigma=1,fromSSD=fromSSD))
+		
+	deltaAIC=np.asarray(AICs)-min(AICs)	
+	
+	weights = computeAkaikeWeights(AICs)
+	
+	acc=[]
+	if thresh==None:
+		
+		idx=list(weights).index(max(weights))
+		acc=[fits[idx]]
+	
+	else:
+		relWeights=abs(weights-max(weights))
+		
+		for i in np.where(list(relWeights<thresh))[0]:
+			acc.append(fits[i])
+	
+	return AICs, deltaAIC,weights, acc
+
+	
+def computeAkaikeWeights(AICs):
+	
+	r"""Computes Akaike weights for a list of 
+	AIC values.
+	
+	Akaike weightsare given by:
+	
+	.. math:: w_i = \frac{\exp\left(\frac{-\Delta_{i}}{2}\right)}{\sum\limits_{i=1}^{N} \exp\left(\frac{- \Delta_{i}}{2}\right)},
+	
+	where :math:`\Delta_{i}` is the Akaike difference of model :math:`i` computed by
+	
+	.. math:: \Delta_{i} = AIC_i - AIC_{\mathrm{min}},
+	
+	and :math:`N` is the total number of models considered. Note that
+	
+	.. math:: \sum\limits_{i=1}^{N} \exp\left(\frac{- \Delta_{i}}{2}\right) = 1.
+	
+	Args:
+		AICs (list): List of AIC values.
+		
+	Returns:
+		np.ndarray: Corresponding Akaike weights.
+	
+	
+	"""
+	
+	deltaAIC=np.asarray(AICs)-min(AICs)	
+	
+	weights=np.exp(-deltaAIC/2.)/sum(np.exp(-deltaAIC/2.))
+	
+	
+	return weights
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	

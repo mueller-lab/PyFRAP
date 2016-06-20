@@ -1064,4 +1064,17 @@ class fit:
 		print "Rsq Values by ROI for fit ", self.name
 		printDict(self.RsqByROI)
 		
+	def getNParmsFitted(self,inclEqu=True):
+		
+		"""Returns the number of parameters fitted in this fit.
+		
+		Keyword Args:
+			inclEqu (bool): Include equalization as additional fitted parameter.
+		
+		Returns:
+			int: Number of parameters fitted.
+		
+		"""
+		
+		return 1+int(self.getFitProd())+int(self.getFitDegr())+int(inclEqu)*int(self.getEqu())
 		

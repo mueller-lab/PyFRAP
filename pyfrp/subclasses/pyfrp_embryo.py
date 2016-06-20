@@ -2212,6 +2212,7 @@ class embryo:
 		"""
 		
 		if direction=='z':
+			
 			#Get zExtend and height of geometry
 			zmin,zmax = self.geometry.getZExtend()
 			height=abs(zmax-zmin)
@@ -2241,8 +2242,103 @@ class embryo:
 				
 				
 		return self.ROIs
-
 	
+	
+	def compareFitsByAIC(self,ROIs=None,sigma=1,fromSSD=True,thresh=None,printOut=True):
+		
+		"""Compares all fits of embryo using the Akaike information criterion (AIC).
+		
+		For a detailed explanation of the model selection procedure, please refer to
+		:py:func:`pyfrp.modules.pyfrp_stats_module.compareFitsByAIC`.
+		
+		If ``printOut`` is selected, will print a list of selected fits and the 
+		underlying Akaike values in a readable table.
+		
+		If the AIC or the AICc should be used can be determined using 
+		:py:func:`pyfrp.modules.pyfrp_stats_module.useAIC`.
+		
+		Keyword Args:	
+			ROIs (list): List of ROIs to be considered for computation.
+			sigma (float): Standard deviation of normal distribution if known.
+			fromSSD (bool): Simply use SSD as maximum likelihood.
+			thresh (float): Probability range for model selection.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* AICs (list): List of AIC values of the respective fits.
+				* deltaAICs (numpy.ndarray): List of Akaike difference values of the respective fits.
+				* weights (numpy.ndarray): List of Akaike difference weights of the respective fits.
+				* acc (list): List of acceptable fits by model selection.
+		
+		"""
+		
+		AICs, deltaAICs,weights,acc = pyfrp_stats_module.compareFitsByAIC(self.fits,ROIs=ROIs,sigma=sigma,fromSSD=fromSSD,thresh=thresh)
+		
+		
+		if printOut:
+			fitNames = pyfrp_misc_module.objAttrToList(self.fits,'name')
+			printNote("Acceptable fits under threshhold "+ str(thresh) +":")
+			for fit in acc:
+				print fit.name
+			
+			print "Details of AIC analysis can be found in the following table:"
+			printTable([fitNames,AICs,deltaAICs,weights],["fitNames","AICs","deltaAICs","weights"],col=True)
+			
+		return AICs, deltaAICs,weights, acc
+			
+	def compareFitsByCorrAIC(self,ROIs=None,sigma=1,fromSSD=True,thresh=None,printOut=True):
+		
+		"""Compares all fits of embryo using the corrected Akaike information criterion (AICc).
+		
+		For a detailed explanation of the model selection procedure, please refer to
+		:py:func:`pyfrp.modules.pyfrp_stats_module.compareFitsByCorrAIC`.
+		
+		If ``printOut`` is selected, will print a list of selected fits and the 
+		underlying Akaike values in a readable table.
+		
+		If the AIC or the AICc should be used can be determined using 
+		:py:func:`pyfrp.modules.pyfrp_stats_module.useAIC`.
+		
+		Keyword Args:	
+			ROIs (list): List of ROIs to be considered for computation.
+			sigma (float): Standard deviation of normal distribution if known.
+			fromSSD (bool): Simply use SSD as maximum likelihood.
+			thresh (float): Probability range for model selection.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* AICs (list): List of AICc values of the respective fits.
+				* deltaAICs (numpy.ndarray): List of Akaike difference values of the respective fits.
+				* weights (numpy.ndarray): List of Akaike difference weights of the respective fits.
+				* acc (list): List of acceptable fits by model selection.
+		
+		"""
+		
+		AICs, deltaAICs,weights,acc = pyfrp_stats_module.compareFitsByCorrAIC(self.fits,ROIs=ROIs,sigma=sigma,fromSSD=fromSSD,thresh=thresh)
+		
+		if printOut:
+			fitNames = pyfrp_misc_module.objAttrToList(self.fits,'name')
+			printNote("Acceptable fits under threshhold "+ str(thresh) +":")
+			for fit in acc:
+				print fit.name
+			
+			print "Details of AIC analysis can be found in the following table:"
+			printTable([fitNames,AICs,deltaAICs,weights],["fitNames","AICcs","deltaAICs","weights"],col=True)
+		
+		return AICs, deltaAICs,weights, acc		
+	
+	#def compareFits(self,crit='corrAIC',ROIs=None,sigma=1,fromSSD=True,thresh=None):
+		
+		#"""
+		
+		#"""
+		
+		#if 
+		#for fit in self.fits:
+			
+		
 	
 	
 	#def grabDataDetails(self):
