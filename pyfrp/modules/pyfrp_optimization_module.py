@@ -66,7 +66,10 @@ def constrObjFunc(x,fit,debug,ax,returnFit):
 		 float: SSD of fit. Except ``returnFit==True``, then will return fit itself. 
 	"""
 	
-	x=xTransform(x,[fit.LBD,fit.LBProd,fit.LBDegr],[fit.UBD,fit.UBProd,fit.UBDegr])
+	
+	LBs, UBs = buildBoundLists(fit)
+	
+	x=xTransform(x,LBs,UBs)
 
 	ssd=pyfrp_fit_module.FRAPObjFunc(x,fit,debug,ax,returnFit)
 	
@@ -198,3 +201,25 @@ def transformX0(x0,LB,UB):
 			k=k+1
 	
 	return x0u
+
+def buildBoundLists(fit):
+	
+	"""Builds list of lower bounds and upper bounds.
+	
+	Args:
+		fit (pyfrp.subclasses.pyfrp_fit): Fit object.
+		
+	Returns:
+		tuple: Tuple containing: 
+		
+			* LBs (list): List of lower bounds.
+			* UBs (list): List of upper bounds.
+			
+	
+	
+	"""
+	
+	LBs=[fit.LBD]+int(fit.fitProd)*[fit.LBProd]+int(fit.fitDegr)*[fit.LBDegr]+len(fit.ROIsFitted)*[fit.LBEqu]
+	UBs=[fit.UBD]+int(fit.fitProd)*[fit.UBProd]+int(fit.fitDegr)*[fit.UBDegr]+len(fit.ROIsFitted)*[fit.UBEqu]
+	
+	return LBs,UBs

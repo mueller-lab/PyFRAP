@@ -541,7 +541,7 @@ class ROI(object):
 		"""Computes number of extended pixels of ROI.
 		
 		Returns:
-			int
+			int: Number of extended pixels.
 			
 		"""
 		
@@ -549,28 +549,104 @@ class ROI(object):
 		return self.numExt
 	
 	def getNumExt(self):
+		
+		"""Returns number of extended pixels of ROI.
+		
+		Returns:
+			int: Number of extended pixels.
+			
+		"""
+		
 		return self.numExt
 	
 	def setDataVec(self,vec):
+		
+		"""Sets data vector of ROI.
+		
+		Args:
+			vec (numpy.ndarray): New data vector.
+			
+		Returns:
+			numpy.ndarray: New data vector.
+		
+		"""
+		
 		self.dataVec=vec 
 		return self.dataVec
 
 	def getDataVec(self):
+		
+		"""Returns current data vector of ROI.
+			
+		Returns:
+			numpy.ndarray: Current data vector.
+		
+		"""
+		
 		return self.dataVec
 	
 	def setSimVec(self,vec):
+		
+		"""Sets simulation vector of ROI.
+		
+		Args:
+			vec (numpy.ndarray): New simulation vector.
+			
+		Returns:
+			numpy.ndarray: New simulation vector.
+		
+		"""
+		
 		self.simVec=vec 
 		return self.simVec
 
 	def getSimVec(self):
+		
+		"""Returns current simulation vector of ROI.
+			
+		Returns:
+			numpy.ndarray: Current simulation vector.
+		
+		"""
+		
 		return self.simVec
 	
 	def computeImgMask(self):
+		
+		"""Computes image mask of ROI.
+		
+		Image mask is a ``dataResPx * dataResPx`` array with the value
+		``1`` for pixels inside ROI and ``0`` elsewhere.
+		
+		Returns:
+			numpy.ndarray: Image mask.
+		
+		"""
+		
 		vals=np.zeros((self.embryo.dataResPx,self.embryo.dataResPx))
 		self.imgMask=pyfrp_idx_module.ind2mask(vals,self.imgIdxX,self.imgIdxY,1)
 		return self.imgMask
 		
 	def computeExtMask(self):
+		
+		"""Computes mask of extended pixels of ROI.
+		
+		Mask is a 2D array with the value
+		``1`` for pixels inside ROI and ``0`` elsewhere.
+		
+		.. note:: Returns ``None,None,None`` if there are no extended pixels.
+		
+		Also returns coordinate arrays, since offset of extended mask is not ``[0,0]``.
+		See also http://docs.scipy.org/doc/numpy/reference/generated/numpy.meshgrid.html .
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* mX (numpy.ndarray): Coordinate array corresponding to pixels of extended mask.
+				* mY (numpy.ndarray): Coordinate array corresponding to pixels of extended mask.
+				* extMask (numpy.ndarray): Extended mask.
+		
+		"""
 		
 		if len(self.extImgIdxX)==0:
 			return None,None,None
@@ -1659,11 +1735,19 @@ class ROI(object):
 		
 		return max(distances[0][self.meshIdx]),max(distances[1][self.meshIdx]),max(distances[2][self.meshIdx])
 		
-	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Radial ROI class
 
 class radialROI(ROI):
+	
+	"""Radial ROI class.
+	
+	Inherits from :py:class:`ROI`. 
+	
+	Main attributes are:
+	
+		* ``radius``: Radius of ROI.
+		* ``center``: Center of ROI.
+	
+	"""
 
 	def __init__(self,embryo,name,Id,center,radius,color='b'):
 		
@@ -1673,28 +1757,111 @@ class radialROI(ROI):
 		self.center=center
 		
 	def setRadius(self,r):
+		
+		"""Sets radius of ROI.
+		
+		Args:
+			r (float): New radius
+			
+		Returns:
+			float: New radius.
+		
+		"""
+		
 		self.radius=r
 		return self.radius	
 		
 	def getRadius(self):
+		
+		"""Returns current radius of ROI.
+		
+		Returns:
+			float: Current radius.
+		
+		"""
+		
 		return self.radius
 	
 	def setCenter(self,c):
+		
+		"""Sets radius of ROI.
+		
+		Args:
+			c (list): New center.
+			
+		Returns:
+			list: New center.
+		
+		"""
+		
 		self.center=c
 		return self.center
 	
 	def getCenter(self):
+		
+		"""Returns current center of ROI.
+		
+		Returns:
+			list: Current center.
+		
+		"""
+		
 		return self.center	
 	
 	def computeImgIdx(self,debug=False):
+		
+		"""Computes image indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getCircleIdxImg`.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				
+		"""
+		
+		
 		[self.imgIdxX,self.imgIdxY]=pyfrp_idx_module.getCircleIdxImg(self.center,self.radius,self.embryo.dataResPx,debug=debug)
 		return self.imgIdxX,self.imgIdxY
 	
 	def computeMeshIdx(self,mesh):
+		
+		"""Computes mesh indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getCircleIdxMesh`.
+		
+		Args:
+			mesh (fipy.GmshImporter3D): Fipy mesh object.
+			
+		Returns:
+			list: Newly computed mesh indices.
+				
+		"""
+		
+		
 		self.meshIdx=pyfrp_idx_module.getCircleIdxMesh(self.center,self.radius,radius,mesh,zmin=self.zmin,zmax=self.zmax)
 		return self.meshIdx	
 	
 	def showBoundary(self,color=None,linewidth=3,ax=None):
+		
+		"""Shows ROI in a 2D plot.
+		
+		If no color is specified, will use color specified in ``ROI.color``.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+			color (str): Color of plot.
+			linewidth (float): Linewidth of plot.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.	
+
+		"""
 		
 		if color==None:
 			color=self.color
@@ -1745,6 +1912,20 @@ class radialROI(ROI):
 			return bool((self.center[0]==self.embryo.dataResPx/2.) and (self.center[1]==self.embryo.dataResPx/2.))
 	
 	def checkXYInside(self,x,y):
+		
+		"""Checks if coordinates are inside ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.checkInsideCircle`.
+		
+		Args:
+			x (np.ndarray): Array of x-coordinates.
+			y (np.ndarray): Array of y-coordinates.
+			
+		Returns:
+			np.ndarray: Array of booleans with corresponding to [x,y].
+		
+		"""
+		
 		return pyfrp_idx_module.checkInsideCircle(x,y,self.center,self.radius)
 	
 	def computeXYExtend(self):
@@ -1810,16 +1991,60 @@ class sliceROI(ROI):
 		return self.width
 	
 	def computeImgIdx(self,debug=False):
+		
+		"""Computes image indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getAllIdxImg`.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				
+		"""
+		
 		[self.imgIdxX,self.imgIdxY]=pyfrp_idx_module.getAllIdxImg(self.embryo.dataResPx,debug=debug)
 		return self.imgIdxX,self.imgIdxY
 	
 	def computeMeshIdx(self,mesh):
+		
+		"""Computes mesh indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getSliceIdxMesh`.
+		
+		Args:
+			mesh (fipy.GmshImporter3D): Fipy mesh object.
+			
+		Returns:
+			list: Newly computed mesh indices.
+				
+		"""
+		
 		x,y,z=mesh.cellCenters
 		self.meshIdx=pyfrp_idx_module.getSliceIdxMesh(z,self.zmin,self.zmax)
 		return self.meshIdx
 	
 	def checkXYInside(self,x,y):
-		return True
+		
+		"""Checks if coordinates are inside ROI.
+		
+		Only returns ``True``, since ``sliceROI`` is not limited in
+		x/y-direction.
+		
+		Args:
+			x (np.ndarray): Array of x-coordinates.
+			y (np.ndarray): Array of y-coordinates.
+			
+		Returns:
+			np.ndarray: Array of booleans with corresponding to [x,y], all ``True``.
+		
+		"""
+		
+		return np.ones(np.asarray(x).shape).astype(bool)
 	
 	def computeXYExtend(self):
 		self.xExtend=[0,self.embryo.dataResPx]
@@ -1837,16 +2062,58 @@ class radialSliceROI(sliceROI,radialROI):
 		sliceROI.__init__(self,embryo,name,Id,height,width,sliceBottom,color=color)
 		
 	def computeImgIdx(self,debug=False):
+		
+		"""Computes image indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getCircleIdxImg`.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				
+		"""
+		
 		[self.imgIdxX,self.imgIdxY]=pyfrp_idx_module.getCircleIdxImg(self.center,self.radius,self.embryo.dataResPx,debug=debug)
 		return self.imgIdxX,self.imgIdxY
 	
 	def computeMeshIdx(self,mesh):
+		
+		"""Computes mesh indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getCircleIdxMesh`.
+		
+		Args:
+			mesh (fipy.GmshImporter3D): Fipy mesh object.
+			
+		Returns:
+			list: Newly computed mesh indices.
+				
+		"""
 	
 		self.meshIdx=pyfrp_idx_module.getCircleIdxMesh(self.center,self.radius,mesh,zmin=self.zmin,zmax=self.zmax)
 		
 		return self.meshIdx
 	
 	def checkXYInside(self,x,y):
+		
+		"""Checks if coordinates are inside ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.checkInsideCircle`.
+		
+		Args:
+			x (np.ndarray): Array of x-coordinates.
+			y (np.ndarray): Array of y-coordinates.
+			
+		Returns:
+			np.ndarray: Array of booleans with corresponding to [x,y].
+		
+		"""
+		
 		return pyfrp_idx_module.checkInsideCircle(x,y,self.center,self.radius)
 	
 	def computeXYExtend(self):
@@ -1885,14 +2152,57 @@ class squareROI(ROI):
 		return self.offset
 	
 	def computeImgIdx(self,debug=False):
+		
+		"""Computes image indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getSquareIdxImg`.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				
+		"""
+		
 		[self.imgIdxX,self.imgIdxY]=pyfrp_idx_module.getSquareIdxImg(self.offset,self.sidelength,self.embryo.dataResPx,debug=debug)
 		return self.imgIdxX,self.imgIdxY
 	
 	def computeMeshIdx(self,mesh):
+		
+		"""Computes mesh indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getSquareIdxMesh`.
+		
+		Args:
+			mesh (fipy.GmshImporter3D): Fipy mesh object.
+			
+		Returns:
+			list: Newly computed mesh indices.
+				
+		"""
+		
 		self.meshIdx=pyfrp_idx_module.getSquareIdxMesh(self.sidelength,self.offset,mesh,zmin=self.zmin,zmax=self.zmax)
 		return self.meshIdx
 	
 	def showBoundary(self,color=None,linewidth=3,ax=None):
+		
+		"""Shows ROI in a 2D plot.
+		
+		If no color is specified, will use color specified in ``ROI.color``.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+			color (str): Color of plot.
+			linewidth (float): Linewidth of plot.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.	
+
+		"""
 		
 		if color==None:
 			color=self.color
@@ -1936,6 +2246,20 @@ class squareROI(ROI):
 		return False
 	
 	def checkXYInside(self,x,y):
+		
+		"""Checks if coordinates are inside ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.checkInsideSquare`.
+		
+		Args:
+			x (np.ndarray): Array of x-coordinates.
+			y (np.ndarray): Array of y-coordinates.
+			
+		Returns:
+			np.ndarray: Array of booleans with corresponding to [x,y].
+		
+		"""
+		
 		return pyfrp_idx_module.checkInsideSquare(x,y,self.offset,self.sidelength)
 	
 	def computeXYExtend(self):
@@ -1997,14 +2321,57 @@ class squareSliceROI(squareROI,sliceROI):
 		sliceROI.__init__(self,embryo,name,Id,height,width,sliceBottom,color=color)
 	
 	def computeImgIdx(self,debug=False):
+		
+		"""Computes image indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getSquareIdxImg`.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				
+		"""
+		
 		[self.imgIdxX,self.imgIdxY]=pyfrp_idx_module.getSquareIdxImg(self.offset,self.sidelength,self.embryo.dataResPx,debug=debug)
 		return self.imgIdxX,self.imgIdxY
 	
 	def computeMeshIdx(self,mesh):
+		
+		"""Computes mesh indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getSquareIdxMesh`.
+		
+		Args:
+			mesh (fipy.GmshImporter3D): Fipy mesh object.
+			
+		Returns:
+			list: Newly computed mesh indices.
+				
+		"""
+		
 		self.meshIdx=pyfrp_idx_module.getSquareIdxMesh(self.sidelength,self.offset,mesh,zmin=self.zmin,zmax=self.zmax)
 		return self.meshIdx
 	
 	def checkXYInside(self,x,y):
+		
+		"""Checks if coordinates are inside ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.checkInsideSquare`.
+		
+		Args:
+			x (np.ndarray): Array of x-coordinates.
+			y (np.ndarray): Array of y-coordinates.
+			
+		Returns:
+			np.ndarray: Array of booleans with corresponding to [x,y].
+		
+		"""
+		
 		return pyfrp_idx_module.checkInsideSquare(x,y,self.offset,self.sidelength)
 	
 	def computeXYExtend(self):
@@ -2047,14 +2414,57 @@ class rectangleROI(ROI):
 		return self.offset
 	
 	def computeImgIdx(self,debug=False):
+		
+		"""Computes image indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getRectangleIdxImg`.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				
+		"""
+		
 		[self.imgIdxX,self.imgIdxY]=pyfrp_idx_module.getRectangleIdxImg(self.offset,self.sidelengthX,self.sidelengthY,self.embryo.dataResPx,debug=debug)
 		return self.imgIdxX,self.imgIdxY
 	
 	def computeMeshIdx(self,mesh):
+		
+		"""Computes mesh indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getRectangleIdxMesh`.
+		
+		Args:
+			mesh (fipy.GmshImporter3D): Fipy mesh object.
+			
+		Returns:
+			list: Newly computed mesh indices.
+				
+		"""
+		
 		self.meshIdx=pyfrp_idx_module.getRectangleIdxMesh(self.sidelengthX,self.sidelengthY,self.offset,mesh,zmin=self.zmin,zmax=self.zmax)
 		return self.meshIdx
 	
 	def showBoundary(self,color=None,linewidth=3,ax=None):
+		
+		"""Shows ROI in a 2D plot.
+		
+		If no color is specified, will use color specified in ``ROI.color``.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+			color (str): Color of plot.
+			linewidth (float): Linewidth of plot.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.	
+
+		"""
 		
 		if color==None:
 			color=self.color
@@ -2098,6 +2508,20 @@ class rectangleROI(ROI):
 		return False
 	
 	def checkXYInside(self,x,y):
+		
+		"""Checks if coordinates are inside ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.checkInsideRectangle`.
+		
+		Args:
+			x (np.ndarray): Array of x-coordinates.
+			y (np.ndarray): Array of y-coordinates.
+			
+		Returns:
+			np.ndarray: Array of booleans with corresponding to [x,y].
+		
+		"""
+		
 		return pyfrp_idx_module.checkInsideRectangle(x,y,self.offset,self.sidelengthX,self.sidelengthY)
 	
 	def computeXYExtend(self):
@@ -2159,14 +2583,57 @@ class rectangleSliceROI(rectangleROI,sliceROI):
 		sliceROI.__init__(self,embryo,name,Id,height,width,sliceBottom,color=color)
 	
 	def computeImgIdx(self,debug=False):
+		
+		"""Computes image indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getRectangleIdxImg`.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				
+		"""
+		
 		[self.imgIdxX,self.imgIdxY]=pyfrp_idx_module.getRectangleIdxImg(self.sidelengthX,self.sidelengthY,self.offset,self.embryo.dataResPx,debug=debug)
 		return self.imgIdxX,self.imgIdxY
 	
 	def computeMeshIdx(self,mesh):
+		
+		"""Computes mesh indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getRectangleIdxMesh`.
+		
+		Args:
+			mesh (fipy.GmshImporter3D): Fipy mesh object.
+			
+		Returns:
+			list: Newly computed mesh indices.
+				
+		"""
+		
 		self.meshIdx=pyfrp_idx_module.getRectangleIdxMesh(self.sidelengthX,self.sidelengthY,self.offset,mesh,zmin=self.zmin,zmax=self.zmax)
 		return self.meshIdx	
 	
 	def checkXYInside(self,x,y):
+		
+		"""Checks if coordinates are inside ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.checkInsideRectangle`.
+		
+		Args:
+			x (np.ndarray): Array of x-coordinates.
+			y (np.ndarray): Array of y-coordinates.
+			
+		Returns:
+			np.ndarray: Array of booleans with corresponding to [x,y].
+		
+		"""
+		
 		return pyfrp_idx_module.checkInsideRectangle(x,y,self.offset,self.sidelengthX,self.sidelengthY)
 	
 	def computeXYExtend(self):
@@ -2205,14 +2672,57 @@ class polyROI(ROI):
 		return self.corners
 	
 	def computeImgIdx(self,debug=False):
+		
+		"""Computes image indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getPolyIdxImg`.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				
+		"""
+		
 		[self.imgIdxX,self.imgIdxY]=pyfrp_idx_module.getPolyIdxImg(self.corners,self.embryo.dataResPx,debug=debug)
 		return self.imgIdxX,self.imgIdxY
 	
 	def computeMeshIdx(self,mesh):
+			
+		"""Computes mesh indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getPolyIdxMesh`.
+		
+		Args:
+			mesh (fipy.GmshImporter3D): Fipy mesh object.
+			
+		Returns:
+			list: Newly computed mesh indices.
+				
+		"""
+		
 		self.meshIdx=pyfrp_idx_module.getPolyIdxMesh(self.corners,mesh,zmin=self.zmin,zmax=self.zmax)
 		return self.meshIdx
 	
 	def showBoundary(self,color=None,linewidth=3,ax=None):
+		
+		"""Shows ROI in a 2D plot.
+		
+		If no color is specified, will use color specified in ``ROI.color``.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+			color (str): Color of plot.
+			linewidth (float): Linewidth of plot.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.	
+
+		"""
 		
 		if color==None:
 			color=self.color
@@ -2229,6 +2739,20 @@ class polyROI(ROI):
 		return ax
 	
 	def checkXYInside(self,x,y):
+		
+		"""Checks if coordinates are inside ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.checkInsidePoly`.
+		
+		Args:
+			x (np.ndarray): Array of x-coordinates.
+			y (np.ndarray): Array of y-coordinates.
+			
+		Returns:
+			np.ndarray: Array of booleans with corresponding to [x,y].
+		
+		"""
+		
 		return pyfrp_idx_module.checkInsidePoly(x,y,self.corners)
 	
 	def computeXYExtend(self):
@@ -2307,14 +2831,57 @@ class polySliceROI(polyROI,sliceROI):
 		self.corners=corners
 	
 	def computeImgIdx(self,debug=False):
+		
+		"""Computes image indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getPolyIdxImg`.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* imgIdxX (list): Image indices in x-direction.
+				* imgIdxY (list): Image indices in y-direction.
+				
+		"""
+		
 		[self.imgIdxX,self.imgIdxY]=pyfrp_idx_module.getPolyIdxImg(self.corners,self.embryo.dataResPx,debug=debug)
 		return self.imgIdxX,self.imgIdxY
 	
 	def computeMeshIdx(self,mesh):
+		
+		"""Computes mesh indices of ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.getPolyIdxMesh`.
+		
+		Args:
+			mesh (fipy.GmshImporter3D): Fipy mesh object.
+			
+		Returns:
+			list: Newly computed mesh indices.
+				
+		"""
+		
 		self.meshIdx=pyfrp_idx_module.getPolyIdxMesh(self.corners,mesh,zmin=self.zmin,zmax=self.zmax)
 		return self.meshIdx	
 	
 	def checkXYInside(self,x,y):
+		
+		"""Checks if coordinates are inside ROI.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_idx_module.checkInsidePoly`.
+		
+		Args:
+			x (np.ndarray): Array of x-coordinates.
+			y (np.ndarray): Array of y-coordinates.
+			
+		Returns:
+			np.ndarray: Array of booleans with corresponding to [x,y].
+		
+		"""
+		
 		return pyfrp_idx_module.checkInsidePoly(x,y,self.corners)
 	
 	def computeXYExtend(self):
@@ -2418,6 +2985,21 @@ class customROI(ROI):
 		
 	def showBoundary(self,color=None,linewidth=3,ax=None):
 		
+		"""Shows ROI in a 2D plot by plotting all included ROIs.
+		
+		If no color is specified, will use color specified in ``ROI.color``. If ``color=="each"``,
+		will plot each included ROI in its respective color.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+			color (str): Color of plot.
+			linewidth (float): Linewidth of plot.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.	
+
+		"""
+		
 		if color==None:
 			color=self.color
 		
@@ -2438,6 +3020,22 @@ class customROI(ROI):
 		return ax
 	
 	def checkXYInside(self,x,y):
+		
+		"""Checks if coordinates are inside ROI.
+		
+		Does this by looping through all ROIs specified in ``ROIsIncluded``
+		and checking if x/y is supposed to lie inside or outside of 
+		the respective ROI.
+		
+		Args:
+			x (np.ndarray): Array of x-coordinates.
+			y (np.ndarray): Array of y-coordinates.
+			
+		Returns:
+			np.ndarray: Array of booleans with corresponding to [x,y].
+		
+		"""
+		
 		b=True
 		for i,r in enumerate(self.ROIsIncluded):
 			if self.procedures[i]==1:

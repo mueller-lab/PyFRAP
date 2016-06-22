@@ -89,7 +89,7 @@ def FRAPFitting(fit,debug=False,ax=None):
 	
 	#Building bounds
 	bnds=fit.getBounds()
-		
+	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Calling optimization algorithms
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -99,8 +99,8 @@ def FRAPFitting(fit,debug=False,ax=None):
 		res=optimize.brute(FRAPObjFunc, bnds,args=(fit,debug,ax,False), full_output=bool(debug),finish=optimize.fmin)
 		
 	elif fit.optMeth=='Constrained Nelder-Mead':
-		
-		x0=pyfrp_optimization_module.transformX0(fit.x0,[fit.LBD,fit.LBProd,fit.LBDegr],[fit.UBD,fit.UBProd,fit.UBDegr])
+		LBs, UBs = pyfrp_optimization_module.buildBoundLists(fit)
+		x0=pyfrp_optimization_module.transformX0(x0,LBs,UBs)
 		res=sciopt.fmin(pyfrp_optimization_module.constrObjFunc,x0,args=(fit,debug,ax,False),ftol=fit.optTol,maxiter=fit.maxfun,disp=bool(debug),full_output=True)
 	
 	elif fit.optMeth=='Anneal':
@@ -114,8 +114,8 @@ def FRAPFitting(fit,debug=False,ax=None):
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	if fit.optMeth=='Constrained Nelder-Mead':
-		resNew=pyfrp_optimization_module.xTransform(res[0],[fit.LBD,fit.LBProd,fit.LBDegr],[fit.UBD,fit.UBProd,fit.UBDegr])
-		
+		LBs, UBs = pyfrp_optimization_module.buildBoundLists(fit)
+		resNew=pyfrp_optimization_module.xTransform(res[0],LBs,UBs)
 		fit=FRAPObjFunc(resNew,fit,debug,ax,True)
 		
 	elif fit.optMeth=='brute':
@@ -125,7 +125,7 @@ def FRAPFitting(fit,debug=False,ax=None):
 		fit=FRAPObjFunc(res.x,fit,debug,ax,True)
 	
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Saving results in embryo object
+	#Saving results in fit object
 	#------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		
 	if fit.optMeth=='brute':
@@ -140,7 +140,8 @@ def FRAPFitting(fit,debug=False,ax=None):
 		
 	elif fit.optMeth=='Constrained Nelder-Mead':
 		
-		resNew=pyfrp_optimization_module.xTransform(res[0],[fit.LBD,fit.LBProd,fit.LBDegr],[fit.UBD,fit.UBProd,fit.UBDegr])
+		LBs, UBs = pyfrp_optimization_module.buildBoundLists(fit)
+		resNew=pyfrp_optimization_module.xTransform(res[0],LBs,UBs)
 		
 		fit.assignOptParms(resNew)
 		
@@ -172,6 +173,10 @@ def assignInputVariables(x,fit):
 	use ``x[1]`` or ``x[2]`` as input values for degradation and
 	production rate.
 	
+	If ``fit.equOn=True``, then will use last entry of ``x0``
+	for equalization factors, otherwise will return empty list
+	for equFacts.
+	
 	Args:
 		x (list): Input vector of objective function.
 		fit (pyfrp.subclasses.pyfrp_fit): Fit object.
@@ -182,6 +187,7 @@ def assignInputVariables(x,fit):
 			* Dnew (float): Diffusion rate.
 			* prod (float): Production rate.
 			* degr (float): Degredation rate.
+			* equFacts (list): Equalization factors.
 	"""
 	
 	Dnew=x[0]
@@ -200,8 +206,14 @@ def assignInputVariables(x,fit):
 	elif not fit.fitProd and not fit.fitDegr:
 		degr=fit.x0[2]
 		prod=fit.x0[1]
+		
+	if fit.equOn:
+		idx=1+int(fit.fitDegr)+int(fit.fitProd)
+		equFacts=x[idx:]
+	else:
+		equFacts=[]	
 	
-	return Dnew,prod,degr
+	return Dnew,prod,degr,equFacts
 
 def checkInput(x,iteration,fit):
 	
@@ -216,7 +228,7 @@ def checkInput(x,iteration,fit):
 		bool: ``True`` if everythings positive, ``False`` else.
 	"""
 	
-	x=np.array([1,fit.fitProd,fit.fitDegr])*x
+	#x=[1]+int(fit.fitProd)*[1],fit.fitDegr]+len(fit.ROIsFitted)*[1])*x
 	if min(x)<0:
 		if iteration==0:
 			#If initial guess is out of bounds, just do nothing
@@ -442,28 +454,30 @@ def computeEquFactors(dataVec,simVec):
 	
 	return equFacts
 
+def findMinEquFacts(dataVecs,simVecs): 
+	
+	"""Computes list of equalization factors per ROI in ``fit.ROIsFitted`` and then
+	finds the one that minimizes SSD.
 
-def equalize(dataVecs,simVecs):
-	
-	"""Equalizes all simulation vectors of all ROIs defined in 
-	``fit.ROIsFitted``.
-	
 	Does this by:
 	
-		* Computing equalization factors per ROI.
+		* Computing equalization factors per ROI via :py:func:`computeEquFactors`.
 		* Computing SSD for each equalization factor per ROI.
 		* Selecting equalization factor per ROI that minimizes SSD.
 	
 	Args:
-		scaledSimVecs (list): List of scaled simulation vectors by ROI.
+		simVecs (list): List of scaled simulation vectors by ROI.
 		dataVecs (list): List of data vectors by ROI.
+		equFacts (list): List of equalization factors.
 	
 	Returns:
-		 list: List of optimal equalization factors by ROI.
-
+		tuple: Tuple containing:
+		
+			* equSimVecs (list): List of equalized simulation vectors.
+			* equFactsFinal (list): List of optimal equalization factors by ROI.
+		
 	"""
 	
-	equSimVecs=[]
 	equFacts=[]
 	
 	#Compute Equalization factors
@@ -483,11 +497,50 @@ def equalize(dataVecs,simVecs):
 	#Compute Final Equalization Factor (the one that minimizes SSD)
 	equFactFinalIdx=SSDs.index(min(SSDs))
 	
+	#Append optimal equalization factors 
+	for i,vec in enumerate(simVecs):
+		equFactsFinal.append(equFacts[i][equFactFinalIdx])
+	
+	return equFactFinalIdx
+	
+
+def equalize(dataVecs,simVecs,equFacts,fromVecs=False):
+	
+	"""Equalizes all simulation vectors of all ROIs defined in 
+	``fit.ROIsFitted``.
+	
+	If ``fromVecs=True``, will use :py:func:`findMinEquFacts` to 
+	compute the equalization factors that minimize SSD from a 
+	set of equalization factors given by the ratio between 
+	simulation and data vector.
+	
+	Args:
+		simVecs (list): List of scaled simulation vectors by ROI.
+		dataVecs (list): List of data vectors by ROI.
+		equFacts (list): List of equalization factors.
+		
+	Keyword Args:
+		fromVecs (bool): Compute equalization factors from data/simulation ratio.
+	
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* equSimVecs (list): List of equalized simulation vectors.
+			* equFacts (list): List of (optimal) equalization factors by ROI.
+	"""
+	
+	equSimVecs=[]
+	
+	#Compute possible equalization factors from ratio between data and simulation
+	if fromVecs:
+		equFacts=findMinEquFacts(dataVecs,simVecs)
+	
 	#Return equalized simulation vectors
 	for i,vec in enumerate(simVecs):
-		equSimVecs.append(vec/equFacts[i][equFactFinalIdx])
+		equSimVecs.append(vec/equFacts[i])
 		
-	return equSimVecs
+	return equSimVecs,equFacts
 	
 def FRAPObjFunc(x,fit,debug,ax,returnFit):
 	
@@ -524,14 +577,14 @@ def FRAPObjFunc(x,fit,debug,ax,returnFit):
 		return 2*fit.SSD
 	
 	#Assign Input Values
-	Dnew,prod,degr = assignInputVariables(x,fit)
+	Dnew,prod,degr,equFacts = assignInputVariables(x,fit)
 
 	#Rescaling degr and prod
 	prod,degr = downscaleKinetics(prod,degr,fit.kineticTimeScale)
 	
 	if debug:
 		print "------------------------------------------"
-		print "Dnew=",Dnew, "prod=", prod, "degr=", degr
+		print "Dnew=",Dnew, "prod=", prod, "degr=", degr, "equFacts", equFacts
 	
 	#Scale simulation vectors
 	try:
@@ -548,7 +601,8 @@ def FRAPObjFunc(x,fit,debug,ax,returnFit):
 	
 	#Equalize
 	if fit.equOn:
-		scaledSimVecs=equalize(dataVecs,scaledSimVecs)
+		scaledSimVecs,equFacts=equalize(dataVecs,scaledSimVecs,equFacts)
+		fit.equFacts=equFacts
 	
 	#Compute final SSD
 	ssds=[]

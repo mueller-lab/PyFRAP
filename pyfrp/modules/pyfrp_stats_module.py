@@ -272,7 +272,7 @@ def computeLogLikelihood(fit,ROIs=None,neg=True,sigma=1):
 	
 	resulting in a log-likelihood function of
 	
-	.. math:: - \frac{n}{2} \log (2\pi) - \frac{\sum\limits{j=1}^{n}(m_j-d_j)^2}{2\sigma^2}
+	.. math:: - \frac{n}{2} \log (2\pi) - \frac{\sum\limits_{j=1}^{n} (m_j-d_j)^2 }{2\sigma^2}
 	
 	Function allows to compute both negative and positive log-likelihood by ``neg`` flag.
 	
@@ -452,12 +452,18 @@ def compareFitsByAIC(fits,ROIs=None,sigma=1,fromSSD=True,thresh=None):
 			* deltaAICs (numpy.ndarray): List of Akaike difference values of the respective fits.
 			* weights (numpy.ndarray): List of Akaike difference weights of the respective fits.
 			* acc (list): List of acceptable fits by model selection.
-	
+			* ks (list): List of number of parameters fitted of the respective fits.
+			* ns (list): List of number of datapoints fitted of the respective fits.
+			
 	"""
 	
 	AICs=[]
+	ks=[]
+	ns=[]
 	for fit in fits:
 		AICs.append(computeAIC(fit,ROIs=ROIs,sigma=1,fromSSD=fromSSD))
+		ks.append(fit.getNParmsFitted())
+		ns.append(len(fit.dataVecsFitted[0]))
 		
 	deltaAIC=np.asarray(AICs)-min(AICs)	
 	
@@ -476,7 +482,7 @@ def compareFitsByAIC(fits,ROIs=None,sigma=1,fromSSD=True,thresh=None):
 			acc.append(fits[i])
 	
 	
-	return AICs, deltaAIC,weights, acc
+	return AICs, deltaAIC,weights, acc,ks,ns
 
 def compareFitsByCorrAIC(fits,ROIs=None,sigma=1,fromSSD=True,thresh=None):
 	
@@ -512,12 +518,18 @@ def compareFitsByCorrAIC(fits,ROIs=None,sigma=1,fromSSD=True,thresh=None):
 			* deltaAICs (numpy.ndarray): List of Akaike difference values of the respective fits.
 			* weights (numpy.ndarray): List of Akaike difference weights of the respective fits.
 			* acc (list): List of acceptable fits by model selection.
+			* ks (list): List of number of parameters fitted of the respective fits.
+			* ns (list): List of number of datapoints fitted of the respective fits.
 	
 	"""
 	
 	AICs=[]
+	ks=[]
+	ns=[]
 	for fit in fits:
 		AICs.append(computeCorrAIC(fit,ROIs=ROIs,sigma=1,fromSSD=fromSSD))
+		ks.append(fit.getNParmsFitted())
+		ns.append(len(fit.dataVecsFitted[0]))
 		
 	deltaAIC=np.asarray(AICs)-min(AICs)	
 	
@@ -535,7 +547,7 @@ def compareFitsByCorrAIC(fits,ROIs=None,sigma=1,fromSSD=True,thresh=None):
 		for i in np.where(list(relWeights<thresh))[0]:
 			acc.append(fits[i])
 	
-	return AICs, deltaAIC,weights, acc
+	return AICs, deltaAIC,weights, acc,ks,ns
 
 	
 def computeAkaikeWeights(AICs):

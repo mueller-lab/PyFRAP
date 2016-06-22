@@ -38,6 +38,7 @@ import platform
 import gc
 import sys
 import os
+import csv
 
 from pyfrp.modules import pyfrp_misc_module
 
@@ -237,6 +238,46 @@ def copyAndRenameFile(fn,fnNew,debug=False):
 		return fnNew
 	else:
 		return fn
+	
+def writeTableToCSV(l,header,fn,col=False):
+	
+	"""Writes table to csv file.
+	
+	If ``col=True``, columns are given via ``l``, otherwise rows are given.
+	
+	Args:
+		l (list): List of rows or columns.
+		header (list): List of headers.
+		col (bool): Flag on how rows/columns are given.
+	
+	Returns:
+		tuple: Tuple containing:
+			
+			* header (list): Header of table.
+			* table (list): Table as a list of rows.
+	
+	"""
+	
+	if col:
+		table=[]
+		for i in range(len(l[0])):
+			row=[]
+			for j in range(len(l)):
+				row.append(l[j][i])
+			table.append(row)
+	else:
+		table=l
+	
+	with open(fn,'wb') as csvFile:
+		fcsv = csv.writer(csvFile,delimiter=',')
+		
+		fcsv.writerow(header)
+	
+		for row in table:
+			fcsv.writerow(row)
+	
+	return header,table
+			
 	
 	
 	

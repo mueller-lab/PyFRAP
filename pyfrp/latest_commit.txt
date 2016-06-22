@@ -1,8 +1,26 @@
-Added loglikehood, Akaike information criterion, corrected AIC,
-Akaike weight and model comparison functions to pyfrp_stats_module.
+Fit now saves final equalization factors.
 
-Added table printing function to pyfrp_term_module
+Model selection methods now also return number of parameters fitted.
 
-Added model comparison methods to pyfrp_embryo
+Moved old way of computing equalization factors into pyfrp_fit_module.findMinEquFacts. 
 
-Added getNParmsFitted to pyfrp_fit
+Equalization factors are now an additional parameter to be fitted. For this, made major changes to:
+- pyfrp_fit_module.equalize: Now takes equFacts as argument, only computes equFacts the old way if
+  asked to.
+- pyfrp_fit_module.assignInputVariables: Can now handle equFacts as input.
+- pyfrp_fit_module.checkInput: Can now handle equFacts as input.
+- pyfrp_optimization_module.constrObjFunc: Now adjust to handle equFacts as input.
+- pyfrp_optimization_module.buildBoundLists: New function to build lists of boundaries 
+  for transforming x into constrained form.
+- pyfrp_fit.fit: Now has new attributes LBEqu/UBEqu
+- pyfrp_fit.fit.addROI: Adjusts x0 with equFacts automatically.
+- pyfrp_fit.fit.removeROI: Adjusts x0 with equFacts automatically.
+- pyfrp_fit.fit.getX0: Builds equFacts into x0.
+- pyfrp_fit.fit.getBounds: Builds equFacts boundaries into bounds.
+- pyfrp_fit.fit.reset2DefaultX0: Builds x0 in standard way.
+- pyfrp_fit.fit: Added set/get methods for everything equFact related.
+
+New IO functions to handle tables:
+- pyfrp_term_module.printTable: Print table in nice way.
+- pyfrp_IO_module.writeTableToCSV: Writes table to csv file in nice way.
+

@@ -2208,7 +2208,6 @@ class embryo:
 		Returns:
 			list: Updates ``ROIs`` list.
 			
-		
 		"""
 		
 		if direction=='z':
@@ -2270,10 +2269,11 @@ class embryo:
 				* deltaAICs (numpy.ndarray): List of Akaike difference values of the respective fits.
 				* weights (numpy.ndarray): List of Akaike difference weights of the respective fits.
 				* acc (list): List of acceptable fits by model selection.
-		
+				* ks (list): List of number of parameters fitted of the respective fits.
+				* ns (list): List of number of datapoints fitted of the respective fits.
 		"""
 		
-		AICs, deltaAICs,weights,acc = pyfrp_stats_module.compareFitsByAIC(self.fits,ROIs=ROIs,sigma=sigma,fromSSD=fromSSD,thresh=thresh)
+		AICs, deltaAICs,weights,acc,ks,ns = pyfrp_stats_module.compareFitsByAIC(self.fits,ROIs=ROIs,sigma=sigma,fromSSD=fromSSD,thresh=thresh)
 		
 		
 		if printOut:
@@ -2283,9 +2283,9 @@ class embryo:
 				print fit.name
 			
 			print "Details of AIC analysis can be found in the following table:"
-			printTable([fitNames,AICs,deltaAICs,weights],["fitNames","AICs","deltaAICs","weights"],col=True)
+			printTable([fitNames,AICs,deltaAICs,weights,ks,ns],["fitNames","AICs","deltaAICs","weights","k","n"],col=True)
 			
-		return AICs, deltaAICs,weights, acc
+		return AICs, deltaAICs,weights, acc,ks,ns
 			
 	def compareFitsByCorrAIC(self,ROIs=None,sigma=1,fromSSD=True,thresh=None,printOut=True):
 		
@@ -2313,10 +2313,12 @@ class embryo:
 				* deltaAICs (numpy.ndarray): List of Akaike difference values of the respective fits.
 				* weights (numpy.ndarray): List of Akaike difference weights of the respective fits.
 				* acc (list): List of acceptable fits by model selection.
+				* ks (list): List of number of parameters fitted of the respective fits.
+				* ns (list): List of number of datapoints fitted of the respective fits.
 		
 		"""
 		
-		AICs, deltaAICs,weights,acc = pyfrp_stats_module.compareFitsByCorrAIC(self.fits,ROIs=ROIs,sigma=sigma,fromSSD=fromSSD,thresh=thresh)
+		AICs, deltaAICs,weights,acc,ks,ns = pyfrp_stats_module.compareFitsByCorrAIC(self.fits,ROIs=ROIs,sigma=sigma,fromSSD=fromSSD,thresh=thresh)
 		
 		if printOut:
 			fitNames = pyfrp_misc_module.objAttrToList(self.fits,'name')
@@ -2325,9 +2327,9 @@ class embryo:
 				print fit.name
 			
 			print "Details of AIC analysis can be found in the following table:"
-			printTable([fitNames,AICs,deltaAICs,weights],["fitNames","AICcs","deltaAICs","weights"],col=True)
+			printTable([fitNames,AICs,deltaAICs,weights,ks,ns],["fitNames","AICcs","deltaAICs","weights","k","n"],col=True)
 		
-		return AICs, deltaAICs,weights, acc		
+		return AICs, deltaAICs,weights, acc,ks,ns	
 	
 	#def compareFits(self,crit='corrAIC',ROIs=None,sigma=1,fromSSD=True,thresh=None):
 		

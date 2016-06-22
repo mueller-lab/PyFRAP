@@ -122,9 +122,12 @@ class fit:
 		#Equalization and pinning
 		self.equOn=True
 		self.fitPinned=True
+		self.equFacts=[]
+		self.LBEqu=0.1
+		self.UBEqu=3.
 		
 		#Intial guess
-		self.x0=[10,0,0]
+		self.x0=[10,0,0.]
 		
 		#Bounds
 		self.LBProd=0.
@@ -170,9 +173,6 @@ class fit:
 		self.MeanRsq=None
 		self.RsqByROI={}
 		
-		#Equalization
-		self.equFacts=[]
-		
 		#Empty result dataseries
 		self.tvecFit=embryo.tvecData
 
@@ -190,6 +190,8 @@ class fit:
 		
 		if r not in self.ROIsFitted:
 			self.ROIsFitted.append(r)
+			self.x0.append(1.)
+			
 		return self.ROIsFitted
 	
 	def addROIByName(self,name):
@@ -247,7 +249,11 @@ class fit:
 		"""
 		
 		if r in self.ROIsFitted:
+			
+			idx=self.ROIsFitted.index(r)
+			self.x0.pop(3+idx)
 			self.ROIsFitted.remove(r)
+			
 		return self.ROIsFitted
 	
 	def getX0(self):
@@ -258,6 +264,8 @@ class fit:
 		Copies x0 into local variable to pass to solver, pop entries that are 
 		currently not needed since they are turned off via ``fitProd`` or ``fitDegr``.
 		
+		Always appends initial guess for equalization factors, even though they might not been used.
+		
 		.. note:: Always gets executed at the start of ``run``.
 		
 		Returns:
@@ -265,18 +273,41 @@ class fit:
 			
 		"""
 		
+		x0=list(self.x0)	
 		if self.fitProd and self.fitDegr:
-			x0=list(self.x0)		
+			pass	
 		elif self.fitProd and  not self.fitDegr:	
-			x0=list(self.x0)
 			x0.pop(2)
 		elif not self.fitProd and self.fitDegr:
-			x0=list(self.x0)
-			x0.pop(1)		
+			x0.pop(1)
 		elif not self.fitProd and not self.fitDegr:
-			x0=[self.x0[0]]
+			x0=list(self.x0)
+			x0.pop(2)
+			x0.pop(1)
 		
 		return x0
+	
+	def reset2DefaultX0(self):
+		
+		"""Resets initial guess x0 to its default form.
+		
+		The default form of x0 is 
+		
+		>>> [10., 0. ,0. , 1.,1.,1.]
+		
+		The last entries are the initial guess of equlalization factors and is
+		set to be list of of ones of the same length of ``ROIsFitted``.
+		
+		Returns:
+			list: New initial guess x0.
+		
+		"""
+		
+		equFacts=len(self.ROIsFitted)*[1.]
+		
+		self.x0=[10,0,0]+equFacts
+		
+		return self.x0
 	
 	def getBounds(self):
 		
@@ -291,6 +322,9 @@ class fit:
 		Will use values that are stored in ``LBx`` and ``UBx``, where ``x`` is 
 		``D``, ``Prod``, or ``Degr`` for the creation of the tuples. 
 		
+		Will also add a tuple of bounds defined via ``LBEqu`` and ``UBEqu`` for each 
+		ROI in ``ROIsFitted``.
+		
 		.. note:: Always gets executed at the start of ``run``.
 		
 		Returns:
@@ -299,25 +333,30 @@ class fit:
 		"""
 	
 		if self.fitProd and self.fitDegr:
-			bnds = ((self.LBD, self.UBD), (self.LBD, self.UBD),(self.LBD,self.UBD))
-			ranges=(slice(self.LBD,self.UBD,1),slice(self.LBProd,self.UBProd,10),slice(self.LBDegr,self.UBDegr,10))		
+			bnds = [(self.LBD, self.UBD), (self.LBD, self.UBD),(self.LBD,self.UBD)]
+			ranges=[slice(self.LBD,self.UBD,1),slice(self.LBProd,self.UBProd,10),slice(self.LBDegr,self.UBDegr,10)]
 		elif self.fitProd and  not self.fitDegr:	
-			bnds = ((self.LBD, self.UBD), (self.LBProd, self.UBProd))
-			ranges=(slice(self.LBD,self.UBD,1),slice(self.LBProd,self.UBProd,10))
+			bnds = [(self.LBD, self.UBD), (self.LBProd, self.UBProd)]
+			ranges=[slice(self.LBD,self.UBD,1),slice(self.LBProd,self.UBProd,10)]
 		elif not self.fitProd and self.fitDegr:
-			bnds = ((self.LBD, self.UBD), (self.LBDegr, self.UBDegr))
-			ranges=(slice(self.LBD,self.UBD,1),slice(self.LBDegr,self.UBDegr,10))
+			bnds = [(self.LBD, self.UBD), (self.LBDegr, self.UBDegr)]
+			ranges=[slice(self.LBD,self.UBD,1),slice(self.LBDegr,self.UBDegr,10)]
 		elif not self.fitProd and not self.fitDegr:
-			bnds = ((self.LBD, self.UBD),)
-			ranges=(1,self.UBD)
-			
+			bnds = [(self.LBD, self.UBD),]
+			ranges=[1,self.UBD]
+		
+		bnds=bnds+len(self.ROIsFitted)*[(self.LBEqu,self.UBEqu)]
+		ranges=ranges+len(self.ROIsFitted)*[slice(self.LBEqu,self.UBEqu,0.2)]
+		
 		if self.optMeth=='brute':
-			self.bounds=ranges
+			self.bounds=tuple(ranges)
 		else:
-			self.bounds=bnds
+			self.bounds=tuple(bnds)
 			
 		return self.bounds
-		
+	
+	
+	
 	def run(self,debug=False,ax=None):
 		
 		"""Runs fit.
@@ -425,10 +464,25 @@ class fit:
 		
 		"""
 		
-		parms=["DOptMu","DOptPx","prodOpt","degrOpt","success","Rsq","MeanRsq","fitDegr","fitProd","fitPinned","equOn"]
+		parms=["DOptMu","DOptPx","prodOpt","degrOpt","success","Rsq","MeanRsq","fitDegr","fitProd","fitPinned","equOn","x0"]
 		
 		dic=pyfrp_misc_module.objAttr2Dict(self,attr=parms)
 		
+		roiNames=pyfrp_misc_module.objAttrToList(self.ROIsFitted,"name")
+		#equFacts=np.asarray(self.equFacts).astype(str)
+		
+		dic["ROIsFitted"]=" , ".join(roiNames)
+		
+		
+		for i in range(len(roiNames)):
+			
+			if self.equOn:
+				dic["equFactor "+roiNames[i]]=self.equFacts[i]
+			else:
+				dic["equFactor "+roiNames[i]]=""
+			
+			dic["Rsq("+roiNames[i]+")"]=self.RsqByROI[roiNames[i]]
+				
 		return dic
 		
 	
@@ -907,7 +961,33 @@ class fit:
 		"""
 		
 		return self.name
+	
+	def setX0Equ(self,x):
 		
+		"""Sets the initial guess for the equalization factor.
+		
+		.. note:: Does this for all ROIs in ROIsFitted.
+		
+		Args:
+			x (float): Initial guess for equalization factor.
+		"""
+		
+		for i in range(3,len(self.x0)):
+			self.x0[i]=x
+		
+		return self.x0
+	
+	def getX0Equ(self,x):
+		
+		"""Returns the initial guess for the equalization factor for
+		all ROIs fitted.
+		
+		Returns:
+			list: Initial guess for equalization factor.
+		"""
+		
+		return self.x0[3:]
+	
 	def setX0D(self,x):
 		
 		"""Sets the initial guess for the diffusion rate.
@@ -1068,6 +1148,18 @@ class fit:
 		
 		"""Returns the number of parameters fitted in this fit.
 		
+		.. note:: If equlalization is turned on, each ROI in ``ROIsFitted``
+		   counts as an extra parameter.
+		   
+		Example: We fit production and equalization for 2 ROIs, then we have fitted
+		
+			* D
+			* degradation
+			* equalization ROI 1
+			* equalization ROI 2
+			
+		leading to in total 4 fitted parameters.
+			
 		Keyword Args:
 			inclEqu (bool): Include equalization as additional fitted parameter.
 		
@@ -1076,5 +1168,5 @@ class fit:
 		
 		"""
 		
-		return 1+int(self.getFitProd())+int(self.getFitDegr())+int(inclEqu)*int(self.getEqu())
+		return 1+int(self.getFitProd())+int(self.getFitDegr())+int(inclEqu)*int(self.getEqu())*len(self.equFacts)
 		

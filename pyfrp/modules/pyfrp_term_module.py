@@ -185,6 +185,12 @@ def printTable(l,header,col=False):
 		header (list): List of headers.
 		col (bool): Flag on how rows/columns are given.
 	
+	Returns:
+		tuple: Tuple containing:
+			
+			* header (list): Header of table.
+			* table (list): Table as a list of rows.
+	
 	"""
 	
 	if col:
@@ -200,5 +206,6 @@ def printTable(l,header,col=False):
 	from tabulate import tabulate
 			
 	print tabulate(table,headers=header)
-	
+		
+	return header, table	
 
