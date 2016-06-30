@@ -1705,31 +1705,38 @@ class ROISelector(QtGui.QDialog):
 			self.msg=kwargs["msg"]
 		else:
 			self.msg="Select ROI type"
+			
+		#Grab asMaster
+		if "asMaster" in kwargs.keys():
+			self.asMaster=kwargs["asMaster"]
+		else:
+			self.asMaster=False
+			
 				
 	def newROI(self):
 		newID=self.embryo.getFreeROIId()
 		typ=self.comboType.currentText()
 		
 		if typ=='slice':
-			self.embryo.newSliceROI(self.name,newID,self.sliceHeight,self.sliceWidth,False,color=self.color)	
+			self.embryo.newSliceROI(self.name,newID,self.sliceHeight,self.sliceWidth,False,color=self.color,asMaster=self.asMaster)	
 		elif typ=='radial':
-			self.embryo.newRadialROI(self.name,newID,self.center,self.radius,color=self.color)
+			self.embryo.newRadialROI(self.name,newID,self.center,self.radius,color=self.color,asMaster=self.asMaster)
 		elif typ=='radialSlice':
-			self.embryo.newRadialSliceROI(self.name,newID,self.center,self.radius,self.sliceHeight,self.sliceWidth,False,color=self.color)
+			self.embryo.newRadialSliceROI(self.name,newID,self.center,self.radius,self.sliceHeight,self.sliceWidth,False,color=self.color,asMaster=self.asMaster)
 		elif typ=='square':
-			self.embryo.newSquareROI(self.name,newID,self.offset,self.sidelength,self.radius,color=self.color)
+			self.embryo.newSquareROI(self.name,newID,self.offset,self.sidelength,self.radius,color=self.color,asMaster=self.asMaster)
 		elif typ=='squareSlice':
-			self.embryo.newSquareSliceROI(self.name,newID,self.offset,self.sidelength,self.sliceHeight,self.sliceWidth,False,color=self.color)
+			self.embryo.newSquareSliceROI(self.name,newID,self.offset,self.sidelength,self.sliceHeight,self.sliceWidth,False,color=self.color,asMaster=self.asMaster)
 		elif typ=='rectangle':
 			self.embryo.newRectangleROI(self.name,newID,self.offset,self.sidelength,self.sidelength,color=self.color)
 		elif typ=='rectangleSlice':
-			self.embryo.newRectangleSliceROI(self.name,newID,self.offset,self.sidelength,self.sidelength,self.sliceHeight,self.sliceWidth,False,color=self.color)
+			self.embryo.newRectangleSliceROI(self.name,newID,self.offset,self.sidelength,self.sidelength,self.sliceHeight,self.sliceWidth,False,color=self.color,asMaster=self.asMaster)
 		elif typ=='polygon':
-			self.embryo.newPolyROI(self.name,newID,[],color=self.color)
+			self.embryo.newPolyROI(self.name,newID,[],color=self.color,asMaster=self.asMaster)
 		elif typ=='polygonSlice':
-			self.embryo.newPolySliceROI(self.name,newID,[],self.sliceHeight,self.sliceWidth,False,color=self.color)	
+			self.embryo.newPolySliceROI(self.name,newID,[],self.sliceHeight,self.sliceWidth,False,color=self.color,asMaster=self.asMaster)	
 		elif typ=='custom':
-			self.embryo.newCustomROI(self.name,newID,color=self.color)
+			self.embryo.newCustomROI(self.name,newID,color=self.color,asMaster=self.asMaster)
 		else:
 			printWarning('Unknown ROI Type' + typ)
 	

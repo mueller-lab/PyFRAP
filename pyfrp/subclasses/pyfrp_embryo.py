@@ -1022,7 +1022,7 @@ class embryo:
 			print r.name , type(r)
 		return True
 	
-	def genDefaultROIs(self,center,radius,rimFactor=0.66,masterROI=None,bleachedROI=None,rimROI=None,clean=True):
+	def genDefaultROIs(self,center,radius,rimFactor=0.66,masterROI=None,bleachedROI=None,rimROI=None,sliceHeightPx=None,clean=True):
 		
 		"""Creates a standard set of ROI objects and adds them to ``ROIs`` list.
 		
@@ -1050,12 +1050,15 @@ class embryo:
 		
 		.. note:: If ``rimROI`` is given, *Slice rim* is not created, and ``rimROI`` is used instead. 
 		
+		.. note:: If ``sliceHeightPx`` is given, will create ROIs *Slice*, *Out*, *Bleached Square* and *Rim* at this height, otherwise will use value stored in ``embryo.sliceHeightPx``.
+		
 		Args:	
 			center (list): Center of circle defining imaging slice.
 			radius (float): Radius of circle defining imaging slice.
 			
 		Keyword Args:	
 			rimFactor (float): Factor describing percentage of imaging slice excluded from rim computation.
+			sliceHeightPx (float): Height of slice ROI in px.
 			clean (bool): Will remove all ROIs from embryo object before creating new ones.
 			masterROI (pyfrp.subclasses.pyfrp_ROI.ROI): ROI that is supposed to be used as a masterROI.
 			bleachedROI (pyfrp.subclasses.pyfrp_ROI.ROI): ROI that is supposed to be used to indicate the bleached region.
@@ -1078,7 +1081,10 @@ class embryo:
 			self.ROIs.append(bleachedROI)
 		if rimROI!=None and rimROI not in self.ROIs:
 			self.ROIs.append(rimROI)
-			
+		
+		#Check if sliceHeight is given
+		if sliceHeightPx==None:
+			sliceHeightPx=self.sliceHeightPx
 		
 		#Create All ROI
 		allsl=self.newSliceROI("All",self.getFreeROIId(),0,np.inf,False,color=(0.5,0.3,0.4))
@@ -1086,7 +1092,7 @@ class embryo:
 		#Create All Square
 		if bleachedROI!=None:
 			zmin,zmax=allsl.getZExtend()
-			allsqu=bleachedROI.getCopy()
+			allsqu=bleachedROI.getCopy() 
 			allsqu.setName("All "+bleachedROI.getName())
 			allsqu.setZExtend(zmin,zmax)
 			allsqu.setId(self.getFreeROIId())
@@ -1108,13 +1114,13 @@ class embryo:
 				printWarning("masterROI is not named Slice, this might lead to problems.")
 				
 		else:
-			sl=self.newRadialSliceROI("Slice",self.getFreeROIId(),center,radius,self.sliceHeightPx,self.sliceWidthPx,self.sliceBottom,color='g',asMaster=True)
+			sl=self.newRadialSliceROI("Slice",self.getFreeROIId(),center,radius,sliceHeightPx,self.sliceWidthPx,self.sliceBottom,color='g',asMaster=True)
 		
 		#Create Rim
 		if rimROI!=None:
 			sl2=rimROI
 		else:
-			sl2=self.newRadialSliceROI("Slice rim",self.getFreeROIId(),center,rimFactor*radius,self.sliceHeightPx,self.sliceWidthPx,self.sliceBottom,color='y')
+			sl2=self.newRadialSliceROI("Slice rim",self.getFreeROIId(),center,rimFactor*radius,sliceHeightPx,self.sliceWidthPx,self.sliceBottom,color='y')
 		 
 		rim=self.newCustomROI("Rim",self.getFreeROIId(),color='m')
 		rim.addROI(sl,1)
@@ -1127,7 +1133,7 @@ class embryo:
 			if squ.getName()!="Bleached Square":
 				printWarning("Bleached ROI is not named Bleached Square, this might lead to problems.")
 		else:	
-			squ=self.newSquareSliceROI("Bleached Square",self.getFreeROIId(),self.offsetBleachedPx,self.sideLengthBleachedPx,self.sliceHeightPx,self.sliceWidthPx,self.sliceBottom,color='b')
+			squ=self.newSquareSliceROI("Bleached Square",self.getFreeROIId(),self.offsetBleachedPx,self.sideLengthBleachedPx,sliceHeightPx,self.sliceWidthPx,self.sliceBottom,color='b')
 		
 		#Create Out
 		out=self.newCustomROI("Out",self.getFreeROIId(),color='r')

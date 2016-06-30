@@ -96,6 +96,9 @@ class geometryDialog(pyfrp_gui_basics.basicCanvasDialog):
 		self.btnFnGeo=QtGui.QPushButton('Change')
 		self.btnFnGeo.connect(self.btnFnGeo, QtCore.SIGNAL('clicked()'), self.setFnGeo)
 		
+		self.btnGetCenterFromROI=QtGui.QPushButton('Grab from ROI')
+		self.btnGetCenterFromROI.connect(self.btnGetCenterFromROI, QtCore.SIGNAL('clicked()'), self.getCenterFromROI)
+		
 		self.btnUpdateAll=QtGui.QPushButton('Update optimal All ROI')
 		self.btnUpdateAll.connect(self.btnUpdateAll, QtCore.SIGNAL('clicked()'), self.updateAllROI)
 		
@@ -118,10 +121,13 @@ class geometryDialog(pyfrp_gui_basics.basicCanvasDialog):
 		
 		self.grid.addWidget(self.lblTypVal,nRows+1,2)
 		self.grid.addLayout(self.centerGrid,nRows+2,2)
+		
 		self.grid.addLayout(self.fnGeoGrid,nRows+3,2)
 		
 		self.grid.addWidget(self.cbAnn,nRows+4,2)
 		self.grid.addWidget(self.btnUpdateAll,nRows+5,2)
+		
+		self.grid.addWidget(self.btnGetCenterFromROI,nRows+2,3)
 		
 		self.setAxes3D()
 		
@@ -133,7 +139,7 @@ class geometryDialog(pyfrp_gui_basics.basicCanvasDialog):
 		
 		
 		self.show()
-
+	
 	def setCenter(self):
 		center=[float(self.qleCenterX.text()),float(self.qleCenterY.text())]
 		self.geometry.setCenter(center)
@@ -152,6 +158,62 @@ class geometryDialog(pyfrp_gui_basics.basicCanvasDialog):
 		self.drawGeometry()
 		
 		return fnGeo
+	
+	def getCenterFromROI(self):
+		
+		"""First finds all ROIs in ``geometry.embryo.ROIs`` that
+		have an attribute called ``center``, then lets the user
+		select one of them and then sets centerof geometry to the same 
+		center as the ROI.
+		
+		"""
+		
+		center=self.getAttrFromROI('center')
+		
+		self.geometry.setCenter(center)
+		self.updateCenterQles()
+	
+	def getAttrFromROI(self,attr):
+		
+		"""First finds all ROIs in ``geometry.embryo.ROIs`` that
+		have an attribute called ``attr``, then lets the user
+		select one of them and then returns the value of 
+		``attr`` of the selected ROI.
+		
+		"""
+		
+		possROIs=list(self.geometry.embryo.ROIs)
+		possROIsNew=[]
+		for r in possROIs:
+			if hasattr(r,attr):
+				possROIsNew.append(r)
+		possROIs=list(possROIsNew)		
+			
+		if len(possROIs)<1:
+			printWarning("Cannot create selection of ROIs, there is none with attribute " + attr + " .")
+			return None
+		
+		nameList=pyfrp_misc_module.objAttrToList(possROIs,'name')
+		
+		selectorDialog = pyfrp_gui_basics.basicSelectorDialog(nameList,self)
+		if selectorDialog.exec_():
+			selectedROIName = selectorDialog.getItem()
+			if selectedROIName==None:
+				return None
+		
+		r=self.geometry.embryo.getROIByName(selectedROIName)
+	
+		attrVal=getattr(r,attr)
+		
+		return attrVal
+		
+	def updateCenterQles(self):
+		
+		"""Updates the two center QLEs with current value in geometry.center."""
+		
+		self.qleCenterX.setText(str(self.geometry.getCenter()[0]))
+		self.qleCenterY.setText(str(self.geometry.getCenter()[1]))
+		self.setCenter()
 	
 	def updateFnGeoLbl(self):
 		self.lblFnGeoVal.setText("..."+self.geometry.fnGeo[-self.nCharDisplayed:])
@@ -187,7 +249,6 @@ class zebrafishDomeStageDialog(geometryDialog):
 		self.lblScale = QtGui.QLabel("Radius Scale:", self)
 		self.lblHeight = QtGui.QLabel("Imaging Height (px):", self)
 		
-		
 		#LineEdits
 		self.qleRadius = QtGui.QLineEdit(str(self.geometry.imagingRadius))
 		self.qleScale = QtGui.QLineEdit(str(self.geometry.radiusScale))
@@ -205,7 +266,8 @@ class zebrafishDomeStageDialog(geometryDialog):
 		self.btnRestoreDefaults=QtGui.QPushButton('Restore Defaults')
 		self.btnRestoreDefaults.connect(self.btnRestoreDefaults, QtCore.SIGNAL('clicked()'), self.restoreDefaults)
 		
-		###NOTE: Will need "Grab from ROI" button for certain properties.
+		self.btnGetRadiusFromROI=QtGui.QPushButton('Grab from ROI')
+		self.btnGetRadiusFromROI.connect(self.btnGetRadiusFromROI, QtCore.SIGNAL('clicked()'), self.getRadiusFromROI)
 		
 		#Layout
 		nRows=self.grid.rowCount()
@@ -217,23 +279,25 @@ class zebrafishDomeStageDialog(geometryDialog):
 		self.grid.addWidget(self.qleRadius,nRows+1,2)
 		self.grid.addWidget(self.qleScale,nRows+2,2)
 		self.grid.addWidget(self.qleHeight,nRows+3,2)
-		
+
 		self.grid.addWidget(self.btnRestoreDefaults,nRows+4,2)
+				
+		self.grid.addWidget(self.btnGetRadiusFromROI,nRows+1,3)
 		
 		self.show()
-		
+	
 	def setRadius(self):
 		self.geometry.setImagingRadius(float(str(self.qleRadius.text())))
 		self.geometry.updateGeoFile()
 		self.drawGeometry()
 		return self.geometry.getImagingRadius()
-		
+	
 	def setScale(self):
 		self.geometry.setRadiusScale(float(str(self.qleScale.text())))
 		self.geometry.updateGeoFile()
 		self.drawGeometry()
 		return self.geometry.getRadiusScale()
-	
+		
 	def setHeight(self):
 		self.geometry.setImagingHeight(float(str(self.qleHeight.text())))
 		self.geometry.updateGeoFile()
@@ -244,6 +308,27 @@ class zebrafishDomeStageDialog(geometryDialog):
 		self.geometry.restoreDefault()
 		self.geometry.updateGeoFile()
 		self.drawGeometry()
+
+	def getRadiusFromROI(self):
+		
+		"""First finds all ROIs in ``geometry.embryo.ROIs`` that
+		have an attribute called ``radius``, then lets the user
+		select one of them and then sets radius of geometry to the same 
+		radius as the ROI.
+		
+		"""
+		
+		radius=self.getAttrFromROI('radius')
+		
+		self.geometry.setImagingRadius(radius)
+		self.updateRadiusQle()
+		
+	def updateRadiusQle(self):
+		
+		"""Updates the imagingRadius QLE with current value in geometry.radius."""
+		
+		self.qleRadius.setText(str(self.geometry.getImagingRadius()))
+		self.setRadius()	
 
 class cylinderDialog(geometryDialog):
 	
@@ -287,6 +372,26 @@ class cylinderDialog(geometryDialog):
 		self.drawGeometry()
 		return self.geometry.getHeight()
 	
+	def getRadiusFromROI(self):
+		
+		"""First finds all ROIs in ``geometry.embryo.ROIs`` that
+		have an attribute called ``radius``, then lets the user
+		select one of them and then sets radius of geometry to the same 
+		radius as the ROI.
+		
+		"""
+		
+		radius=self.getAttrFromROI('radius')
+		
+		self.geometry.setRadius(radius)
+		self.updateRadiusQle()
+		
+	def updateRadiusQle(self):
+		
+		"""Updates the radius QLE with current value in geometry.radius."""
+		
+		self.qleRadius.setText(str(self.geometry.getRadius()))
+		self.setRadius()	
 		
 	
 class coneDialog(geometryDialog):
@@ -345,6 +450,7 @@ class coneDialog(geometryDialog):
 		self.drawGeometry()
 		return self.geometry.getHeight()
 	
+	
 class xenopusBallDialog(geometryDialog):
 	
 	def __init__(self,geometry,parent):	
@@ -368,6 +474,9 @@ class xenopusBallDialog(geometryDialog):
 		self.btnRestoreDefaults=QtGui.QPushButton('Restore Defaults')
 		self.btnRestoreDefaults.connect(self.btnRestoreDefaults, QtCore.SIGNAL('clicked()'), self.restoreDefaults)
 		
+		self.btnGetRadiusFromROI=QtGui.QPushButton('Grab from ROI')
+		self.btnGetRadiusFromROI.connect(self.btnGetRadiusFromROI, QtCore.SIGNAL('clicked()'), self.getRadiusFromROI)
+		
 		#Layout
 		nRows=self.grid.rowCount()
 		
@@ -378,6 +487,8 @@ class xenopusBallDialog(geometryDialog):
 		self.grid.addWidget(self.qleHeight,nRows+2,2)
 		
 		self.grid.addWidget(self.btnRestoreDefaults,nRows+4,2)
+		
+		self.grid.addWidget(self.btnGetRadiusFromROI,nRows+1,3)
 		
 		self.show()
 		
@@ -397,7 +508,29 @@ class xenopusBallDialog(geometryDialog):
 		self.geometry.restoreDefaults()
 		self.geometry.updateGeoFile()
 		self.drawGeometry()
+	
+	
+	def getRadiusFromROI(self):
 		
+		"""First finds all ROIs in ``geometry.embryo.ROIs`` that
+		have an attribute called ``radius``, then lets the user
+		select one of them and then sets radius of geometry to the same 
+		radius as the ROI.
+		
+		"""
+		
+		radius=self.getAttrFromROI('radius')
+		
+		self.geometry.setImagingRadius(radius)
+		self.updateRadiusQle()
+		
+	def updateRadiusQle(self):
+		
+		"""Updates the imagingRadius QLE with current value in geometry.radius."""
+		
+		self.qleRadius.setText(str(self.geometry.getImagingRadius()))
+		self.setRadius()	
+	
 class geometrySelectDialog(QtGui.QDialog):
 	
 	def __init__(self,embryo,parent):

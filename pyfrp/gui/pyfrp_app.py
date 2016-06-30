@@ -341,7 +341,7 @@ class pyfrp(QtGui.QMainWindow):
 		editEmbryoButton = QtGui.QAction('Edit Embryo', self)
 		self.connect(editEmbryoButton, QtCore.SIGNAL('triggered()'), self.editEmbryo)
 		
-		loadEmbryoButton = QtGui.QAction('Edit Embryo', self)
+		loadEmbryoButton = QtGui.QAction('Load Embryo', self)
 		self.connect(loadEmbryoButton, QtCore.SIGNAL('triggered()'), self.loadEmbryo)
 		
 		selectGeometryButton = QtGui.QAction('Select Geometry', self)
@@ -1050,7 +1050,7 @@ class pyfrp(QtGui.QMainWindow):
 		if self.currNode!=None:
 			self.updatePropBar()
 		else:
-			self.updatePropBar.clear()		
+			self.propBar.clear()		
 		
 		return self.molecules
 		
@@ -1373,6 +1373,7 @@ class pyfrp(QtGui.QMainWindow):
 		self.newEmbryo()
 		self.defaultROIsWizard()
 		self.openROIManager()
+		self.editGeometry()
 		self.getCurrentEmbryo().newSimulation()
 		self.generateMesh()
 		self.updateROIIdxs()
@@ -1417,7 +1418,6 @@ class pyfrp(QtGui.QMainWindow):
 			ret=pyfrp_gui_ROI_manager.ROImanager(currEmbryo,self).exec_()
 			self.updateROIsNodeChildren()
 		return
-	
 	
 	def createDefaultROIs(self):
 		

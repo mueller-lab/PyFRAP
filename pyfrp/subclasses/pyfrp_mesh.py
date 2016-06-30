@@ -153,7 +153,7 @@ class mesh(object):
 		if self.simulation.embryo.geometry==None:
 			printWarning("Geometry of embryo not specified, mesh generation will not work!")
 		
-		self.geometry=self.simulation.embryo.geometry
+		
 		self.fromFile=True
 		self.volSizePx=20
 		self.fnMesh=""
@@ -178,16 +178,16 @@ class mesh(object):
 		"""
 		
 		if fnOut==None:
-			fnOut=self.geometry.fnGeo.replace(".geo",".msh")
+			fnOut=self.simulation.embryo.geometry.fnGeo.replace(".geo",".msh")
 			
 		if self.fromFile:
 			self.fnMesh=fnOut
 		
-			pyfrp_gmsh_module.runGmsh(self.geometry.fnGeo,fnOut=fnOut,debug=debug,volSizeMax=self.volSizePx)
+			pyfrp_gmsh_module.runGmsh(self.simulation.embryo.geometry.fnGeo,fnOut=fnOut,debug=debug,volSizeMax=self.volSizePx)
 			
 			self.importMeshFromFile(self.fnMesh)
 		else:
-			self.runFiPyMeshGenerator(self.geometry.typ)
+			self.runFiPyMeshGenerator(self.simulation.embryo.geometry.typ)
 
 		return self.mesh
 	
@@ -212,11 +212,11 @@ class mesh(object):
 		"""
 		
 		if typ=="cylinder":
-			self.mesh=pyfrp_gmsh_module.genFiPyCylinderMesh(self.volSizePx,self.geometry.radius,self.geometry.height,self.geometry.center)
+			self.mesh=pyfrp_gmsh_module.genFiPyCylinderMesh(self.volSizePx,self.simulation.embryo.geometry.radius,self.simulation.embryo.geometry.height,self.simulation.embryo.geometry.center)
 		elif typ=="zebrafishDomeStage":
-			self.mesh=pyfrp_gmsh_module.genFiPyDomeMesh(self.volSizePx,self.geometry.innerRadius,self.geometry.outerRadius,self.geometry.centerDist,self.geometry.center)
+			self.mesh=pyfrp_gmsh_module.genFiPyDomeMesh(self.volSizePx,self.simulation.embryo.geometry.innerRadius,self.simulation.embryo.geometry.outerRadius,self.simulation.embryo.geometry.centerDist,self.simulation.embryo.geometry.center)
 		elif typ=="xenopusBall":
-			self.mesh=pyfrp_gmsh_module.genFiPyBallMesh(self.volSizePx,self.geometry.radius,self.geometry.center)
+			self.mesh=pyfrp_gmsh_module.genFiPyBallMesh(self.volSizePx,self.simulation.embryo.geometry.radius,self.simulation.embryo.geometry.center)
 		else:
 			printWarning("Geometry type " + typ + "unknown for runFiPyMeshGenerator. Check pyfrp_gmsh_module for available geometries.")
 		
@@ -315,8 +315,8 @@ class mesh(object):
 		
 		"""
 		
-		if os.path.isfile(self.geometry.fnGeo):
-			self.fnMesh=pyfrp_gmsh_module.updateVolSizeGeo(self.geometry.fnGeo,self.volSizePx,run=False,debug=debug)
+		if os.path.isfile(self.simulation.embryo.geometry.fnGeo):
+			self.fnMesh=pyfrp_gmsh_module.updateVolSizeGeo(self.simulation.embryo.geometry.fnGeo,self.volSizePx,run=False,debug=debug)
 		else:
 			printWarning("Cannot update meshfile, since geometry.fnGeo does not exist or is invalid.")
 		return self.fnMesh
@@ -729,15 +729,15 @@ class mesh(object):
 		"""
 		
 		if newFile:
-			if "_box" not in self.geometry.fnGeo:	
-				fnOut=os.path.dirname(self.geometry.fnGeo)+"/field/custom/"+os.path.basename(self.geometry.fnGeo).replace(".geo",fnAppendix+"_"+self.geometry.embryo.name+".geo")
+			if "_box" not in self.simulation.embryo.geometry.fnGeo:	
+				fnOut=os.path.dirname(self.simulation.embryo.geometry.fnGeo)+"/field/custom/"+os.path.basename(self.simulation.embryo.geometry.fnGeo).replace(".geo",fnAppendix+"_"+self.simulation.embryo.geometry.embryo.name+".geo")
 			else:
-				fnOut=fnOut=self.geometry.fnGeo
+				fnOut=fnOut=self.simulation.embryo.geometry.fnGeo
 		else:
-			fnOut=self.geometry.fnGeo
+			fnOut=self.simulation.embryo.geometry.fnGeo
 		
-		pyfrp_gmsh_IO_module.addBoxField(self.geometry.fnGeo,volSizeIn,self.volSizePx,rangeX,rangeY,rangeZ,comment=comment,fnOut=fnOut)
-		self.geometry.setFnGeo(fnOut)
+		pyfrp_gmsh_IO_module.addBoxField(self.simulation.embryo.geometry.fnGeo,volSizeIn,self.volSizePx,rangeX,rangeY,rangeZ,comment=comment,fnOut=fnOut)
+		self.simulation.embryo.geometry.setFnGeo(fnOut)
 		
 		
 		if run:

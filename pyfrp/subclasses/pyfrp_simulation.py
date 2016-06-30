@@ -52,7 +52,16 @@ import matplotlib.pyplot as plt
 #===========================================================================================================================================================================
 
 class simulation(object):
-
+	
+	"""PyFRAP simulation class. 
+	
+	Stores all important properties about how FRAP simulation is performed, such as:
+	
+		
+	
+	"""
+	
+	
 	def __init__(self,embryo):
 		
 		#Naming/ID
@@ -169,8 +178,20 @@ class simulation(object):
 	
 	def run(self,signal=None,embCount=None,showProgress=True,debug=False):
 		
-		"""Runs simulation
+		"""Runs simulation.
 		
+		Checks if ROI indices are computed, if not, computes them. Then passes simulation
+		object to :py:func:`pyfrp.modules.pyfrp_sim_module.simulateReactDiff`.
+		
+		Keyword Args:
+			signal (PyQt4.QtCore.pyqtSignal): PyQT signal to send progress to GUI.
+			embCount (int): Counter of counter process if multiple datasets are simulated. 
+			debug (bool): Print debugging messages and show debugging plots.
+			showProgress (bool): Print out progress.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_simulation.simulation: Updated simulation instance.
+			
 		
 		"""
 		
@@ -181,17 +202,72 @@ class simulation(object):
 		return True
 	
 	def setMesh(self,m):
+		
+		"""Sets mesh to a new mesh object.
+	
+		Args:
+			m (pyfrp.subclasses.pyfrp_mesh.mesh): PyFRAP mesh object.
+			
+		Returns:
+			pyfrp.subclasses.pyfrp_mesh.mesh: Updated mesh instance.
+			
+		
+		"""
+		
 		self.mesh=m
 		return self.mesh
 		
 	def setICimg(self,img):
+		
+		"""Sets image for initial condition interpolation.
+		
+		Args:
+			img (numpy.ndarray): A 2D image.
+			
+		Returns:
+			numpy.ndarray: New ICimg.
+		
+		"""
+		
 		self.ICimg=img
 		return self.ICimg
 	
 	def getICimg(self):
+			
+		"""Returns image for initial condition interpolation.
+		
+		Returns:
+			numpy.ndarray: Current ICimg.
+		
+		"""
+		
+		
 		return self.ICimg
 	
 	def showIC(self,ax=None,roi=None,nlevels=25,vmin=None,vmax=None):
+		
+		"""Plots initial conditions applied to mesh in 2D.
+		
+		If ``roi`` is given, will only plot initial conditions for nodes inside ROI, else 
+		will plot initial condition for all nodes in mesh.
+		
+		.. note:: Simulation needs to be run first before this plotting function
+		   can be used.
+		
+		.. image:: ../imgs/pyfrp_simulation/showIC.png
+		
+		Keyword Args:
+			roi (pyfrp.subclasses.pyfrp_ROI.ROI): A PyFRAP ROI object.
+			vmin (float): Overall minimum value to be displayed in plot.
+			vmax (float): Overall maximum value to be displayed in plot.
+			ax (matplotlib.axes): Axes used for plotting.
+			nlevels (int): Number of contour levels to display.
+		
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
 		
 		if self.IC!=None:
 			
@@ -226,6 +302,19 @@ class simulation(object):
 		
 	def showICimg(self,ax=None):
 		
+		"""Plots image used for initial 2D.
+		
+		.. image:: ../imgs/pyfrp_simulation/showICimg.png
+		
+		Keyword Args:
+			ax (matplotlib.axes): Axes used for plotting.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
+		
 		if self.ICimg!=None:
 			
 			if ax==None:
@@ -239,8 +328,9 @@ class simulation(object):
 				X,Y=np.meshgrid(np.arange(res),np.arange(res))
 			
 			plt_ICs=ax.contourf(X,Y,self.ICimg)
+			#plt_ICs=ax.imshow()
 			
-			ax.autoscale(enable=True, axis='both', tight=True)
+			#ax.autoscale(enable=True, axis='both', tight=True)
 			plt.axis('equal')
 			#cb=plt.colorbar(plt_ICs,orientation='horizontal',pad=0.05,shrink=0.9)
 			
@@ -253,6 +343,19 @@ class simulation(object):
 			return None
 	
 	def computeInterpolatedICImg(self):
+		
+		"""Computes interpolation of initial condition image.
+		
+		Interpolation is done as in :py:func:`pyfrp.modules.pyfrp_sim_module.applyInterpolatedICs`.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* xInt (numpy.ndarray): Meshgrid x-coordinates.
+				* yInt (numpy.ndarray): Meshgrid y-coordinates.
+				* f (numpy.ndarray): Interpolated image.
+	
+		"""
 		
 		#Get image resolution and center of geometry
 		res=self.ICimg.shape[0]
@@ -273,6 +376,24 @@ class simulation(object):
 		return xInt, yInt, f
 	
 	def computeInterpolatedIC(self,roi=None):
+		
+		"""Interpolates ICs back onto 2D image.
+		
+		Uses ``scipy.interpolate.griddata``, see also http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.griddata.html
+		
+		If ``roi`` is specified, will only interpolate nodes of this ROI. 
+		
+		Keyword Args:
+			roi (pyfrp.subclasses.pyfrp_ROI.ROI): A PyFRAP ROI.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* X (numpy.ndarray): Meshgrid x-coordinates.
+				* Y (numpy.ndarray): Meshgrid y-coordinates.
+				* interpIC (numpy.ndarray): Interpolated ICs.
+		
+		"""
 		
 		#Get image resolution and center of geometry
 		res=self.ICimg.shape[0]
@@ -298,6 +419,23 @@ class simulation(object):
 		
 	def showInterpolatedIC(self,ax=None,roi=None):
 		
+		"""Shows ICs interpolated back onto 2D image.
+		
+		If ``roi`` is specified, will only interpolate nodes of this ROI. 
+		
+		See also :py:func:`computeInterpolatedIC`.
+		
+		.. image:: ../imgs/pyfrp_simulation/showInterpolatedIC.png
+		
+		Keyword Args:
+			roi (pyfrp.subclasses.pyfrp_ROI.ROI): A PyFRAP ROI.
+			ax (matplotlib.axes): Axes to be used for plotting.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
+		
 		X,Y,interpIC=self.computeInterpolatedIC(roi=roi)
 		
 		if ax==None:
@@ -309,6 +447,20 @@ class simulation(object):
 		return ax
 	
 	def showInterpolatedICImg(self,ax=None):
+		
+		"""Shows interpolation of initial condition image.
+		
+		See also :py:func:`computeInterpolatedICImg`.
+		
+		.. image:: ../imgs/pyfrp_simulation/showInterpolatedICimg.png
+		
+		Keyword Args:
+			ax (matplotlib.axes): Axes to be used for plotting.
+			
+		Returns:
+			matplotlib.axes: Axes used for plotting.
+		
+		"""
 		
 		if ax==None:
 			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Interpolated Image"],sup="simulation")
@@ -331,6 +483,27 @@ class simulation(object):
 		return ax
 	
 	def compareICInterpolation(self,axes=None,roi=None):
+		
+		"""Shows initial image, its interpolation, the resulting initial 
+		condition and its interpolation back onto an image.
+		
+		See also :py:func:`showICimg`, :py:func:`showInterpolatedICImg`, 
+		:py:func:`showIC`, :py:func:`showInterpolatedIC`.
+		
+		Will create new axes if necessary.
+		
+		.. warning:: Some images might be flipped due to plotting functions. Will be fixed in future version.
+		
+		.. image:: ../imgs/pyfrp_simulation/ICcompare.png
+		
+		Keyword Args:
+			roi (pyfrp.subclasses.pyfrp_ROI.ROI): A PyFRAP ROI.
+			axes (matplotlib.axes): List of axes of length 4.
+			
+		Returns:
+			list: List of axes.
+		
+		"""
 	
 		if axes==None:
 			fig,axes = pyfrp_plot_module.makeSubplot([2,2],titles=["Original Image","Interpolated Image","IC","Reinterpolated IC"],sup="simulation")
@@ -346,22 +519,90 @@ class simulation(object):
 		return axes	
 		
 	def getOptTvecSim(self,maxDExpectedPx):
+		
+		r"""Generates time vector that is optimal to fit 
+		experiments with expected diffusion coefficients up
+		to ``maxDExpectedPx``.
+		
+		Basically computes how long a simulation needs to run in
+		seconds to capture the dynamics of an experiment with diffusion
+		coefficient of ``maxDExpectedPx``. Does this by setting end time point to
+		
+		.. math:: t_{\mathrm{end,sim}} = \frac{D_{\mathrm{max. exp.}}}{D_{\mathrm{sim}}} t_{\mathrm{end,data}}
+		
+		.. note:: Keeps time scaling.
+		
+		Args:
+			maxDExpectedPx (float): Maximum expected diffusion coefficient.
+			
+		Returns:
+			numpy.ndarray: New simulation time vector.
+		
+		"""
+		
+		wasLog=self.isLogTimeScale()
+			
 		self.tvecSim=np.linspace(self.embryo.tStart,maxDExpectedPx/self.D*self.embryo.tEnd,self.stepsSim)
+		
+		if wasLog:
+			self.toLogTimeScale()
+		
 		return self.tvecSim
 		
 	def toLogTimeScale(self,spacer=1E-10):
+		
+		"""Converts time vector for simulation to logarithmic scale.
+		
+		Keyword Args:
+			spacer (float): Small offset to avoid log(0).
+			
+		Returns:
+			numpy.ndarray: New simulation time vector.
+		
+		"""
+		
 		self.tvecSim=self.tvecSim[0]+np.logspace(np.log10(spacer+self.tvecSim[0]), np.log10(self.tvecSim[-1]), self.stepsSim)-spacer
 		return self.tvecSim
 		
 	def toLinearTimeScale(self):
+		
+		"""Converts time vector for simulation to linear scale.
+	
+		Returns:
+			numpy.ndarray: New simulation time vector.
+		
+		"""
+		
 		self.tvecSim=np.linspace(self.tvecSim[0],self.tvecSim[-1],self.stepsSim)	
 		return self.tvecSim
 	
 	def toDefaultTvec(self):
+		
+		"""Sets time vector for simulation to default range.
+		
+		Default range is given by ``tStart`` and ``tEnd`` in ``embryo`` object
+		and is linearly scaled.
+		
+		Returns:
+			numpy.ndarray: New simulation time vector.
+		
+		"""
+		
 		self.tvecSim=np.linspace(self.embryo.tStart,self.embryo.tEnd,self.stepsSim)
 		return self.tvecSim
 	
 	def updateTvec(self):
+		
+		"""Updates time vector for simulation to match 
+		experiment start and end time.
+		
+		Does not change scaling of time vector.
+		
+		Returns:
+			numpy.ndarray: New simulation time vector.
+		
+		"""
+		
 		if (self.tvecSim[1]-self.tvecSim[0])==(self.tvecSim[-1]-self.tvecSim[-2]):
 			self.toLinearTimeScale()
 		else:
@@ -369,29 +610,98 @@ class simulation(object):
 		return self.tvecSim
 	
 	def setTimesteps(self,n):
+		
+		"""Sets number of simulation time steps and updates
+		time vector.
+		
+		Args:
+			n (int): New number of time steps.
+			
+		Returns:
+			int: New number of time steps.
+			
+		"""
+		
 		self.stepsSim=int(n)
 		self.updateTvec()
 		return self.stepsSim
 	
 	def setD(self,D):
+		
+		"""Sets diffusion coefficient used for simulation.
+		
+		Args:
+			D (float): New diffusion coefficient in :math:`\mu\mathrm{m}^2/s`.
+			
+		Returns:
+			float: New diffusion coefficient in :math:`\mathrm{px}^2/s`.
+			
+		"""
+		
 		self.D=D
 		return self.D
 	
 	def getD(self):
+		
+		"""Returns current diffusion coefficient used for simulation.
+		
+		Returns:
+			float: Current diffusion coefficient in :math:`\mathrm{px}^2/s`.
+			
+		"""
+		
 		return self.D
 	
 	def setProd(self,prod):
+		
+		"""Sets production rate used for simulation.
+		
+		Args:
+			prod (float): New production rate in :math:`1/s`.
+			
+		Returns:
+			float: New production rate in :math:`1/s`.
+			
+		"""
+		
 		self.prod=prod
 		return self.prod
 	
 	def getProd(self):
+		
+		"""Returns production rate used for simulation.
+		
+		Returns:
+			float: Current production rate in :math:`1/s`.
+			
+		"""
+		
 		return self.prod
 	
 	def setDegr(self,degr):
+		
+		"""Sets degradation rate used for simulation.
+		
+		Args:
+			prod (float): New degradation rate in :math:`1/[c]s`.
+			
+		Returns:
+			float: New degradation rate in :math:`1/[c]s`.
+			
+		"""
+		
 		self.degr=degr
 		return self.degr
 	
 	def getDegr(self):
+		
+		"""Returns degradation rate used for simulation.
+			
+		Returns:
+			float: Current degradation rate in :math:`1/[c]s`.
+			
+		"""
+		
 		return self.degr
 	
 	def isLogTimeScale(self):

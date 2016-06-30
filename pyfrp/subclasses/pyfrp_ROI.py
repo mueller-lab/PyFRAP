@@ -721,6 +721,8 @@ class ROI(object):
 	
 	def showMeshIdx2D(self,ax=None):
 		
+		
+		
 		mesh=self.embryo.simulation.mesh.mesh
 		
 		if ax==None:
@@ -832,6 +834,7 @@ class ROI(object):
 		m=self.embryo.getMasterROI()
 		rois=[self,m]
 		[self.extImgIdxX,self.extImgIdxY]=pyfrp_idx_module.getCommonExtendedPixels(rois,self.embryo.dataResPx,debug=debug)
+		self.computeNumExt()
 		return self.extImgIdxX,self.extImgIdxY
 	
 	def matchImgIdx(self,r):
@@ -1688,11 +1691,13 @@ class ROI(object):
 		
 		"""Returns deepcopy of ROI object.
 		
-		Uses ``copy.deepcopy`` to generate copy of object, see also https://docs.python.org/2/library/copy.html .
+		Uses ``copy.copy`` to generate copy of object, see also https://docs.python.org/2/library/copy.html .
+		
+		``copy.deepcopy`` also generates copies of other objects, including ``ROI.embryo``.
 		
 		"""
 		
-		return copy.deepcopy(self)
+		return copy.copy(self)
 	
 	def getNMeshNodes(self):
 		
@@ -1929,6 +1934,17 @@ class radialROI(ROI):
 		return pyfrp_idx_module.checkInsideCircle(x,y,self.center,self.radius)
 	
 	def computeXYExtend(self):
+		
+		"""Computes extend of ROI in x/y direction.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xExtend (list): List containing minimum/maximum x-coordinate (``[xmin,xmax]``).
+				* yExtend (list): List containing minimum/maximum y-coordinate (``[ymin,ymax]``).
+		
+		"""
+		
 		self.xExtend=[self.center[0]-self.radius,self.center[0]+self.radius]
 		self.yExtend=[self.center[1]-self.radius,self.center[1]+self.radius]
 		return self.xExtend, self.yExtend
@@ -2047,8 +2063,22 @@ class sliceROI(ROI):
 		return np.ones(np.asarray(x).shape).astype(bool)
 	
 	def computeXYExtend(self):
-		self.xExtend=[0,self.embryo.dataResPx]
-		self.yExtend=[0,self.embryo.dataResPx]
+		
+		"""Computes extend of ROI in x/y direction.
+		
+		.. note:: Since sliceROI theoretically is not having any limits in x/y-direction,
+		   function returns limits given by input image, that is, ``[0,embryo.dataResPx]``.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xExtend (list): List containing minimum/maximum x-coordinate (``[xmin,xmax]``).
+				* yExtend (list): List containing minimum/maximum y-coordinate (``[ymin,ymax]``).
+		
+		"""
+		
+		self.xExtend=[1,self.embryo.dataResPx]
+		self.yExtend=[1,self.embryo.dataResPx]
 		return self.xExtend, self.yExtend
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2117,6 +2147,17 @@ class radialSliceROI(sliceROI,radialROI):
 		return pyfrp_idx_module.checkInsideCircle(x,y,self.center,self.radius)
 	
 	def computeXYExtend(self):
+		
+		"""Computes extend of ROI in x/y direction.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xExtend (list): List containing minimum/maximum x-coordinate (``[xmin,xmax]``).
+				* yExtend (list): List containing minimum/maximum y-coordinate (``[ymin,ymax]``).
+		
+		"""
+		
 		self.xExtend=[self.center[0]-self.radius,self.center[0]+self.radius]
 		self.yExtend=[self.center[1]-self.radius,self.center[1]+self.radius]
 		return self.xExtend, self.yExtend
@@ -2263,6 +2304,17 @@ class squareROI(ROI):
 		return pyfrp_idx_module.checkInsideSquare(x,y,self.offset,self.sidelength)
 	
 	def computeXYExtend(self):
+		
+		"""Computes extend of ROI in x/y direction.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xExtend (list): List containing minimum/maximum x-coordinate (``[xmin,xmax]``).
+				* yExtend (list): List containing minimum/maximum y-coordinate (``[ymin,ymax]``).
+		
+		"""
+		
 		self.xExtend=[self.offset[0],self.offset[0]+self.sidelength]
 		self.yExtend=[self.offset[1],self.offset[1]+self.sidelength]
 		return self.xExtend, self.yExtend
@@ -2375,6 +2427,17 @@ class squareSliceROI(squareROI,sliceROI):
 		return pyfrp_idx_module.checkInsideSquare(x,y,self.offset,self.sidelength)
 	
 	def computeXYExtend(self):
+		
+		"""Computes extend of ROI in x/y direction.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xExtend (list): List containing minimum/maximum x-coordinate (``[xmin,xmax]``).
+				* yExtend (list): List containing minimum/maximum y-coordinate (``[ymin,ymax]``).
+		
+		"""
+		
 		self.xExtend=[self.offset[0],self.offset[0]+self.sidelength]
 		self.yExtend=[self.offset[1],self.offset[1]+self.sidelength]
 		return self.xExtend, self.yExtend
@@ -2525,6 +2588,17 @@ class rectangleROI(ROI):
 		return pyfrp_idx_module.checkInsideRectangle(x,y,self.offset,self.sidelengthX,self.sidelengthY)
 	
 	def computeXYExtend(self):
+		
+		"""Computes extend of ROI in x/y direction.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xExtend (list): List containing minimum/maximum x-coordinate (``[xmin,xmax]``).
+				* yExtend (list): List containing minimum/maximum y-coordinate (``[ymin,ymax]``).
+		
+		"""
+		
 		self.xExtend=[self.offset[0],self.offset[0]+self.sidelengthX]
 		self.yExtend=[self.offset[1],self.offset[1]+self.sidelengthY]
 		return self.xExtend, self.yExtend
@@ -2637,6 +2711,17 @@ class rectangleSliceROI(rectangleROI,sliceROI):
 		return pyfrp_idx_module.checkInsideRectangle(x,y,self.offset,self.sidelengthX,self.sidelengthY)
 	
 	def computeXYExtend(self):
+		
+		"""Computes extend of ROI in x/y direction.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xExtend (list): List containing minimum/maximum x-coordinate (``[xmin,xmax]``).
+				* yExtend (list): List containing minimum/maximum y-coordinate (``[ymin,ymax]``).
+		
+		"""
+		
 		self.xExtend=[self.offset[0],self.offset[0]+self.sidelengthX]
 		self.yExtend=[self.offset[1],self.offset[1]+self.sidelengthY]
 		return self.xExtend, self.yExtend
@@ -2756,6 +2841,16 @@ class polyROI(ROI):
 		return pyfrp_idx_module.checkInsidePoly(x,y,self.corners)
 	
 	def computeXYExtend(self):
+		
+		"""Computes extend of ROI in x/y direction.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xExtend (list): List containing minimum/maximum x-coordinate (``[xmin,xmax]``).
+				* yExtend (list): List containing minimum/maximum y-coordinate (``[ymin,ymax]``).
+		
+		"""
 		
 		cornersNP=np.array(corners)
 	
@@ -2886,6 +2981,16 @@ class polySliceROI(polyROI,sliceROI):
 	
 	def computeXYExtend(self):
 		
+		"""Computes extend of ROI in x/y direction.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xExtend (list): List containing minimum/maximum x-coordinate (``[xmin,xmax]``).
+				* yExtend (list): List containing minimum/maximum y-coordinate (``[ymin,ymax]``).
+		
+		"""
+		
 		cornersNP=np.array(corners)
 	
 		xmax=cornersNP[:,0].max()
@@ -2980,7 +3085,9 @@ class customROI(ROI):
 					self.substractROIs(self.ROIsIncluded[i])
 				else:
 					printWarning("Unknown Procedure" + str(self.procedures[i]) + " in Custom ROI " + self.name +". Not going to do anything.")
-					
+		
+		self.computeNumExt()
+		
 		return self.getAllIdxs()
 		
 	def showBoundary(self,color=None,linewidth=3,ax=None):
@@ -3045,10 +3152,32 @@ class customROI(ROI):
 		return b
 			
 	def computeXYExtend(self):
+		
+		"""Computes extend of ROI in x/y direction.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xExtend (list): List containing minimum/maximum x-coordinate (``[xmin,xmax]``).
+				* yExtend (list): List containing minimum/maximum y-coordinate (``[ymin,ymax]``).
+		
+		"""
+		
 		self.xExtend,self.yExtend=pyfrp_idx_module.getCommonXYExtend(self.ROIsIncluded)
 		return self.xExtend,self.yExtend
 	
 	def roiIncluded(self,r):
+		
+		"""Returns if a ROI is included in customROI.
+		
+		Args:
+			r (pyfrp.subclasses.pyfrp_ROI.ROI): A ROI.
+			
+		Returns:
+			bool: ``True`` if included, ``False`` else.
+		
+		"""
+		
 		return r in self.ROIsIncluded
 	
 	

@@ -1021,6 +1021,7 @@ def getCommonExtendedPixels(ROIs,res,debug=False,procedures=None):
 						b=b and r.checkXYInside(i,j)
 					else:					
 						b=b and not r.checkXYInside(i,j)
+						
 				if b:
 					indX.append(i)
 					indY.append(j)
