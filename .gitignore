@@ -39,7 +39,8 @@ pyfrp/meshfiles/experimental/
 pyfrp/executables/gmsh
 pyfrp/executables/Fiji.app
 
-
+# Don't push paper
+paper/
 
 # Don't push temp
 pyfrp/temp/
