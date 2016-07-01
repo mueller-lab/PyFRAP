@@ -421,6 +421,8 @@ class zebrafishDomeStage(geometry):
 	
 		#Compute geometry properties
 		self.restoreDefault()
+		
+		self.updateGeoFile()
 	
 	def setOuterRadius(self,r):
 		
@@ -656,6 +658,7 @@ class cylinder(geometry):
 
 		self.radius=radius
 		self.height=height
+		self.updateGeoFile()
 		
 	def setHeight(self,h):
 		
@@ -812,6 +815,7 @@ class xenopusBall(geometry):
 		self.imagingRadius=imagingRadius
 		
 		self.restoreDefault()
+		self.updateGeoFile()
 	
 	def setImagingRadius(self,r):
 		
@@ -991,6 +995,8 @@ class cone(geometry):
 		self.lowerRadius=lowerRadius
 		
 		self.height=height
+		
+		self.updateGeoFile()
 		
 	def setHeight(self,h):
 		

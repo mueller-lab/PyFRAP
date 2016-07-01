@@ -1,14 +1,1 @@
-Added getFromROI methods and buttons to pyfrp_gui_geometry_dialog.
-
-Fixed bug in pyfrp_ROI.ROI.getCopy. Now only uses copy instead of deepcopy.
-Thus ROI.embryo is not copied.
-
-Fixed bug in pyfrp_ROI.ROI.computeExtIdx. Now ROI.numExt is automatically getting updated.
-
-Fixed numExt update in customROI.
-
-Fixed bug in sliceROI.getXYExtend
-
-Added sliceHeightPx Keyword Arg to genDefaultROIs
-
-Fixed bug where pyfrp_mesh gets assigned embryo.geometry.
+- Geometry file now gets updated at geometry creation.

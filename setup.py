@@ -470,7 +470,7 @@ class OverrideInstall(install):
 		
 		return fnDL,folderFn	
 	
-	def downloadFijiOSX(self):
+	def downloadFijiOSX(self,arch):
 		
 		"""Downloads Fiji from Fiji website for OSX.
 		
