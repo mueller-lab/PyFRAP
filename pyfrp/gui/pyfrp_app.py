@@ -45,7 +45,6 @@ import code
 import numpy as np
 
 #PyFRAP Modules
-#import pyfrp_subwin
 from pyfrp_term import *
 from pyfrp.modules.pyfrp_term_module import *
 from pyfrp.modules import pyfrp_misc_module

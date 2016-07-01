@@ -38,6 +38,9 @@ import sys
 import time
 import os, os.path
 
+#PyFRAP modules
+from pyfrp.modules.pyfrp_term_module import *
+
 #PyQT
 from PyQt4 import QtGui, QtCore
 
@@ -52,6 +55,7 @@ except ImportError:
 		from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as  NavigationToolbar
 	except ImportError:
 		printWarning("Cannot import NavigationToolbar.")
+		
 from matplotlib.figure import Figure
 	
 #===================================================================================================================================
