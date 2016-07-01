@@ -45,7 +45,13 @@ from PyQt4 import QtGui, QtCore
 import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as  NavigationToolbar
+try:
+	from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as  NavigationToolbar
+except ImportError:
+	try:
+		from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as  NavigationToolbar
+	except ImportError:
+		printWarning("Cannot import NavigationToolbar.")
 from matplotlib.figure import Figure
 	
 #===================================================================================================================================
