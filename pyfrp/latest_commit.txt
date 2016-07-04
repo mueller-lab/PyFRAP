@@ -1,1 +1,5 @@
 - Geometry file now gets updated at geometry creation.
+- Added set3DAxesEqual to pyfrp_plot_module
+- Added functions for publication-ready figures in pyfrp_plot_module
+- Added Likelihood profiling functions
+- Added bruteInitD option for fitting

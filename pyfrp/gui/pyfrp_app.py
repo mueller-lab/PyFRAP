@@ -76,11 +76,17 @@ from PyQt4 import QtGui, QtCore
 import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+
+"""
+Apparently the NavigationToolbar naming has changed in newer matplotlib versions, thus
+we need to test out some cases.
+"""
+
 try:
 	from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as  NavigationToolbar
 except ImportError:
 	try:
-		from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as  NavigationToolbar
+		from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as  NavigationToolbar
 	except ImportError:
 		printWarning("Cannot import NavigationToolbar.")
 		
@@ -1707,6 +1713,9 @@ class pyfrp(QtGui.QMainWindow):
 		#Generate Qthread and pass analysis there
 		self.task=pyfrp_gui_basics.pyfrpThread()
 		self.worker=pyfrp_gui_basics.pyfrpWorker(currEmbryo.simulation.mesh.genMesh)
+		
+		#Print out mesh stats
+		self.printMeshStats()
 		
 		#Init and start
 		self.initTask()

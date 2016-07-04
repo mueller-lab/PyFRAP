@@ -140,7 +140,7 @@ class fit:
 		
 		#More settings
 		self.kineticTimeScale=1.
-		self.bruteInit=False		
+		self.bruteInitD=False		
 		
 		#Cutting tvec option
 		self.fitCutOffT=False
@@ -355,7 +355,45 @@ class fit:
 			
 		return self.bounds
 	
+	def resultsToVec(self):
+		
+		"""Puts results back in vector as optimization algorithm would return it.
+		
+		Returns:
+			list: Result vector.
+		"""
+		
+		x=[self.DOptPx]
+		
+		if self.fitProd:
+			x.append(self.prodOpt)	
+		if self.fitDegr:	
+			x.append(self.degrOpt)
+		if self.equOn:
+			x=x+list(self.equFacts)
+		
+		return x
 	
+	def getFittedParameterNames(self):
+		
+		"""Returns names of parameters that are selected for fitting.
+		
+		Returns:
+			list: Names of parameters fitted.
+			
+		"""
+		
+		x=["DOptPx"]
+		
+		if self.fitProd:
+			x.append("prod")	
+		if self.fitDegr:	
+			x.append("degr")
+		if self.equOn:
+			for r in self.ROIsFitted:
+				x.append(r.name+" equFact")
+			
+		return x
 	
 	def run(self,debug=False,ax=None):
 		
@@ -364,6 +402,8 @@ class fit:
 		Fitting is done by passing fit object to :py:func:`pyfrp.modules.pyfrp_fit_module.FRAPFitting`.
 		This function then calls all necessary methods of fit to prepare it for optimization and
 		then passes it to optimization algorithm.
+		
+		.. note:: If ``bruteInitD`` is turned on, will execute :py:func:`runBruteInit` instead.
 		
 		Keyword Args:
 			debug (bool): Print debugging messages.
@@ -374,8 +414,92 @@ class fit:
 		
 		"""
 		
-		self=pyfrp_fit_module.FRAPFitting(self,debug=debug,ax=ax)
+		if self.bruteInitD:
+			self.runBruteInit(debug=debug,ax=ax)
+		else:	
+			self=pyfrp_fit_module.FRAPFitting(self,debug=debug,ax=ax)
+		
 		return self
+	
+	def runBruteInit(self,debug=False,ax=None,steps=5,x0Ds=[]):
+		
+		"""Runs fit for different initial guesses of the diffusion constant D, then
+		selects the one that actually yielded the minimal SSD.
+		
+		Initially guesses are generated with :py:func:`getBruteInitDArray` if no array ``x0Ds``
+		is given.
+		
+		Fitting is done by passing fit object to :py:func:`pyfrp.modules.pyfrp_fit_module.FRAPFitting`.
+		This function then calls all necessary methods of fit to prepare it for optimization and
+		then passes it to optimization algorithm.
+		
+		Will select the initial guess that yielded the minimal SSD and then rerun with this x0 again, making
+		sure that everything is updated in fit object.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			ax (matplotlib.axes): Axes to show debugging plots in.
+			steps (int): How many initial guesses to generate.
+			x0Ds (list): Array with possible initial guesses for D.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_fit.fit: ``self``.
+		
+		"""
+		
+		if x0Ds==[]:
+			x0Ds=self.getBruteInitDArray(steps=steps)
+		SSDs=[]
+		
+		for x0D in x0Ds:
+			
+			if debug:
+				print "Trying x0(D) = ", x0D
+			
+			self.setX0D(x0D)
+			self=pyfrp_fit_module.FRAPFitting(self,debug=debug,ax=ax)
+			
+			SSDs.append(self.SSD)
+			
+		idxOpt=SSDs.index(min(SSDs))
+		
+		if debug:
+			print "x0(D) yielding best result = ", x0Ds[idxOpt] 
+		
+		self.setX0D(x0Ds[idxOpt])
+		self=pyfrp_fit_module.FRAPFitting(self,debug=debug,ax=ax)
+		
+		return self
+		
+	def getBruteInitDArray(self,steps=5):
+		
+		"""Generates array of different possibilities to be used as initial guess 
+		for D.
+		
+		If ``LBD`` and ``UBD`` is given, will simply divide the range between the two in 4 equidistant values.
+		Otherwise will vary around ``x0`` in 2 orders of magnitude.
+		
+		Keyword Args:
+			steps (int): How many initial guesses to generate.
+		
+		Returns:
+			list: Array with possible initial guesses for D.
+		
+		"""
+		
+		if self.LBD!=None:
+			LB=self.LBD
+		else:
+			LB=0.01*self.getX0D()
+			
+		if self.UBD!=None:
+			UB=self.UBD
+		else:
+			UB=100*self.getX0D()
+		
+		x0=np.linspace(LB+1E-10,UB-1E-10,steps)
+		
+		return list(x0)
 	
 	def assignOptParms(self,res):
 		
@@ -447,10 +571,12 @@ class fit:
 		
 		"""Prints out main results of fit."""
 		
+		printObjAttr('name',self)
 		printObjAttr('DOptMu',self)
 		printObjAttr('DOptPx',self)
 		printObjAttr('prodOpt',self)
 		printObjAttr('degrOpt',self)
+		printObjAttr('equFacts',self)
 		printObjAttr('success',self)
 		printObjAttr('Rsq',self)
 		printObjAttr('MeanRsq',self)
@@ -485,6 +611,22 @@ class fit:
 				
 		return dic
 		
+	
+	def setBruteInitD(self,b):
+		
+		"""Turns on/off if the initial guess of for the diffusion rate D should be bruteforced.
+		
+		Args:
+			b (bool): Flag value.
+			
+		Returns:
+			bool: Current flag value.
+		
+		"""
+		
+		self.bruteInitD=b
+		
+		return self.bruteInitD
 	
 	def setOptMeth(self,m):
 		
@@ -1169,4 +1311,28 @@ class fit:
 		"""
 		
 		return 1+int(self.getFitProd())+int(self.getFitDegr())+int(inclEqu)*int(self.getEqu())*len(self.equFacts)
+	
+	def plotLikehoodProfiles(self,epsPerc=0.1,steps=100,debug=False):
+		
+		"""Plots likelihood profiles for all fitted parameters.
+		
+		.. warning:: Since we don't yet fit the loglikelihood function, we only plot the 
+		   SSD. Even though the SSD is proportional to the loglikelihood, it should be used
+		   carefully.
+		   
+		See also :py:func:`pyfrp.modules.pyfrp_fit_module.plotFitLikehoodProfiles`.   
+		
+		Keyword Args:
+			epsPerc (float): Percentage of variation.
+			steps (int): Number of values around optimal parameter value.
+			debug (bool): Show debugging messages
+		
+		Returns:
+			list: List of matplotlib.axes objects used for plotting.
+		
+		"""
+		
+		axes=pyfrp_fit_module.plotFitLikehoodProfiles(self,epsPerc=0.1,steps=100,debug=debug)
+		
+		return axes
 		

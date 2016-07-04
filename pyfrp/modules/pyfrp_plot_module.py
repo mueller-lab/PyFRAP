@@ -773,4 +773,151 @@ def makeFittingLevels(vmin,vmax,val,nlevels,buff=0.01):
 	
 	return vmin,vmax,levels
 	
+def set3DAxesEqual(ax):
+
+	"""Make axes of 3D plot have equal scale.
 	
+	This is one possible solution to Matplotlib's
+	ax.set_aspect('equal') and ax.axis('equal') not working for 3D.
+	
+	Modified from http://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to .
+	
+	Args:
+		ax (matplotlib.axes): A matplotlib axes.
+		
+	Returns:
+		matplotlib.axes: Modified matplotlib axes.
+		
+	"""
+
+	xLimits = ax.get_xlim3d()
+	yLimits = ax.get_ylim3d()
+	zLimits = ax.get_zlim3d()
+
+	xRange = abs(xLimits[1] - xLimits[0])
+	xMiddle = np.mean(xLimits)
+	yRange = abs(yLimits[1] - yLimits[0])
+	yMiddle = np.mean(yLimits)
+	zRange = abs(zLimits[1] - zLimits[0])
+	zMiddle = np.mean(zLimits)
+
+	# The plot bounding box is a sphere in the sense of the infinity
+	# norm, hence I call half the max range the plot radius.
+	plotRadius = 0.5*max([xRange, yRange, zRange])
+
+	ax.set_xlim3d([xMiddle - plotRadius, xMiddle + plotRadius])
+	ax.set_ylim3d([yMiddle - plotRadius, yMiddle + plotRadius])
+	ax.set_zlim3d([zMiddle - plotRadius, zMiddle + plotRadius])
+	
+	return ax
+
+def getPubParms():
+	
+	"""Returns dictionary with good parameters for nice 
+	publication figures.
+	
+	Resulting ``dict`` can be loaded via ``plt.rcParams.update()``.
+	
+	.. note:: Use this if you want to include LaTeX symbols in the figure.
+	
+	Returns:
+		dict: Parameter dictionary.
+	
+	"""
+	
+	params = {'backend': 'ps',
+		'axes.labelsize': 10,
+		'text.fontsize': 10,
+		'legend.fontsize': 10,
+		'xtick.labelsize': 10,
+		'ytick.labelsize': 10,
+		'text.usetex': True,
+		'font.family': 'sans-serif',
+		'font.sans-serif': 'Bitstream Vera Sans, Lucida Grande, Verdana, Geneva, Lucid, Arial, Helvetica, Avant Garde, sans-serif',
+		#'ytick.direction': 'out',
+		'text.latex.preamble': [r'\usepackage{helvet}', r'\usepackage{sansmath}'] , #r'\sansmath',    
+		}
+	
+	return params
+
+def turnAxesForPub(ax,adjustFigSize=True,figWidthPt=180.4,ptPerInches=72.27):
+	
+	"""Turns axes nice for publication.
+	
+	If ``adjustFigSize=True``, will also adjust the size the figure. 
+	
+	Args:
+		ax (matplotlib.axes): A matplotlib axes.
+		
+	Keyword Args:
+		adjustFigSize (bool): Adjust the size of the figure.
+		figWidthPt (float): Width of the figure in pt.
+		ptPerInches (float): Resolution in pt/inches.
+		
+		
+	Returns:
+		matplotlib.axes: Modified matplotlib axes.
+		
+	"""
+
+	params=getPubParms()
+	plt.rcParams.update(params)
+	
+	ax=setPubAxis(ax)
+	
+	setPubFigSize(ax.get_figure())
+	
+	ax=closerLabels(ax,padx=3,pady=1)
+	
+	return ax
+		
+def setPubAxis(ax):		
+	
+	"""Gets rid of top and right axis.
+	
+	Args:
+		ax (matplotlib.axes): A matplotlib axes.
+		
+	Returns:
+		matplotlib.axes: Modified matplotlib axes.
+	
+	"""
+	
+	ax.spines['top'].set_color('none')
+	ax.spines['right'].set_color('none')
+	ax.xaxis.set_ticks_position('bottom')
+	ax.yaxis.set_ticks_position('left')
+	
+	return ax
+		
+def setPubFigSize(fig,figWidthPt=180.4,ptPerInches=72.27):
+	
+	"""Adjusts figure size/aspect into golden ratio.
+	
+	Keyword Args:
+		figWidthPt (float): Width of the figure in pt.
+		ptPerInches (float): Resolution in pt/inches.
+	
+	"""
+	
+	inchesPerPt = 1.0/ptPerInches
+	goldenMean = (np.sqrt(5)-1.0)/2.0         # Aesthetic ratio
+	figWidth = figWidthPt*inchesPerPt  # width in inches
+	figHeight = figWidth*goldenMean      # height in inches
+	figSize =  [figWidth,figHeight]
+	
+	fig.set_size_inches(figSize[0],figSize[1])
+	
+	fig.subplots_adjust(bottom=0.25)
+	fig.subplots_adjust(left=0.2)
+	fig.subplots_adjust(top=0.9)
+	
+	return fig
+
+def closerLabels(ax,padx=10,pady=10):
+	
+	"""Moves x/y labels closer to axis."""
+	
+	ax.xaxis.labelpad = padx
+	ax.yaxis.labelpad = pady
+	return ax

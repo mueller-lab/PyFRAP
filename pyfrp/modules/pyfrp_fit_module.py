@@ -28,6 +28,7 @@
 	
 	* Fitting a PyFRAP simulation to FRAP data analyzed by PyFRAP and saving its results in a :py:class:`pyfrp.subclasses.pyfrp_fit.fit`` instance.
 	* Pinning PyFRAP simulation and data between 0 and 1.
+	* Likelihood profiling functions.
 
 """
 
@@ -211,7 +212,7 @@ def assignInputVariables(x,fit):
 		idx=1+int(fit.fitDegr)+int(fit.fitProd)
 		equFacts=x[idx:]
 	else:
-		equFacts=[]	
+		equFacts=[]
 	
 	return Dnew,prod,degr,equFacts
 
@@ -427,7 +428,6 @@ def computeEquFactors(dataVec,simVec):
 	In practical terms, this means that the volume fraction is not allowed to increase by
 	more than 3fold (>3), and that the immobile fraction cannot be more than 90% (< 0.1)
 	
-	
 	Args:
 		dataVec (numpy.ndarray): Data vector of ROI.
 		simVec (numpy.ndarray): Scaled simulation vector of ROI.
@@ -498,12 +498,12 @@ def findMinEquFacts(dataVecs,simVecs):
 	equFactFinalIdx=SSDs.index(min(SSDs))
 	
 	#Append optimal equalization factors 
+	equFactsFinal=[]
 	for i,vec in enumerate(simVecs):
 		equFactsFinal.append(equFacts[i][equFactFinalIdx])
 	
-	return equFactFinalIdx
+	return equFactsFinal
 	
-
 def equalize(dataVecs,simVecs,equFacts,fromVecs=False):
 	
 	"""Equalizes all simulation vectors of all ROIs defined in 
@@ -521,7 +521,6 @@ def equalize(dataVecs,simVecs,equFacts,fromVecs=False):
 		
 	Keyword Args:
 		fromVecs (bool): Compute equalization factors from data/simulation ratio.
-	
 	
 	Returns:
 		tuple: Tuple containing:
@@ -781,7 +780,122 @@ def pinConc(vec,bkgdVal,normVal,axes=None,debug=False,tvec=None,color='b'):
 		
 	return vecPinned
 
+def computeFitLikelihoodProfiles(fit,epsPerc=0.1,steps=100,debug=False):
+	
+	"""Computes likelihood profile of all parameters fitted in fit.
+	
+	.. warning:: Since we don't yet fit the loglikelihood function, we only compute the 
+	   SSD. Even though the SSD is proportional to the loglikelihood, it should be used
+	   carefully.
+		   
+	See also :py:func:`pyfrp.modules.pyfrp_fit_module.computeLikehoodProfile`.
+	
+	Args:
+		fit (pyfrp.subclasses.pyfrp_fit.fit): Fit object.
+		
+	Keyword Args:
+		epsPerc (float): Percentage of variation.
+		steps (int): Number of values around optimal parameter value.
+		debug (bool): Show debugging messages
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* names (list): List of parameter names.
+			* xvaryVec (List): List of parameter variation arrays.
+			* SSDsVec (list): List of corresponding SSDs. 
+	
+	"""
+	
+	x=fit.resultsToVec()
+	names=fit.getFittedParameterNames()
+	
+	xvaryVec=[]
+	SSDsVec=[]
+	
+	for i in range(len(x)):
+		xvary,SSDs=computeLikelihoodProfile(x,fit,i,epsPerc=epsPerc,steps=steps,debug=debug)
+		xvaryVec.append(xvary)
+		SSDsVec.append(SSDs)
+		
+	return names,xvaryVec,SSDsVec
+	
+def computeLikelihoodProfile(xOpt,fit,idx,steps=100,epsPerc=0.1,debug=False):
+	
+	"""Computes likelihood profile of parameter with index idx of fit.
+	
+	.. warning:: Since we don't yet fit the loglikelihood function, we only compute the 
+	   SSD. Even though the SSD is proportional to the loglikelihood, it should be used
+	   carefully.
+	
+	Args:
+		xOpt (list): Vector with optimal parameters.
+		fit (pyfrp.subclasses.pyfrp_fit.fit): Fit object.
+		idx (int): Index of parameter in xOpt of which profile is calculated.
+		
+	Keyword Args:
+		epsPerc (float): Percentage of variation.
+		steps (int): Number of values around optimal parameter value.
+		debug (bool): Show debugging messages
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* xvary (numpy.ndarray): Array with varied parameter.
+			* SSDs (list): Corresponding SSDs. 
+	
+	"""
+	
+	xvary=np.linspace((1-epsPerc)*xOpt[idx],(1+epsPerc)*xOpt[idx],steps)
+	
+	SSDs=[]
+	
+	for xv in xvary:
+		
+		x=list(xOpt)
+		x[idx]=xv
+		
+		SSDs.append(FRAPObjFunc(x,fit,debug,None,False))
+	
+	return xvary, SSDs
+	
+def plotFitLikehoodProfiles(fit,epsPerc=0.1,steps=100,debug=False,axes=None):
+	
+	"""Computes and plots likelihood profile of all parameters fitted in fit.
+	
+	.. warning:: Since we don't yet fit the loglikelihood function, we only plot the 
+	   SSD. Even though the SSD is proportional to the loglikelihood, it should be used
+	   carefully.
+		   
+	See also :py:func:`pyfrp.modules.pyfrp_fit_module.computeFitLikehoodProfiles`.
+	
+	Args:
+		xOpt (list): Vector with optimal parameters.
+		fit (pyfrp.subclasses.pyfrp_fit.fit): Fit object.
+		idx (int): Index of parameter in xOpt of which profile is calculated.
+		
+	Keyword Args:
+		epsPerc (float): Percentage of variation.
+		steps (int): Number of values around optimal parameter value.
+		debug (bool): Show debugging messages
+		
+	Returns:
+		list: List of matplotlib.axes objects used for plotting.
+	
+	"""
+	
+	names,xvaryVec,SSDs=computeFitLikelihoodProfiles(fit,epsPerc=0.1,steps=100,debug=False)
+	xOpt=fit.resultsToVec()
+	
+	if axes==None:
+		fig,axes=pyfrp_plot_module.makeSubplot([int(np.ceil(len(names)/2.)),2],sup="Profile Likehoods",show=True)
 
+	for i in range(len(names)):
+		pyfrp_plot_module.plotTS(xvaryVec[i],SSDs[i],color='k',ax=axes[i],title=names[i])
+	
+	
+	return axes
+		
 
 
 
