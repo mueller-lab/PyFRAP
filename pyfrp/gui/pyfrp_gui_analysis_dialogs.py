@@ -226,6 +226,8 @@ class analysisDialog(pyfrp_gui_basics.basicSettingsDialog):
 		if folder=='':
 			return
 		
+		folder=pyfrp_misc_module.slashToFn(folder)
+		
 		self.analysis.setFnPre(folder)
 		
 		self.parent.lastopen=folder

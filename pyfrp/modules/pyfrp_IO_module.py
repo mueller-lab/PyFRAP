@@ -259,11 +259,20 @@ def writeTableToCSV(l,header,fn,col=False):
 	"""
 	
 	if col:
+		
+		lengths=[]
+		for i in range(len(l)):
+			lengths.append(len(l[i]))
+		maxL=max(lengths)
+		
 		table=[]
-		for i in range(len(l[0])):
+		for i in range(maxL):
 			row=[]
 			for j in range(len(l)):
-				row.append(l[j][i])
+				try:
+					row.append(l[j][i])
+				except IndexError:
+					row.append("")
 			table.append(row)
 	else:
 		table=l

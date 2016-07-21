@@ -638,7 +638,23 @@ class embryo:
 		except ValueError:
 			printError("ROI "+ r.name+ " is not in ROIs list of embryo "+self.name+".")
 			return -1
+	
+	def addROI(self,roi):
+		
+		"""Adds ROI to ``ROIs`` list.
+		
+		Args:
+			roi (pyfrp.subclasses.pyfrp_ROI.ROI): A PyFRAP ROI.
 			
+		Returns:
+			list: Updated ROIs list.
+		
+		"""
+	
+		self.ROIs.append(roi)
+		
+		return self.ROIs
+	
 	def newROI(self,name,Id,zmin='-inf',zmax='inf',color='b',asMaster=False):
 		
 		"""Creates new simple :py:class:`pyfrp.subclasses.pyfrp_ROI.ROI` object
@@ -2055,11 +2071,18 @@ class embryo:
 			r.pinAllTS(bkgdVal=bkgdVal,normVal=normVal,bkgdValSim=bkgdValSim,normValSim=normValSim,debug=debug)
 		return self.ROIs	
 			
-	def printAllAttr(self):
+	def printAllAttr(self,full=False):
 		
 		"""Prints out all attributes of embryo object.""" 
 		
 		printAllObjAttr(self)
+		
+		if full:
+			self.geometry.printDetails()
+			self.analysis.printAllAttr()
+			self.simulation.printAllAttr()
+			self.simulation.mesh.printAllAttr()
+				
 		
 	def isAnalyzed(self):
 		
@@ -2337,16 +2360,28 @@ class embryo:
 		
 		return AICs, deltaAICs,weights, acc,ks,ns	
 	
-	#def compareFits(self,crit='corrAIC',ROIs=None,sigma=1,fromSSD=True,thresh=None):
+	def getRimFactorByPx(self,radius,px):
 		
-		#"""
+		r"""Returns the correct rimFactor if a rim of with ``px`` in a 
+		ROI of radius ``radius`` is desired.
 		
-		#"""
+		Rim factor :math:`f` is then given by:
 		
-		#if 
-		#for fit in self.fits:
+		.. math:: f=1-\frac{p}{r},
+		
+		where :math:`p` is ``px`` and :math:`r` is ``radius``.
+		
+		Args:
+			radius (float): Radius of ROI.
+			px (float): Number of pixels that rim should be wide.
 			
+		Returns:
+			float: Calculated rim factor.
 		
+		"""
+		
+		return 1-px/radius
+	
 	
 	
 	#def grabDataDetails(self):

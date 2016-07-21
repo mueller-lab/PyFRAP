@@ -930,7 +930,7 @@ class ROI(object):
 		self.setSimVec([])
 		return self
 	
-	def plotData(self,ax=None,color=None,linewidth=1,legend=True,linestyle='-'):
+	def plotData(self,ax=None,color=None,linewidth=1,legend=True,linestyle='-',label=None):
 		
 		"""Plot data vector of ROI.
 		
@@ -951,12 +951,15 @@ class ROI(object):
 		if color==None:
 			color=self.color
 		
+		if label==None:
+			label=self.name + ' simulated'
+		
 		ax = pyfrp_plot_module.plotTS(self.embryo.tvecData,self.dataVec,ax=ax,linewidth=linewidth,color=color,label=self.name + ' data',
 		title="Data",sup=self.name+" data",linestyle=linestyle,legend=legend)
 		
 		return ax
 	
-	def plotDataPinned(self,ax=None,color=None,linewidth=1,legend=True,linestyle='-'):
+	def plotDataPinned(self,ax=None,color=None,linewidth=1,legend=True,linestyle='-',label=None):
 		
 		"""Plot pinned data vector of ROI.
 		
@@ -977,12 +980,15 @@ class ROI(object):
 		if color==None:
 			color=self.color
 		
+		if label==None:
+			label=self.name + ' simulated'
+		
 		ax = pyfrp_plot_module.plotTS(self.embryo.tvecData,self.dataVecPinned,ax=ax,linewidth=linewidth,color=color,label=self.name + ' data',
 		title="Data Pinned",sup=self.name+" data",linestyle=linestyle,legend=legend)
 		
 		return ax
 	
-	def plotSim(self,ax=None,color=None,linewidth=1,legend=True,linestyle='--'):
+	def plotSim(self,ax=None,color=None,linewidth=1,legend=True,linestyle='--',label=None):
 		
 		"""Plot simulation vector of ROI.
 		
@@ -1003,12 +1009,15 @@ class ROI(object):
 		if color==None:
 			color=self.color
 		
+		if label==None:
+			label=self.name + ' simulated'
+		
 		ax = pyfrp_plot_module.plotTS(self.embryo.simulation.tvecSim,self.simVec,ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' simulated',title="Simulation",sup=self.name+" simulation",linestyle=linestyle,legend=legend)
+		label=label,title="Simulation",sup=self.name+" simulation",linestyle=linestyle,legend=legend)
 			
 		return ax
 	
-	def plotSimPinned(self,ax=None,color=None,linewidth=1,legend=True,linestyle='--'):
+	def plotSimPinned(self,ax=None,color=None,linewidth=1,legend=True,linestyle='--',label=None):
 		
 		"""Plot pinned simulation vector of ROI.
 		
@@ -1028,6 +1037,9 @@ class ROI(object):
 		
 		if color==None:
 			color=self.color
+		
+		if label==None:
+			label=self.name + ' simulated'
 		
 		ax = pyfrp_plot_module.plotTS(self.embryo.simulation.tvecSim,self.simVecPinned,ax=ax,linewidth=linewidth,color=color,
 		label=self.name + ' ' + ' simulated',title="Simulation Pinned",sup=self.name+" simulation",linestyle=linestyle,legend=legend)
@@ -1386,7 +1398,7 @@ class ROI(object):
 			fit.dataVecsFitted.insert(fit.ROIsFitted.index(self),[])
 			return []
 		
-	def plotFit(self,fit,ax=None,color=None,linewidth=1,legend=True,title=None,linestyles=['-','-.']):
+	def plotFit(self,fit,ax=None,color=None,linewidth=1,legend=True,title=None,linestyles=['-','-.'],show=True):
 		
 		"""Plot fit for ROI.
 		
@@ -1398,6 +1410,7 @@ class ROI(object):
 			linestyles (list): Linestyles of data and simulation.
 			linewidth (float): Linewidth of plot.
 			legend (bool): Show legend.
+			show (bool): Show figure.
 			
 		Returns:
 			matplotlib.axes: Axes used for plotting.	
@@ -1411,10 +1424,10 @@ class ROI(object):
 			title="Fit"+fit.name
 			
 		ax = pyfrp_plot_module.plotTS(fit.tvecFit,self.getFittedVec(fit),ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' ' + fit.name,title=title,sup=self.name+" fitted",linestyle=linestyles[1],legend=legend)
+		label=self.name + ' ' + fit.name,title=title,sup=self.name+" fitted",linestyle=linestyles[1],legend=legend,show=show)
 		
 		ax = pyfrp_plot_module.plotTS(fit.tvecFit,self.getdataVecFitted(fit),ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' ' + fit.name,title=title,sup=self.name+" fitted",linestyle=linestyles[0],legend=legend)
+		label=self.name + ' ' + fit.name,title=title,sup=self.name+" fitted",linestyle=linestyles[0],legend=legend,show=show)
 		
 		return ax
 	
@@ -1542,7 +1555,7 @@ class ROI(object):
 			
 		return fnOut
 	
-	def adaptRefineInMesh(self,nNodesReq,factor=3.,addZ=15.,zIncrement=1.,fIncrement=1.,nNodesMax='inf',debug=False):
+	def adaptRefineInMesh(self,nNodesReq,factor=3.,addZ=15.,zIncrement=1.,fIncrement=1.,nNodesMax='inf',debug=False,ROIReq=None):
 		
 		"""Refines mesh inside ROI adaptively until a given number of nodes inside ROI 
 		is reached.
@@ -1557,6 +1570,9 @@ class ROI(object):
 		.. note:: If the new number of nodes in the ROI exceeds ``nNodesMax``, will revert the last step
 		   and perform the other operation, e.g. increasing ``addZ`` instead of ``factor`` and vice versa.
 		
+		.. note:: If ``ROIReq`` is given, will try to refine in ``self`` such that ``ROIReq`` has at least ``nNodesReq``
+		   mesh nodes. If it is not given, ``nNodesReq`` refers to the nodes in ``self``.
+		
 		Args:
 			nNodesReq (int): Desired number of nodes inside ROI.
 		
@@ -1567,6 +1583,7 @@ class ROI(object):
 			fIncrement (float): Stepsize of refinement factor.
 			nNodesMax (float): Maximum number of nodes allowed in ROI.
 			debug (bool): Print debugging messages.
+			ROIReq (pyfrp.subclasses.pyfrp_ROI.ROI): The ROI object that is referred to with nNodesReq.
 			
 		Returns:
 			int: Final number of nodes in ROI.
@@ -1577,29 +1594,46 @@ class ROI(object):
 		nNodesMax=pyfrp_misc_module.translateNPFloat(nNodesMax)
 		
 		#Get current node numbers
-		self.computeMeshIdx(self.embryo.simulation.mesh.mesh)
-		nNodes=len(self.meshIdx)
-		nNodesAll=self.embryo.simulation.mesh.getNNodes()
+		if ROIReq==None:
+			self.computeMeshIdx(self.embryo.simulation.mesh.mesh)
+			nNodes=len(self.meshIdx)
+			nNodesAll=self.embryo.simulation.mesh.getNNodes()
+		else:
+			ROIReq.computeMeshIdx(ROIReq.embryo.simulation.mesh.mesh)
+			nNodes=len(ROIReq.meshIdx)
+			nNodesROIReq=len(ROIReq.meshIdx)
+			nNodesAll=ROIReq.embryo.simulation.mesh.getNNodes()
+		nNodesROI=len(self.meshIdx)
 		
 		#Init flags
 		mode=0
 		i=0
 		
-		#As long as 
+		#As long as requirement isn't met, refine
 		while nNodes<nNodesReq:
-			
 			
 			self.refineInMesh(factor=factor,addZ=addZ,findIdxs=True,debug=False,run=True)
 			
-			nNodesNew=len(self.meshIdx)
+			#Compute updated idxs
 			nNodesAllNew=self.embryo.simulation.mesh.getNNodes()
+			if ROIReq==None:
+				nNodesNew=len(self.meshIdx)
+			else:
+				ROIReq.computeMeshIdx(ROIReq.embryo.simulation.mesh.mesh)
+				nNodesNew=len(ROIReq.meshIdx)
+				nNodesROIReqNew=len(ROIReq.meshIdx)
+			nNodesROINew=len(self.meshIdx)
 			
+			#Print out current status
 			if debug:
 				print "Iteration ", i, ". "
 				print "Current parameters: addZ = ", addZ, " factor = ", factor 
 				print "Total mesh nodes: ", nNodesAllNew
-				print "Mesh Nodes in ROI before refinement: " , nNodes, " and after ", nNodesNew, "."
+				print "Mesh Nodes in ROI before refinement: " , nNodesROI, " and after ", nNodesROINew, "."
+				if ROIReq!=None:
+					print "Mesh Nodes in ROIReq before refinement: " , nNodesROIReq, " and after ", nNodesROIReqNew, "."
 			
+			#Check if nNodes requirement is met
 			if nNodesNew<nNodesReq:
 				if nNodesAllNew==nNodesAll:
 					if debug: 
@@ -1611,7 +1645,8 @@ class ROI(object):
 						print "nNodes not large enough yet, will increase factor by ",fIncrement,". \n"
 					factor=factor+fIncrement
 					mode=1
-					
+			
+			#Check if maximum number of nodes was exceeded
 			elif nNodesNew>nNodesMax:
 				if debug:
 					print "Number of nodes exceeded maximum allowed number", nNodesMax, "."
@@ -1631,8 +1666,13 @@ class ROI(object):
 						
 			i=i+1
 			
+			#Update old counter
 			nNodes=nNodesNew
 			nNodesAll=nNodesAllNew
+			nNodesROI=nNodesROINew
+			if ROIReq!=None:
+				nNodesROIReq=nNodesROIReqNew
+			
 		return nNodes
 				
 	def printDetails(self):
@@ -1643,22 +1683,61 @@ class ROI(object):
 		printAllObjAttr(self)
 		print 
 	
-	def plotSimConcProfile(self,phi,ax=None,direction='x'):
+	def plotSimConcProfile(self,phi,ax=None,direction='x',mode='normal',nbins=20,color=None,label=None,legend=False):
 		
 		"""Plots concentration profile of solution variable in 
 		single direction.
+		
+		``mode`` can be either ``"normal"`` or ``"hist"``. If ``mode="hist"``, will plot a histogram with ``nbins`` bins using
+		:py:func:`pyfrp.modules.pyfrp_misc_module.simpleHist`.
+		
+		.. note:: ``direction`` sets in which direction the profile should be plotted. if ``direction="r"``, then function
+		   will plot a radial profile and uses ``self.embryo.geometry.center`` as center if ROI does not have a center,
+		   else uses center of ROI.
+		
+		.. note:: Will create axes if not given via ``ax``.
+		
+		Example:
+		
+		Grab ROI:
+		
+		>>> sl=emb.getROIByName("Slice")
+		
+		Make some plot:
+		
+		>>> fig,axes=pyfrp_plot_module.makeSubplot([2,2])
+		
+		Plot some concentration profiles:
+		
+		>>> ax=sl.plotSimConcProfile(emb.simulation.IC,mode='hist',color='g',label='direction = x',nbins=100,ax=axes[0],legend=False)
+		>>> ax=sl.plotSimConcProfile(emb.simulation.IC,mode='hist',direction='y',color='r',label='direction = y',nbins=100,ax=axes[1],legend=False)
+		>>> ax=sl.plotSimConcProfile(emb.simulation.IC,mode='hist',direction='r',color='b',nbins=100,label='direction = r',ax=axes[2],legend=False)
+		>>> ax=sl.plotSimConcProfile(emb.simulation.IC,mode='normal',direction='r',color='b',label='direction = r',ax=axes[3],legend=False)
+		
+		.. image:: ../imgs/pyfrp_ROI/plotSimConcProfile.png
 		
 		Args:
 			phi (fipy.CellVariable): Solution variable
 			
 		Keyword Args:
 			ax (matplotlib.axes): Axes to be plotted in.
-			direction (str): Direction to be plotted (x/y/z).
-		
+			direction (str): Direction to be plotted (x/y/z/r).
+			color (str): Color of plot.
+			legend (bool): Show legend.
+			label (str): Label of plot.
+			nbins (int): Number of bins of histogram.
+			mode (str): Either ``normal`` or ``hist``.
+			
 		Returns:
 			matplotlib.axes: Matplotlib axes used for plotting.
 		
 		"""
+		
+		if color==None:
+			color=self.color
+		if label==None:
+			label=self.name
+		
 		
 		if ax==None:
 			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Concentration profile"],sup=self.name+" phi")
@@ -1670,16 +1749,28 @@ class ROI(object):
 			x=self.embryo.simulation.mesh.mesh.y
 		elif direction=='z':
 			x=self.embryo.simulation.mesh.mesh.z
+		elif direction=='r':
+			if hasattr(self,'center'):
+				center=self.center
+			else:
+				center=self.embryo.geometry.center
+			x=np.sqrt((self.embryo.simulation.mesh.mesh.x-center[0])**2+(self.embryo.simulation.mesh.mesh.y-center[1])**2)
 		else:
 			printError('Direction '+ direction+ 'unknown. Will not plot.')
 			return ax
 		
 		x=np.asarray(x)[self.meshIdx]
-		v=np.asarray(phi.value)[self.meshIdx]
+		if hasattr(phi,'value'):
+			v=np.asarray(phi.value)[self.meshIdx]
+		else:
+			v=np.asarray(phi)[self.meshIdx]
+			
+		vSorted,xSorted=pyfrp_misc_module.sortListsWithKey(v,x)
 		
-		xSorted,vSorted=pyfrp_misc_module.sortListsWithKey(v,x)
+		if mode=='hist':
+			xSorted,vSorted=pyfrp_misc_module.simpleHist(xSorted,vSorted,bins=nbins)
 		
-		pyfrp_plot_module.plotTS(xSorted,vSorted,color=self.color,label=self.name,legend=True)
+		pyfrp_plot_module.plotTS(xSorted,vSorted,color=color,label=label,legend=legend,ax=ax)
 		ax.set_xlabel(direction)
 		ax.set_ylabel("Concentration")
 		

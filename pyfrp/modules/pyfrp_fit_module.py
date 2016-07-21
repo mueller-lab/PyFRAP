@@ -589,7 +589,9 @@ def FRAPObjFunc(x,fit,debug,ax,returnFit):
 	try:
 		fit,tvecScaled,tvecData,scaledSimVecs,dataVecs = scaleROIs(fit,Dnew)
 	except ValueError:
-		printWarning("Scaling failed with Dnew = " + str(Dnew))
+		if debug:
+			printWarning("Scaling failed with Dnew = " + str(Dnew))
+		
 		if returnFit:
 			return fit
 		else:	

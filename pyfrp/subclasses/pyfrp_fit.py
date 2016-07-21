@@ -544,7 +544,7 @@ class fit:
 		
 		return self.DOptPx, self.prodOpt, self.degrOpt, self.DOptMu
 	
-	def plotFit(self,ax=None,legend=True,title=None):
+	def plotFit(self,ax=None,legend=True,title=None,show=True):
 		
 		"""Plots fit, showing the result for all fitted ROIs.
 		
@@ -556,6 +556,7 @@ class fit:
 			ax (matplotlib.axes): Axes used for plotting.
 			legend (bool): Show legend.
 			title (str): Title of plot.
+			show (bool): Show plot.
 		
 		Returns:
 			matplotlib.axes: Axes used for plotting.
@@ -563,7 +564,7 @@ class fit:
 		"""
 		
 		for r in self.ROIsFitted:
-			ax=r.plotFit(self,ax=ax,legend=legend,title=title)
+			ax=r.plotFit(self,ax=ax,legend=legend,title=title,show=show)
 			
 		return ax
 	
@@ -582,6 +583,12 @@ class fit:
 		printObjAttr('MeanRsq',self)
 		
 		return True
+	
+	def printAllAttr(self):
+		
+		"""Prints out all attributes of fit object.""" 
+		
+		printAllObjAttr(self)
 	
 	def resultsToDict(self):
 		

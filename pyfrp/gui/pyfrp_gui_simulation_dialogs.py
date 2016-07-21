@@ -61,6 +61,10 @@ class simulationSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		
 		self.simulation = simulation
 		
+		#Buttons
+		self.btnOptTvec=QtGui.QPushButton('opt. tEnd from D')
+		self.btnOptTvec.connect(self.btnOptTvec, QtCore.SIGNAL('clicked()'), self.getOptTvecSim)
+		
 		#Labels
 		self.lblD = QtGui.QLabel("D:", self)
 		self.lblProd = QtGui.QLabel("Prod:", self)
@@ -70,6 +74,8 @@ class simulationSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		self.lblICmode = QtGui.QLabel("IC Mode:", self)
 		self.lblTimeScale = QtGui.QLabel("Time Scaling:", self)
 		
+		self.lblTEnd = QtGui.QLabel("TEnd:", self) 
+		
 		#LineEdits
 		self.qleD = QtGui.QLineEdit(str(self.simulation.D))
 		self.qleProd = QtGui.QLineEdit(str(self.simulation.prod))
@@ -77,12 +83,15 @@ class simulationSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		
 		self.qleSteps = QtGui.QLineEdit(str(self.simulation.stepsSim))
 		
+		self.qleTEnd = QtGui.QLineEdit(str(self.simulation.tvecSim[-1]))
+		
 		self.doubleValid=QtGui.QDoubleValidator()
 		self.intValid=QtGui.QIntValidator()
 		
 		self.qleD.setValidator(self.doubleValid)
 		self.qleProd.setValidator(self.doubleValid)
 		self.qleDegr.setValidator(self.doubleValid)
+		self.qleTEnd.setValidator(self.doubleValid)
 		
 		self.qleSteps.setValidator(self.intValid)
 		
@@ -90,6 +99,7 @@ class simulationSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		self.qleProd.editingFinished.connect(self.setProd)
 		self.qleDegr.editingFinished.connect(self.setDegr)
 		self.qleSteps.editingFinished.connect(self.setSteps)
+		self.qleTEnd.editingFinished.connect(self.setTEnd)
 		
 		#ComboBox
 		self.comboIC = QtGui.QComboBox(self)
@@ -119,12 +129,18 @@ class simulationSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		
 		self.grid.addWidget(self.lblSteps,1,3)
 		self.grid.addWidget(self.lblTimeScale,2,3)
+		self.grid.addWidget(self.lblTEnd,3,3)
 		
 		self.grid.addWidget(self.qleSteps,1,4)
 		self.grid.addWidget(self.comboTS,2,4)
+		self.grid.addWidget(self.qleTEnd,3,4)
+		self.grid.addWidget(self.btnOptTvec,4,4)
+		
 		
 		self.grid.addWidget(self.lblICmode,1,5)
 		self.grid.addWidget(self.comboIC,1,6)
+		
+		
 		
 		self.setWindowTitle("Simulation Settings")
 		
@@ -156,13 +172,22 @@ class simulationSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		self.comboIC.setCurrentIndex(self.simulation.ICmode-1)
 			
 	def initComboTS(self):
-		if np.diff(self.simulation.tvecSim)[0]==np.diff(self.simulation.tvecSim)[-1]:
-			self.comboTS.setCurrentIndex(0)
+		if self.simulation.isLogTimeScale():
+			self.comboTS.setCurrentIndex(1)
 		else:
 			self.comboTS.setCurrentIndex(0)
-
-
-			
+	
+	def setTEnd(self):
+		self.simulation.setTEnd(float(str(self.qleTEnd.text())))
+		
+	def getOptTvecSim(self):
+		maxExp, ok = QtGui.QInputDialog.getDouble(self, "Maximum expected diffusion coefficient","Enter expected diffusion coefficient (px^2/s):", 50, 0)
+		
+		if ok:
+			self.simulation.getOptTvecSim(maxExp)
+			self.qleTEnd.setText(str(float(self.simulation.tvecSim[-1])))
+	
+		
 #===================================================================================================================================
 #Dialogs for simulation progress
 #===================================================================================================================================

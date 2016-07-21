@@ -157,6 +157,8 @@ def analyzeDataset(analysis,signal=None,embCount=None,debug=False,debugAll=False
 		#Process Image
 		img = processImg(img,analysis.process,flatteningMask,bkgdMask,preMask,analysis.dataOffset,debug=debugAll)
 		
+		
+		
 		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		#Compute concentrations
 		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -237,20 +239,31 @@ def convSkio2NP(img):
 	
 	return np.asarray(img)
 	
-def genFakeIC(res,valIn,valOut,offset,sidelength,radius,center,rim,add_rim_from_radius,fill=0.,debug=False):
+def genFakeIC(res,valIn,valOut,offset,sidelength,radius,center,fill=0.,debug=False):
 	
 	"""Create fake image consisting of circular ROI with pixel value valOut
 	and a square ROI centered inside circle with pixel value valIn. 
 	
 	.. note:: If ``fill=np.nan``, then :py:func:`pyfrp.modules.pyfrp_sim_module.applyInterpolatedICs` will 
 	   not work.
-	   
+	
+	.. image:: ../imgs/pyfrp_img_module/genFakeIC.png
+	
 	Args:
 		res (int): Resolution of desired image.
 		valIn (float): Value inside bleached region.
 		valOut (float): Value outside of bleached region.
 		offset (numpy.ndarray): Offset of bleached square.
-		sidelength (float): Sidelength of
+		sidelength (float): Sidelength of bleached square.
+		radius (float): Radius of circular ROI.
+		center (list): Center of circular ROI.
+		
+	Keyword Args:	
+		fill (float): Fill value for everything outside of circular domain.
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		numpy.ndarray: Generated image.
 	
 	"""
 	
@@ -284,7 +297,48 @@ def genFakeIC(res,valIn,valOut,offset,sidelength,radius,center,rim,add_rim_from_
 	
 	return vals
 
-
+def genFakeSigmoidIC(res,valIn,valOut,rJump,rate,radius,center,fill=0.,debug=False):
+	
+	"""Create fake image consisting of circular ROI with pixel value valOut
+	that decays with a sigmoid function towards center.
+	
+	.. note:: If ``fill=np.nan``, then :py:func:`pyfrp.modules.pyfrp_sim_module.applyInterpolatedICs` will 
+	   not work.
+	
+	.. image:: ../imgs/pyfrp_img_module/genFakeSigmoidIC.png
+	
+	Args:
+		res (int): Resolution of desired image.
+		valIn (float): Value inside bleached region.
+		valOut (float): Value outside of bleached region.
+		radius (float): Radius of circular ROI.
+		center (list): Center of circular ROI.
+		rate (float): Decay rate of sigmoid.
+		rJump (float): Radius at which decay happens.
+		
+	Keyword Args:	
+		fill (float): Fill value for everything outside of circular domain.
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		numpy.ndarray: Generated image.
+	
+	"""
+	
+	#Coordinate system
+	X,Y=np.meshgrid(np.arange(res),np.arange(res))
+	
+	#Compute distance from center for each point
+	r=np.sqrt((X-center[0])**2+(Y-center[1])**2)
+	
+	#Compute sigmoid function
+	img=valIn+(valOut-valIn)/(1+np.exp(-rate*(r-rJump)))
+	
+	#Apply fill value
+	img[np.where(r>radius)]=fill
+	
+	return img
+	
 def meanConc(idxX,idxY,vals,debug=False):
 	
 	"""Returns mean concentration over given indices. 
@@ -333,7 +387,7 @@ def meanExtConc(idxX,idxY,img,concRim,numExt,addRimImg,debug=False):
 	concNum=len(idxX)
 	
 	#Check if I want to add rim
-	if addRimImg:	
+	if addRimImg:
 		
 		#We assume that the concentration in all extended pixels is equals the concRim and add it numExt times to overall concentration 
 		concSum=concSum+numExt*concRim
@@ -403,15 +457,15 @@ def flipQuad(img,debug=False,testimg=False):
 				raw_input()
 				
 		#Grab max/min values of original image	
-		org_max=img.max()
-		org_min=img.min()
+		orgMax=img.max()
+		orgMin=img.min()
 		
 		#Save original image
-		org_img=img.copy()
+		orgImg=img.copy()
 		
 		#Create figure
 		fig,axes = pyfrp_plot_module.makeSubplot([1,3],titles=["Original image","Flipped image before normalization","Flipped image after normalization"],sup="flipQuad debugging output")
-		a=axes[0].imshow(img,vmin=org_min,vmax=org_max)
+		a=axes[0].imshow(img,vmin=orgMin,vmax=orgMax)
 		plt.colorbar(a)
 			
 	#Grab image resolution
@@ -440,15 +494,15 @@ def flipQuad(img,debug=False,testimg=False):
 		
 		print "======= flipQuad debugging output ======="
 		print "Corner check: "
-		print "Original Image corners: ",  org_img[0,0],org_img[0,-1],org_img[-1,0],org_img[-1,-1]
-		print "Original Image average: ", (org_img[0,0]+org_img[0,-1]+org_img[-1,0]+org_img[-1,-1])/4.
+		print "Original Image corners: ",  orgImg[0,0],orgImg[0,-1],orgImg[-1,0],orgImg[-1,-1]
+		print "Original Image average: ", (orgImg[0,0]+orgImg[0,-1]+orgImg[-1,0]+orgImg[-1,-1])/4.
 		print "Flipped Image corners: ", img[0,0],img[0,-1],img[-1,0],img[-1,-1]
 		print "Flipped image: ", img[-1,-1]
 		
 		print
 		
 		print "Unique check: "
-		print "Original Image #values ", unique(org_img)
+		print "Original Image #values ", unique(orgImg)
 		print "Flipped Image #values ", unique(img)
 		
 		
@@ -475,33 +529,33 @@ def unflipQuad(img,debug=False,testimg=False):
 		if testimg:
 			
 			#Generate fake ICs with optimal settings
-			img=gen_fake_IC(2*img.shape[0],0,1,[256.5-50,256.5-50],100,256,[256.5,256.5],101,0)
+			img=genFakeIC(2*img.shape[0],0,1,[256.5-50,256.5-50],100,256,[256.5,256.5],101,0)
 			
 			#Flip fake ICs
 			img=flipQuad(img)
 				
 		#Grab max/min values of original image	
-		org_max=img.max()
-		org_min=img.min()
+		orgMax=img.max()
+		orgMin=img.min()
 		
 		#Save original image
-		org_img=img.copy()
+		orgImg=img.copy()
 		
 		#Create figure
 		fig,axes = pyfrp_plot_module.makeSubplot([2,2],titles=["Original image","Before first flip","After first flip","After second flip"],sup="unflipQuad debugging output")
 	
-		a=axes[0].imshow(img,vmin=org_min,vmax=org_max)
+		a=axes[0].imshow(img,vmin=orgMin,vmax=orgMax)
 		plt.colorbar(a)
 	
 	#Make new empty image
-	new_img=np.zeros((2*img.shape[0],2*img.shape[1]))
+	newImg=np.zeros((2*img.shape[0],2*img.shape[1]))
 	
 	#Grab image resolution
-	res=np.shape(new_img)[0]
+	res=np.shape(newImg)[0]
 	
 	#Assign first quadrant to empty image
-	new_img[:res/2,res/2:]=img
-	img=new_img
+	newImg[:res/2,res/2:]=img
+	img=newImg
 	
 	#Plot result
 	if debug:
@@ -637,6 +691,86 @@ def loadImg(fn,enc,dtype='float'):
 	img=img.astype(dtype)
 	
 	return img
+
+def saveImg(img,fn,enc="uint16",scale=True,maxVal=None):
+	
+	"""Saves image as tif file.
+	
+	``scale`` triggers the image to be scaled to either the maximum
+	range of encoding or ``maxVal``. See also :py:func:`scaleToEnc`.
+	
+	Args:
+		img (numpy.ndarray): Image to save.
+		fn (str): Filename.
+		
+	Keyword Args:	
+		enc (str): Encoding of image.
+		scale (bool): Scale image.
+		maxVal (int): Maximum value to which image is scaled.
+	
+	Returns:
+		str: Filename.
+	
+	"""
+	
+	#Fill nan pixels with 0
+	img=np.nan_to_num(img)
+	
+	#Scale img
+	img=scaleToEnc(img,enc,maxVal=maxVal)
+	skimage.io.imsave(fn,img)
+	
+	return fn
+
+def scaleToEnc(img,enc,maxVal=None):
+	
+	"""Scales image to either the maximum
+	range of encoding or ``maxVal``.
+	
+	Possible encodings: 
+	
+		* 4bit
+		* 8bit
+		* 16bit
+		* 32bit
+	
+	Args:
+		img (numpy.ndarray): Image to save.
+		enc (str): Encoding of image.
+		
+	Keyword Args:	
+		maxVal (int): Maximum value to which image is scaled.
+	
+	Returns:
+		numpy.ndarray: Scaled image.
+	
+	"""
+	
+	#Get maximum intensity of encoding
+	if "16" in enc:
+		maxValEnc=2**16-1
+	elif "8" in enc:
+		maxValEnc=2**8-1
+	elif "4" in enc:
+		maxValEnc=2**4-1
+	elif "32" in enc:
+		maxValEnc=2**32-1
+	
+	#See if maxVal is greater than maxValEnc
+	if maxVal!=None:
+		maxVal=min([maxVal,maxValEnc])
+	else:
+		maxVal=maxValEnc
+		
+	#Scale image
+	factor=maxVal/img.max()
+	img=img*factor
+
+	#Convert to encoding
+	img=img.astype(enc)
+	
+	return img
+	
 
 def normImg(img,imgPre,dataOffset=1.,debug=False):
 	
@@ -1197,7 +1331,13 @@ def radialImgHist(img,center,nbins=10,byMean=True,maxR=None):
 def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle='-',fullOutput=False,maxR=None,plotBinSize=False,label='',legend=False,linewidth=1.):
 	
 	"""Plots radial histogram of image from center.
-		
+	
+	Example:
+	
+	>>> axes=pyfrp_img_module.plotRadialHist(emb.simulation.ICimg,emb.geometry.getCenter(),nbins=100)
+	
+	.. image:: ../imgs/pyfrp_img_module/plotRadialHist.png
+	
 	Args:
 		img (numpy.ndarray): Image to be profiled
 		center (list): Center of image.
@@ -1207,7 +1347,7 @@ def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle
 		byMean (bool): Norm bins by number of items in bin.
 		maxR (float): Maximum radius considered.
 		plotBinSize (bool): Include number of items in bin on secondary axis.
-		ax (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
+		axes (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
 		color (str): Color of plot.
 		linestyle (str): Linestyle of plot.
 		fullOutput (bool): Also return result arrays from radialImgHist ?
@@ -1229,7 +1369,7 @@ def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle
 	bins,binsMid,histY,binY=radialImgHist(img,center,nbins=nbins,byMean=byMean,maxR=maxR)
 	
 	if axes==None:
-		fig,axes = pyfrp_plt.make_subplot([1,1],titles=["Histogram"],sup="Histogram")
+		fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Histogram"],sup="Histogram")
 		ax=axes[0]
 		if plotBinSize:
 			ax2=ax.twinx()
@@ -1273,7 +1413,13 @@ def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle
 def plotRadialProfile(img,center,ax=None,color='r',linestyle='-',fullOutput=False,linewidth=1.):
 	
 	"""Plots radial profile of image from center.
-		
+	
+	Example:
+	
+	>>> ax=pyfrp_img_module.plotRadialProfile(emb.simulation.ICimg,emb.geometry.getCenter(),color='g')
+	
+	.. image:: ../imgs/pyfrp_img_module/plotRadialProfile.png
+	
 	Args:
 		img (numpy.ndarray): Image to be profiled
 		center (list): Center of image.
@@ -1297,7 +1443,7 @@ def plotRadialProfile(img,center,ax=None,color='r',linestyle='-',fullOutput=Fals
 	r,v=computeRadialProfile(img,center)
 	
 	if ax==None:
-		fig,axes = pyfrp_plt.make_subplot([1,1],titles=["Profile"],sup="Profile")
+		fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Profile"],sup="Profile")
 		ax=axes[0]
 		
 	ax.plot(r,v,color=color,linewidth=linewidth)
@@ -1668,8 +1814,41 @@ def runFijiMacro(macroPath,macroArgs,fijiBin=None):
 		print cmd
 		return -1	
 	
+def getImgSmoothness(arr):
+
+	r"""Returns smoothness of img. 
 	
+	Smoothness :math:`s` is computed as:
 	
+	.. math:: s=\frac{d_{\mathrm{max}}}{\bar{d}}
+	
+	where :math:`d_{\mathrm{max}}` is the maximum derivation from the nearest neighbour over the whole array, and 
+	:math:`\bar{d}` the average derivation.
+	
+	Args:
+		arr (numpy.ndarray): Some image.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* s (float): Smoothmess coefficient.
+			* dmax(float): Maximum diff.
+		
+	"""
+	
+	#Convert to np
+	arr=np.array(arr)
+	
+	#Compute diffs
+	diffs=[abs(np.diff(arr,axis=0)),abs(np.diff(arr,axis=1))]
+	
+	#dmax
+	dmax=max([diffs[0].max(),diffs[1].max()])
+	
+	#dbar
+	dbar=np.mean(np.vstack((abs(np.diff(arr,axis=0)),abs(np.diff(arr,axis=1).T))))
+
+	return dmax/dbar,dmax
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Functions that still need testing

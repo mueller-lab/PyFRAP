@@ -42,10 +42,16 @@ import pyfrp_mesh
 #PyFRAP modules
 from pyfrp.modules import pyfrp_plot_module
 from pyfrp.modules import pyfrp_sim_module
+from pyfrp.modules import pyfrp_img_module
+from pyfrp.modules import pyfrp_idx_module
+from pyfrp.modules import pyfrp_misc_module
 from pyfrp.modules.pyfrp_term_module import *
 
 #Plotting
 import matplotlib.pyplot as plt
+
+#itertools 
+import itertools
 
 #===========================================================================================================================================================================
 #Class definitions
@@ -56,9 +62,7 @@ class simulation(object):
 	"""PyFRAP simulation class. 
 	
 	Stores all important properties about how FRAP simulation is performed, such as:
-	
-		
-	
+
 	"""
 	
 	
@@ -73,6 +77,8 @@ class simulation(object):
 		self.restoreDefaults()
 		
 	def restoreDefaults(self):
+		
+		"""Restores default parameters for simulations."""
 		
 		#PDE specific
 		self.D=50.
@@ -94,15 +100,102 @@ class simulation(object):
 		self.stepsSim=3000
 		self.tvecSim=np.linspace(self.embryo.tStart,self.embryo.tEnd,self.stepsSim)
 		
-		#Integration specific (deprecated)
-		#self.avgMode=0
-		#self.addRimSim=0
-		#self.intSteps=512
-		#self.integrationMethod=2
+		#Save simulation
+		self.saveSim=False
+		self.vals=[]
 		
-		#Debugging (deprecated)
-		#self.debug=0
+		#Solver details
+		self.solver="PCG"
+		self.iterations=1000
+		self.tolerance=1E-10
+	
+	def setSolver(self,solver):
 		
+		"""Sets solver to use.
+		
+		Implemented solvers are:
+		
+			* PCG
+			* LU
+			
+		Args:
+			solver (str): Solver to use.
+		
+		Returns:
+			str: Current solver
+		
+		"""
+		
+		if solver not in ["PCG","LU"]:
+			printWarning("Unknown solver " + solver +". This might lead to problems later")
+		
+		self.solver=solver
+		return self.solver
+	
+	def getSolver(self):
+		
+		"""Returns current solver.
+		
+		Returns:
+			str: Current solver
+		
+		"""
+	
+		return self.solver
+	
+	def setTolerance(self,tol):
+		
+		"""Sets tolerance of solver.
+			
+		Args:
+			tol (float): New tolerance.
+		
+		Returns:
+			float: Current tolerance.
+		
+		"""
+	
+		self.tolerance=tolerance
+		return self.tolerance
+	
+	def getTolerance(self):
+		
+		"""Returns current tolerance.
+		
+		Returns:
+			str: Current solver
+		
+		"""
+		
+		
+		return self.tolerance
+	
+	def setIterations(self,tol):
+		
+		"""Sets iterations of solver.
+			
+		Args:
+			tol (float): New iterations.
+		
+		Returns:
+			float: Current iterations.
+		
+		"""
+	
+		self.iterations=iterations
+		return self.iterations
+	
+	def getIterations(self):
+		
+		"""Returns current iterations.
+		
+		Returns:
+			str: Current solver
+		
+		"""
+		
+		return self.iterations
+	
 	def setICMode(self,m):
 		
 		"""Sets the mode of initial conditions.
@@ -194,6 +287,8 @@ class simulation(object):
 			
 		
 		"""
+		
+		self.updateVersion()
 		
 		if not self.embryo.checkROIIdxs()[1]:
 			self.embryo.computeROIIdxs()
@@ -375,7 +470,50 @@ class simulation(object):
 		
 		return xInt, yInt, f
 	
-	def computeInterpolatedIC(self,roi=None):
+	def computeInterpolatedSolutionToImg(self,vals,roi=None):
+		
+		"""Interpolates solution back onto 2D image.
+		
+		Uses ``scipy.interpolate.griddata``, see also http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.griddata.html
+		
+		If ``roi`` is specified, will only interpolate nodes of this ROI. 
+		
+		Keyword Args:
+			vals (numpy.ndarray): Solution to be interpolated.
+			roi (pyfrp.subclasses.pyfrp_ROI.ROI): A PyFRAP ROI.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* X (numpy.ndarray): Meshgrid x-coordinates.
+				* Y (numpy.ndarray): Meshgrid y-coordinates.
+				* interpIC (numpy.ndarray): Interpolated solution.
+		
+		"""
+		
+		#Get image resolution and center of geometry
+		res=self.ICimg.shape[0]
+		
+		#Build Empty Img
+		X,Y=np.meshgrid(np.arange(res),np.arange(res))
+		
+		#Get cellcenters
+		x,y,z=self.mesh.mesh.getCellCenters()
+		
+		if roi!=None:
+			xInt=x[roi.meshIdx]
+			yInt=y[roi.meshIdx]
+			val=vals[roi.meshIdx]
+		else:
+			xInt=x
+			yInt=y
+			val=vals
+		
+		interpIC=interp.griddata((xInt,yInt),val,(X,Y),method='linear')
+		
+		return X,Y,interpIC
+	
+	def computeInterpolatedICImg(self,roi=None):
 		
 		"""Interpolates ICs back onto 2D image.
 		
@@ -395,25 +533,7 @@ class simulation(object):
 		
 		"""
 		
-		#Get image resolution and center of geometry
-		res=self.ICimg.shape[0]
-		
-		#Build Empty Img
-		X,Y=np.meshgrid(np.arange(res),np.arange(res))
-		
-		#Get cellcenters
-		x,y,z=self.mesh.mesh.getCellCenters()
-		
-		if roi!=None:
-			xInt=x[roi.meshIdx]
-			yInt=y[roi.meshIdx]
-			val=self.IC[roi.meshIdx]
-		else:
-			xInt=x
-			yInt=y
-			val=self.IC
-		
-		interpIC=interp.griddata((xInt,yInt),val,(X,Y),method='linear')
+		X,Y,interpIC=self.computeInterpolatedSolutionToImg(self.IC,roi=roi)
 		
 		return X,Y,interpIC
 		
@@ -517,7 +637,30 @@ class simulation(object):
 			pyfrp_plot_module.redraw(ax)
 		
 		return axes	
+	
+	def setTEnd(self,T):
 		
+		"""Updates timevector of simulation to end at new time point.
+		
+		.. note:: Keeps scaling.
+		
+		Args:
+			T (float): New end timepoint.
+			
+		Returns:
+			numpy.ndarray: New simulation time vector.
+		
+		"""
+		
+		wasLog=self.isLogTimeScale()
+			
+		self.tvecSim=np.linspace(self.embryo.tStart,T,self.stepsSim)
+		
+		if wasLog:
+			self.toLogTimeScale()
+		
+		return self.tvecSim
+	
 	def getOptTvecSim(self,maxDExpectedPx):
 		
 		r"""Generates time vector that is optimal to fit 
@@ -704,6 +847,33 @@ class simulation(object):
 		
 		return self.degr
 	
+	def setSaveSim(self,b):
+		
+		"""Sets flag if simulation should be saved.
+		
+		Args:
+			b (bool): New flag value.
+		
+		Returns:
+			bool: Updated flag value.
+		
+		"""
+		
+		self.saveSim=b
+		
+		return self.saveSim
+	
+	def getSaveSim(self):
+		
+		"""Returns flag if simulation should be saved.
+		
+		Returns:
+			bool: Current flag value.
+		
+		"""
+		
+		return self.saveSim
+	
 	def isLogTimeScale(self):
 		
 		"""Returns if time spacing of simulation is logarithmic.
@@ -808,6 +978,200 @@ class simulation(object):
 			ax=r.plotSolutionVariable(phi,ax=ax,vmin=vmin,vmax=vmax,plane=plane,zs=zs,zdir=zdir,colorbar=colorbar)
 				
 		return ax
+	
+	def getSolutionVariableSmoothness(self,vals,roi=None):
+		
+		r"""Returns smoothness of solution variable. 
+	
+		Smoothness :math:`s` is computed as:
+		
+		.. math:: s=\frac{d_{\mathrm{max}}}{\bar{d}}
+		
+		where :math:`d_{\mathrm{max}}` is the maximum derivative from the nearest neighbour over the whole array, and 
+		:math:`\bar{d}` the average derivation. Derivative from nearest neighbour is computed by
+		
+		.. math:: d=\frac{c-c_\mathrm{nearest}}{||\textbf{x}-\textbf{x}_\mathrm{nearest}||_2}
+		
+		.. note:: If ``roi!=None``, will only evaluate smoothness over this specific ROI.
+		
+		.. warning:: Nearest neighbour finding algorithm is slow. Should be changed to ``ckdTree`` at some point.
+		
+		Keyword Args:
+			roi (pyfrp.subclasses.pyfrp_ROI.ROI): PyFRAP ROI.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* s (float): Smoothmess coefficient.
+				* dmax(float): Maximum diff.
+			
+		"""
+		
+		#Retrieve values
+		x,y,z=self.mesh.mesh.getCellCenters()
+	
+		if roi!=None:
+			idxs=roi.meshIdx
+		else:	
+			idxs=range(len(x))
+		
+		x=np.asarray(x)[idxs]
+		y=np.asarray(y)[idxs]
+		z=np.asarray(z)[idxs]
+		vals=np.asarray(self.IC)[idxs]
+		
+		#Nearest neighbour
+		idx,dist=pyfrp_idx_module.nearestNeighbour3D(x,y,z,x,y,z,k=2,minD=0)
+		#Compute deriv
+		diffs=[]
+		for i in range(len(idx)):
+			diffs.append(abs(vals[i]-vals[idx[i]]))
+	
+		#Get derivative
+		deriv=np.asarray(diffs)/np.asarray(dist)	
+				
+		#Normalize
+		s=max(deriv)/(np.mean(deriv))
+		
+		return s,max(deriv)
+		
+	def getICSmoothness(self,roi=None):
+		
+		"""Returns smoothness of initial condition. 
+	
+		See also :py:func:`getSolutionVariableSmoothness`.
+		
+		.. note:: If ``roi!=None``, will only evaluate smoothness over this specific ROI.
+		
+		Keyword Args:
+			roi (pyfrp.subclasses.pyfrp_ROI.ROI): PyFRAP ROI.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* s (float): Smoothmess coefficient.
+				* dmax(float): Maximum diff.
+			
+		"""
+		
+		return self.getSolutionVariableSmoothness(self.IC,roi=roi)
+		
+	def getICImgSmoothness(self):
+		
+		r"""Returns smoothness of initial condition. 
+	
+		See also :py:func:`pyfrp.modules.pyfrp_img_module.getICImgSmoothness`.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* s (float): Smoothmess coefficient.
+				* dmax(float): Maximum diff.
+		"""	
+		
+		return pyfrp_img_module.getImgSmoothness(self.ICimg)
+		
+	def rerun(self,signal=None,embCount=None,showProgress=True,debug=False):
+		
+		"""Reruns simulation.
+		
+		.. note:: Only works if simulation has been run before with ``saveSim`` enabled.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_sim_module.rerunReactDiff`.
+		
+		Keyword Args:
+			signal (PyQt4.QtCore.pyqtSignal): PyQT signal to send progress to GUI.
+			embCount (int): Counter of counter process if multiple datasets are simulated. 
+			debug (bool): Print debugging messages and show debugging plots.
+			showProgress (bool): Print out progress.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_simulation.simulation: Updated simulation instance.
+			
+		
+		"""
+		
+		if not self.embryo.checkROIIdxs()[1]:
+			self.embryo.computeROIIdxs()
+		
+		pyfrp_sim_module.rerunReactDiff(self,signal=signal,embCount=embCount,showProgress=showProgress,debug=debug)
+		return True
+		
+	def updateVersion(self):
+		
+		"""Updates simulation object to current version, making sure that it possesses
+		all attributes.
+		
+		Creates a new simulation object and compares ``self`` with the new simulation object.
+		If the new simulation object has a attribute that ``self`` does not have, will
+		add attribute with default value from the new simulation object.
+		
+		Returns:
+			pyfrp.subclasses.pyfrp_simulation.simulation: ``self``
+			
+		"""
+		
+		simtemp=simulation(self.embryo)
+		pyfrp_misc_module.updateObj(simtemp,self)
+		return self
+		
+	def printAllAttr(self):
+		
+		"""Prints out all attributes of embryo object.""" 
+		
+		print "Simulation of embryo ", self.embryo.name, " Details."
+		printAllObjAttr(self)
+		
+	def mapOntoImgs(self,tvec=None,roi=None,fnOut="",showProgress=True):
+		
+		"""Maps simulation solution back onto images.
+		
+		See also :py:func:`computeInterpolatedSolutionToImg`.
+		
+		.. note:: Only works if simulation has been run before and saved via ``saveSim``.
+		
+		Keyword Args:
+			tvec (numpy.ndarray): Timepoints at which solution is saved to image.
+			roi (pyfrp.subclasses.pyfrp_ROI.ROI): PyFRAP ROI.
+			fnOut (str): Path where images should be saved.
+			showProgress (bool): Show progress of output.
+		
+		Returns:
+			bool: True if everything ran through, False else.
+		"""
+		
+		#Check if anything has been saved
+		if len(self.vals)==0:
+			printError("Simulation hasn't been saved, will not do anything.")
+			return False
+			
+		#Grab tvec	
+		if tvec==None:
+			tvec=self.tvecSim
+		
+		#Build filename
+		fnOut=pyfrp_misc_module.slashToFn(fnOut)+self.embryo.name+"_sim_"
+		
+		#Output
+		print "Saving ", len(tvec), " images of simulation to ", fnOut
+		
+		#Loop all tvec and build images
+		j=0
+		for i,t in enumerate(self.tvecSim):
+			
+			if t >= tvec[j]:
+				j=j+1
+				
+				X,Y,img=self.computeInterpolatedSolutionToImg(self.vals[i],roi=roi)
+				
+				enum=(len(str(len(tvec)))-len(str(j)))*"0"+str(j)
+				pyfrp_img_module.saveImg(img,fnOut+"t"+enum+".tif")
+				
+				if showProgress:
+					print "Saved for t=", t ," to ", fnOut+"t"+enum+".tif"
+			
+		return True
+		
 		
 		
 		

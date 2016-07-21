@@ -56,7 +56,10 @@ def getAvgConc(val,cvs,ind):
 	"""
 	
 	if len(ind)>0:
-		return sum(val.value[ind]*cvs[ind])/sum(cvs[ind])
+		if hasattr(val,'value'):
+			return sum(val.value[ind]*cvs[ind])/sum(cvs[ind])
+		else:
+			return sum(val[ind]*cvs[ind])/sum(cvs[ind])
 	else:
 		return 0.
 

@@ -703,7 +703,14 @@ class mesh(object):
 			pyfrp_plot_module.redraw(ax)
 		
 		return axes
-			
+	
+	def printAllAttr(self):
+		
+		"""Prints out all attributes of mesh object.""" 
+		
+		print "Mesh of embryo ", self.simulation.embryo.name, " Details."
+		printAllObjAttr(self)
+	
 	def addBoxField(self,volSizeIn,rangeX,rangeY,rangeZ,newFile=True,fnAppendix="_box",comment="newField",run=False):
 		
 		"""Adds box field to mesh.

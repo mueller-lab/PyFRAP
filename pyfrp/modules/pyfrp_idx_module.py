@@ -1114,6 +1114,81 @@ def maskMeshByDistance(x,y,d,grid):
 	
 	return idxs,
 
+def nearestNeighbour3D(xi,yi,zi,x,y,z,k=1,minD=None):
+	
+	"""Finds k nearest neighbour to points.
+	
+	Uses http://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.cKDTree.query.html#scipy.spatial.cKDTree.query .
+	
+	Example:
+	
+	>>> from pyfrp.modules import pyfrp_idx_module
+	>>> import numpy as np
+	>>> import matplotlib.pyplot as plt
+
+	>>> N=50
+
+	>>> x=np.random.random(N)
+	>>> y=np.random.random(N)
+	>>> z=np.random.random(N)
+
+	>>> xi=[0.,1.]
+	>>> yi=[0.,1.]
+	>>> zi=[0.,1.]
+
+	>>> idx,dist=pyfrp_idx_module.nearestNeighbour3D(xi,yi,zi,x,y,z,k=1)
+
+	>>> fig=plt.figure()
+	>>> ax=fig.add_subplot(111,projection='3d')
+	>>> ax.scatter(x,y,z,color='k')
+
+	>>> ax.scatter(x[idx[0]],y[idx[0]],z[idx[0]],color='b',s=50)
+	>>> ax.scatter(x[idx[1]],y[idx[1]],z[idx[1]],color='r',s=50)
+	>>> ax.scatter(xi,yi,zi,color='g',s=50)
+	
+	>>> plt.show()
+	
+	.. image:: ../imgs/pyfrp_idx_module/neighbours3D.png
+	
+	
+	.. note:: To avoid that the a point is nearest neighbour to itself, one can choose 
+	   minD=0 to avoid that points with distances ``0`` are returned. Note, if this could
+	   be the possibility, one might have at least ``k=2`` to avoid an empty return.
+	
+	Args:
+		xi (numpy.ndarray): x-coordinates of points to find neighbours to.
+		yi (numpy.ndarray): x-coordinates of points to find neighbours to.
+		zi (numpy.ndarray): x-coordinates of points to find neighbours to.
+		x (numpy.ndarray): x-coordinates of possible neighbours.
+		y (numpy.ndarray): x-coordinates of possible neighbours.
+		z (numpy.ndarray): x-coordinates of possible neighbours.
+	
+	Keyword Args:
+		k (int): Number of neighbours to find per point.
+		minD (float): Minimum distance nearest neighbour must be away.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* indexes (list): Indices of k -closest neighbours per point.
+			* dists (list): Distances of k -closest neighbours per point.
+
+	"""
+	
+	#Convert x/y into useful array
+	xyz=np.vstack((x,y,z))
+	xyzi=np.vstack((xi,yi,zi))
+	
+	#Compute distances to nearest neighbors
+	tree = cKDTree(xyz.T)
+	dists, indexes = tree.query(xyzi.T,k=k)
+	
+	if minD!=None:
+		indexes=indexes[dists>minD]
+		dists=dists[dists>minD]
+		
+	return indexes, dists
+	
 	
 	
 

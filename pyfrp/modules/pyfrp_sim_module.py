@@ -101,6 +101,9 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	for r in simulation.embryo.ROIs:
 		r.resetSimVec()
 	
+	#Empty list to put simulation values in
+	vals=[]
+	
 	print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 	print "Starting simulation"
 	print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -168,20 +171,8 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	for r in simulation.embryo.ROIs:
 		r.getSimConc(phi,append=True)
 	
-	#for r in simulation.embryo.ROIs:
-		#if "Slice" in r.name:
-			#print r.name, r.getNMeshNodes(), r.getZExtend(), r.simVec[0]
-			#r.plotSolutionVariable(phi)
-			
-			
-			#simulation.embryo.getROIByName("Slice").plotSolutionVariable(phi)
-	
-	#ax=None
-	#for r in simulation.embryo.ROIs:
-		#print r.name
-		#ax=r.plotSimConcProfile(phi,ax=ax)
-	
-	#raw_input()
+	if simulation.saveSim:
+		vals.append(np.asarray(phi.value).copy())
 	
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	#Solving PDE
@@ -193,10 +184,12 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	avgTime=0
 	stepTime=0
 	
-	#mySolver = LinearLUSolver(iterations=10, tolerance=5e-1)
-	mySolver = LinearPCGSolver(tolerance=1e-15,iterations=5000)
-	
-	#solvers.DefaultSolver
+	#Choose solver
+	if simulation.solver=="LU":
+		mySolver = LinearLUSolver(iterations=simulation.iterations, tolerance=simulation.tolerance)
+	elif simulation.solver=="PCG":
+		mySolver = LinearPCGSolver(tolerance=simulation.tolerance,iterations=simulation.iterations)
+
 	for step in range(simulation.stepsSim-1):
 		
 		#Compute timestep duration 
@@ -214,7 +207,11 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 			r.getSimConc(phi,append=True)
 		
 		avgTime=avgTime+(time.clock()-avgStart)
-			
+		
+		#Save simulation array if necessary
+		if simulation.saveSim:
+			vals.append(np.asarray(phi.value).copy())
+		
 		#Print Progress
 		if showProgress:
 			currPerc=int(100*step/float(simulation.stepsSim))
@@ -233,7 +230,65 @@ def simulateReactDiff(simulation,signal=None,embCount=None,showProgress=True,deb
 	print "Avg time: ", avgTime, " in %:", avgTime/(time.clock()-startTimeSim)*100
 	print "Simulation done after", time.clock()-startTimeTotal
 	
+	#Save to simulation object only
+	if simulation.saveSim:
+		simulation.vals=list(vals)
+	
 	return simulation
+
+def rerunReactDiff(simulation,signal=None,embCount=None,showProgress=True,debug=False):
+	
+	"""Reruns simulation by extracting values from ``simulation.vals``.
+	
+	Performs the following steps:
+		
+		* Resets ``simVecs`` of all ROIs.
+		* Extracts values per ROI from ``simulation.vals``.
+	
+	.. note:: Only works if simulation has been run before with ``saveSim`` enabled.
+	
+	Args: 
+		simulation (pyfrp.subclasses.pyfrp_simulation.simulation): Simulation object.
+	
+	Keyword Args:
+		signal (PyQt4.QtCore.pyqtSignal): PyQT signal to send progress to GUI.
+		embCount (int): Counter of counter process if multiple datasets are analyzed. 
+		debug (bool): Print final debugging messages and show debugging plots.
+		showProgress (bool): Show simulation progress. 
+		
+	Returns: 
+		pyfrp.subclasses.pyfrp_simulation.simulation: Updated simulation object.
+	"""
+	
+	#Check if can be rerun
+	if len(simulation.vals)==0:
+		printWarning("Values have not been saved for this simulation. Turn on saveSim to do that. Won't do anything for now.")
+		return simulation
+	
+	#Reset simulation vecs
+	for r in simulation.embryo.ROIs:
+		r.resetSimVec()
+	
+	#Loop through vals
+	for i,val in enumerate(simulation.vals):
+		for r in simulation.embryo.ROIs:
+			r.getSimConc(val,append=True)
+		
+		#Print Progress
+		if showProgress:
+			currPerc=int(100*i/float(len(simulation.vals)))
+			
+			if signal==None:
+				sys.stdout.write("\r%d%%" %currPerc)  
+				sys.stdout.flush()
+			else:	
+				if embCount==None:
+					signal.emit(currPerc)
+				else:
+					signal.emit(currPerc,embCount)
+		
+	return simulation	
+	
 
 def applyROIBasedICs(phi,simulation):
 	
@@ -310,9 +365,7 @@ def applyIdealICs(phi,simulation,bleachedROI=None,valOut=None):
 	phi.value[ind]=bleachedROI.dataVec[0]
 	
 	return phi	
-		
-	
-	
+			
 def applyRadialICs(phi,simulation,radSteps=15,debug=False):
 	
 	"""Applies radially averaged image data to solution variable as IC.
@@ -362,7 +415,7 @@ def applyRadialICs(phi,simulation,radSteps=15,debug=False):
 	return phi
 		
 
-def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False):
+def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False,fixNeg=True):
 	
 	"""Interpolates initial conditions onto mesh.
 	
@@ -470,8 +523,32 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False):
 	#Apply interpolation
 	phi.value[ind]=f.ev(x[ind],y[ind])
 	
+	#Fix negative values if selected
+	if fixNeg:
+		phi=fixNegValues(phi)
+	
 	return phi
-
+	
+def fixNegValues(phi,minVal=None):
+	
+	"""Fixes negative values in solution variable. 
+	
+	Interpolation sometimes returns negative values if gradients are really steep. Will
+	apply ``minVal`` to such nodes. 
+	
+	If ``minVal==None``, will take smallest non-negative value of solution value.
+	
+	
+	
+	"""
+	
+	if minVal==None:
+		minVal=min(phi.value[np.where(phi.value>=0)[0]])
+	
+	phi.value[np.where(phi.value<0)[0]]=minVal
+	
+	return phi
+	
 def sigmoidBleachingFct(x,y,z,center,rJump,sliceHeight,maxVal=1.,maxMinValPerc=0.25,minMinValPerc=0.25,rate=0.1):
 	
 	r"""Generates sigmoid scaling function for imperfect bleaching at

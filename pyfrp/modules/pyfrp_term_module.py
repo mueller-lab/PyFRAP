@@ -115,7 +115,7 @@ def printAllObjAttr(obj,maxL=5):
 	
 	for item in vars(obj):
 		printAttr(item,vars(obj)[str(item)],maxL=maxL)
-		
+	print	
 	return True
 
 def printAttr(name,attr,maxL=5):

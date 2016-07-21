@@ -667,6 +667,13 @@ class analysis:
 		printDict(self.process)
 		return
 	
+	def printAllAttr(self):
+		
+		"""Prints out all attributes of analysis object.""" 
+		
+		print "Analysis of embryo ", self.embryo.name, " Details."
+		printAllObjAttr(self)
+	
 	def parm2Process(self,b,key,val):
 		
 		"""Adds/Removes a new option to ``process`` dictionary.

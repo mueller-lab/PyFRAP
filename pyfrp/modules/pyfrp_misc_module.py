@@ -239,8 +239,8 @@ def appDtype(l,s,dtype='int'):
 	
 	"""Appends string to list and convert to right dtype.
 	
-	..note:: Will use ``s.strip()`` before conversion to avoid
-	  unnecessary spaces.
+	.. note:: Will use ``s.strip()`` before conversion to avoid
+	   unnecessary spaces.
 	  
 	.. note:: Will remove quotes from strings using :py:func:`removeQuoteSignsFromString`.  
 	
@@ -502,11 +502,11 @@ def findDateString(s,sep='',lendate=8,yearreq='',monthreq='',debug=False):
 			if i+2<=len(idxs)-1:
 				if lenRange(idx)+lenRange(idxs[i+1])+lenRange(idxs[i+2])+3==lendate:
 					if s[max(idx):min(idxs[i+1])]==sep and s[max(idx):min(idxs[i+1])]==sep:
-						lmin,lmax=range_lists([idx,idxs[i+1],idxs[i+2]])
+						lmin,lmax=rangeLists([idx,idxs[i+1],idxs[i+2]])
 						f=True
 		else:
 			if lenRange(idx)+1==lendate:
-				lmin,lmax=range_lists([idx])
+				lmin,lmax=rangeLists([idx])
 				f=True
 		if f:		
 			if lmax+1==len(s):

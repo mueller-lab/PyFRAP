@@ -583,7 +583,7 @@ def redraw(ax):
 	
 	return ax
 
-def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,legend=True,linestyle='-'):
+def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,legend=True,linestyle='-',show=True):
 	
 	"""Plot timeseries all-in-one function.
 	
@@ -600,6 +600,7 @@ def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,leg
 		sup (str): Figure title.
 		title (str): Axes title.
 		label (str): Label for legend.
+		show (bool): Show figure.
 	
 	Returns:
 		matplotlib.axes: Axes used for plotting.
@@ -611,7 +612,7 @@ def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,leg
 		return None
 	
 	if ax==None:
-		fig,axes = makeSubplot([1,1],titles=[title],sup=sup,tight=False)
+		fig,axes = makeSubplot([1,1],titles=[title],sup=sup,tight=False,show=show)
 		ax=axes[0]
 	else:
 		ax.set_title(title)
