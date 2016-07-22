@@ -293,6 +293,7 @@ class OverrideInstall(install):
 		fnDL=str(folderFn)
 		
 		#Mount dmg file (Here the user need to read through LICENSE, don't know how to fix this)
+		print "executing: ", 'hdiutil attach '+folderFn 
 		os.system('hdiutil attach '+folderFn)
 		folderFn=folderFn.replace('.dmg','')
 		try:
