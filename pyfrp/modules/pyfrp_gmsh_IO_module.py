@@ -294,6 +294,14 @@ def readLine(line,parmDic,domain):
 			vcenter,idx=domain.getVertexById(vals[1])
 			vend,idx=domain.getVertexById(vals[2])
 			domain.addArc(vstart,vcenter,vend,Id=Id)
+		elif typ=="Line Loop":
+			domain.addLineLoop(Id,edgeIDs=vals)
+		elif typ=="Ruled Surface":
+			domain.addRuledSurface(Id,lineLoopID=vals[0])
+		elif typ=="Surface Loop":
+			domain.addSurfaceLoop(Id,surfaceIDs=vals)
+		elif typ=="Volume":
+			domain.addVolume(Id,surfaceLoopID=vals[0])	
 		else:
 			#This is a object like surface or volume which we don't care about
 			pass
@@ -939,6 +947,10 @@ def repairDefaultGeoFiles(debug=False):
 		return False
 	else:
 		return True
+	
+#def increaseElementIDs(fn):
+	
+	
 
 		
 

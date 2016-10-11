@@ -237,6 +237,7 @@ class mesh(object):
 		"""
 		
 		self.mesh=fipy.GmshImporter3D(fn)
+		self.fnMesh=fn
 		return self.mesh
 		
 	def setMesh(self,m):

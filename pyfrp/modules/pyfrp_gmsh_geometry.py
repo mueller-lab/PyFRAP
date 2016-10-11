@@ -46,6 +46,7 @@ import numpy as np
 import pyfrp_plot_module
 from pyfrp_term_module import *
 import pyfrp_misc_module
+import pyfrp_gmsh_IO_module
 
 #===========================================================================================================================================================================
 #Module Functions
@@ -80,9 +81,13 @@ class domain:
 	
 	Args:
 		edges (list): List of edges.
-		vertices (list): List of edges.
-		arcs (list): List of edges.
-		lines (list): List of edges.
+		vertices (list): List of vertices.
+		arcs (list): List of arcs.
+		lines (list): List of lines.
+		lineLoops (list): List of lineLoops.
+		surfaceLoops (list): List of surfaceLoops.
+		ruledSurfaces (list): List of ruledSurfaces.
+		volumes (list): List of volumes.
 		annXOffset (float): Offset of annotations in x-direction.
 		annYOffset (float): Offset of annotations in y-direction.
 		annZOffset (float): Offset of annotations in z-direction.
@@ -95,6 +100,10 @@ class domain:
 		self.vertices=[]
 		self.arcs=[]
 		self.lines=[]
+		self.lineLoops=[]
+		self.ruledSurfaces=[]
+		self.surfaceLoops=[]
+		self.volumes=[]
 		
 		self.annXOffset=3.
 		self.annYOffset=3.
@@ -266,6 +275,94 @@ class domain:
 				return e,i
 		return False,False
 	
+	def getLineLoopById(self,ID):
+		
+		"""Returns lineLoop with ID ``ID``.
+		
+		Returns ``(False,False)`` if lineLoop cannot be found.
+		
+		Args:
+			ID (int): ID of lineLoop.
+				
+		Returns:
+			tuple: Tuple containing:
+				
+				* l (pyfrp.modules.pyfrp_gmsh_geometry.lineLoop): lineLoop.
+				* i (int): Position in ``lineLoops`` list.
+		
+		"""
+		
+		for i,l in enumerate(self.lineLoops):
+			if l.Id==ID:
+				return l,i
+		return False,False
+	
+	def getRuledSurfaceById(self,ID):
+		
+		"""Returns ruledSurface with ID ``ID``.
+		
+		Returns ``(False,False)`` if ruledSurface cannot be found.
+		
+		Args:
+			ID (int): ID of ruledSurface.
+				
+		Returns:
+			tuple: Tuple containing:
+				
+				* l (pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface): ruledSurface.
+				* i (int): Position in ``ruledSurfaces`` list.
+		
+		"""
+		
+		for i,l in enumerate(self.ruledSurfaces):
+			if l.Id==ID:
+				return l,i
+		return False,False
+	
+	def getSurfaceLoopById(self,ID):
+		
+		"""Returns surfaceLoop with ID ``ID``.
+		
+		Returns ``(False,False)`` if surfaceLoop cannot be found.
+		
+		Args:
+			ID (int): ID of surfaceLoop.
+				
+		Returns:
+			tuple: Tuple containing:
+				
+				* l (pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop): surfaceLoop.
+				* i (int): Position in ``surfaceLoops`` list.
+		
+		"""
+		
+		for i,l in enumerate(self.surfaceLoops):
+			if l.Id==ID:
+				return l,i
+		return False,False
+	
+	def getVolumeById(self,ID):
+		
+		"""Returns volume with ID ``ID``.
+		
+		Returns ``(False,False)`` if volume cannot be found.
+		
+		Args:
+			ID (int): ID of volume.
+				
+		Returns:
+			tuple: Tuple containing:
+				
+				* l (pyfrp.modules.pyfrp_gmsh_geometry.volume): volume.
+				* i (int): Position in ``volumes`` list.
+		
+		"""
+		
+		for i,l in enumerate(self.volumes):
+			if l.Id==ID:
+				return l,i
+		return False,False
+	
 	def getVertexById(self,ID):
 		
 		"""Returns vertex with ID ``ID``.
@@ -364,6 +461,171 @@ class domain:
 			l.append(v.x)
 		return l
 	
+	def addLineLoop(self,Id,edgeIDs=[]):
+		
+		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.lineLoop` instance
+		with given edgeIDs. 
+			
+		Keyword Args:
+			edgeIDs (list): List of edge IDs included in line loop.
+			
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.lineLoop: New lineLoop instance.
+		
+		"""
+		
+		newId=self.getNewId(self.lineLoops,Id)
+		
+		l=lineLoop(self,edgeIDs,newId)
+		self.lineLoops.append(l)
+		
+		return l
+	
+	def addSurfaceLoop(self,Id,surfaceIDs=[]):
+		
+		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop` instance
+		with given surfaceIDs. 
+			
+		Keyword Args:
+			surfaceIDs (list): List of surface IDs included in surface loop.
+			
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop: New surfaceLoop instance.
+		
+		"""
+		
+		newId=self.getNewId(self.surfaceLoops,Id)
+		
+		l=surfaceLoop(self,surfaceIDs,newId)
+		self.surfaceLoops.append(l)
+		
+		return l
+	
+	def addRuledSurface(self,Id,lineLoopID=None):
+		
+		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface` instance
+		with given lineLoop. 
+			
+		Keyword Args:
+			lineLoopID (ID): ID of line loop.
+			
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface: New ruledSurface instance.
+		
+		"""
+		
+		newId=self.getNewId(self.surfaceLoops,Id)
+		
+		l=ruledSurface(self,lineLoopID,newId)
+		self.ruledSurfaces.append(l)
+		
+		return l
+	
+	def addVolume(self,Id,surfaceLoopID=None):
+		
+		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.volume` instance
+		with given surfaceLoop. 
+			
+		Keyword Args:
+			surfaceLoopID (ID): ID of surface loop.
+			
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.volume: New volume instance.
+		
+		"""
+		
+		newId=self.getNewId(self.volumes,Id)
+		
+		l=volume(self,surfaceLoopID,newId)
+		self.volumes.append(l)
+		
+		return l
+	
+	
+	def writeToFile(self,fn):
+		
+		"""Writes domain to file.
+		
+		Args:
+			fn (str): File path to write to.
+			
+		"""
+		
+		with open(fn,'wb') as f:
+			
+			self.writeElements("vertices",f)
+			self.writeElements("lines",f)
+			self.writeElements("arcs",f)
+			self.writeElements("lineLoops",f)
+			self.writeElements("ruledSurfaces",f)
+			self.writeElements("surfaceLoops",f)
+			self.writeElements("volumes",f)
+
+	def writeElements(self,element,f):
+			
+		"""Writes all entities of a specific element type to file.
+		
+		Possible elements are:
+		
+			* vertices
+			* lines
+			* arcs
+			* lineLoops
+			* ruledSurfaces
+			* surfaceLoops
+			* volumes
+		
+		Args:
+			element (str): Element type to write.
+			f (file): File to write to.
+			
+		"""
+	
+		pyfrp_gmsh_IO_module.writeComment(f,element)
+		for v in getattr(self,element):
+			f=v.writeToFile(f)
+		f.write("\n")
+	
+	def incrementAllIDs(self,offset):
+		
+		"""Adds offset to all entity IDs.
+		
+		Args:
+			offset (int): Offset to be added.
+			
+		"""
+		
+		self.incrementIDs(offset,"vertices")
+		self.incrementIDs(offset,"lines")
+		self.incrementIDs(offset,"arcs")
+		self.incrementIDs(offset,"lineLoops")
+		self.incrementIDs(offset,"ruledSurfaces")
+		self.incrementIDs(offset,"surfaceLoops")
+		self.incrementIDs(offset,"volumes")
+		
+	def incrementIDs(self,offset,element):
+		
+		"""Adds offset to all entity IDs.
+		
+		Possible elements are:
+		
+			* vertices
+			* lines
+			* arcs
+			* lineLoops
+			* ruledSurfaces
+			* surfaceLoops
+			* volumes
+		
+		Args:
+			offset (int): Offset to be added.
+			element (str): Element type to increment.
+		
+		"""
+		
+		for e in getattr(self,element):		
+			e.Id=e.Id+offset
+			
 class vertex:
 	
 	"""Vertex class storing information from gmsh .geo Points.
@@ -431,7 +693,24 @@ class vertex:
 		
 		self.x=x
 		return self.x
-
+	
+	def writeToFile(self,f):
+		
+		"""Writes vertex to file.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+		
+		f.write("Point("+str(self.Id)+")= {" + str(self.x[0]) + ","+ str(self.x[1])+ "," + str(self.x[2]) + "};\n" )
+		
+		return f
+	
+	
 class edge:
 	
 	"""Edge class storing information from gmsh .geo circles and lines.
@@ -542,7 +821,67 @@ class line(edge):
 		
 		return ax
 		
-
+	def getLastVertex(self,orientation):
+		
+		"""Returns last vertex of arc given a orientation.
+		
+		Orientation can be either forward (1), or reverse (-1).
+		
+		Args:
+			orientation (int): Orientation of arc.
+			
+		Returns:
+			pyfrp.pyfrp_gmsh_geometry.vertex: Vertex.
+		
+		"""
+		
+		if orientation==1:
+			return self.v2
+		elif orientation==-1:
+			return self.v1
+		else:
+			printError("Cannot return last vertex. Orientation " + str(orientation) + " unknown.")
+			return None
+	
+	def getFirstVertex(self,orientation):
+		
+		"""Returns first vertex of arc given a orientation.
+		
+		Orientation can be either forward (1), or reverse (-1).
+		
+		Args:
+			orientation (int): Orientation of arc.
+			
+		Returns:
+			pyfrp.pyfrp_gmsh_geometry.vertex: Vertex.
+		
+		"""
+		
+		if orientation==1:
+			return self.v1
+		elif orientation==-1:
+			return self.v2
+		else:
+			printError("Cannot return first vertex. Orientation " + str(orientation) + " unknown.")
+			return None
+	
+	def writeToFile(self,f):
+		
+		"""Writes line to file.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+		
+		f.write("Line("+str(self.Id)+")= {" + str(self.v1.Id) + "," + str(self.v2.Id) + "};\n" )
+		
+		return f
+	
+	
 class arc(edge):
 	
 	"""Arc class storing information from gmsh .geo cicle.
@@ -788,5 +1127,425 @@ class arc(edge):
 			
 			
 		pyfrp_plot_module.redraw(ax)
-		
 	
+	def getLastVertex(self,orientation):
+		
+		"""Returns last vertex of arc given a orientation.
+		
+		Orientation can be either forward (1), or reverse (-1).
+		
+		Args:
+			orientation (int): Orientation of arc.
+			
+		Returns:
+			pyfrp.pyfrp_gmsh_geometry.vertex: Vertex.
+		
+		"""
+		
+		if orientation==1:
+			return self.getVend()
+		elif orientation==-1:
+			return self.getVstart()
+		else:
+			printError("Cannot return last vertex. Orientation " + str(orientation) + " unknown.")
+			return None
+	
+	def getFirstVertex(self,orientation):
+		
+		"""Returns first vertex of arc given a orientation.
+		
+		Orientation can be either forward (1), or reverse (-1).
+		
+		Args:
+			orientation (int): Orientation of arc.
+			
+		Returns:
+			pyfrp.pyfrp_gmsh_geometry.vertex: Vertex.
+		
+		"""
+		
+		if orientation==-1:
+			return self.getVend()
+		elif orientation==1:
+			return self.getVstart()
+		else:
+			printError("Cannot return first vertex. Orientation " + str(orientation) + " unknown.")
+			return None
+	
+	def writeToFile(self,f):
+		
+		"""Writes arc to file.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+		
+		f.write("Circle("+str(self.Id)+")= {" + str(self.vstart.Id) + ","+ str(self.vcenter.Id)+ "," + str(self.vend.Id) + "};\n" )
+		
+		return f
+	
+class lineLoop:
+	
+	"""Lineloop class storing information from gmsh .geo.
+
+	Object has two major attributes:
+	
+		* edges (list): List of pyfrp.moduels.pyfrp_gmsh_geometry.edge objects.
+		* orientations (list): List of orientations of each element, either ``1`` or ``-1`` 
+	
+	Args:
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain loop belongs to.
+		edgeIDs (list): List of edge IDs.
+		Id (int): ID of loop.
+		
+	"""		
+	
+	def __init__(self,domain,edgeIDs,ID):
+		
+		self.domain=domain
+		self.Id=ID
+		
+		self.edges,self.orientations=self.initEdges(edgeIDs)
+		
+	def initEdges(self,IDs):
+		
+		"""Constructs ``edges`` and ``orientations`` list at object initiations 
+		from list of IDs.
+		
+		Args:
+			IDs (list): List of IDs
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* edges (list): List of pyfrp.moduels.pyfrp_gmsh_geometry.edge objects.
+				* orientations (list): List of orientations of each element, either ``1`` or ``-1`` 
+		
+		"""
+		
+		self.edges=[]
+		self.orientations=[]
+		
+		for ID in IDs:
+			self.addEdgeByID(ID)
+		
+		return self.edges,self.orientations
+		
+	def addEdgeByID(self,ID):
+		
+		"""Adds edge to lineloop.
+		
+		Args:
+			ID (int): ID of edge to be added.
+			
+		Returns:
+			list: Updated edgeIDs list.
+			
+		"""
+		
+		
+		self.edges.append(self.domain.getEdgeById(abs(ID))[0])
+		self.orientations.append(np.sign(ID))
+		
+		return self.edges
+	
+	def insertEdgeByID(self,ID,pos):
+		
+		"""Inserts edge to lineloop at position.
+		
+		Args:
+			ID (int): ID of edge to be inserted.
+			pos (int): Position at which ID to be inserted.
+			
+		Returns:
+			list: Updated edgeIDs list.
+			
+		"""
+		
+		self.edges.insert(pos,self.domain.getEdgeById(abs(ID))[0])
+		self.orientations.insert(pos,np.sign(ID))
+		
+		return self.edges
+	
+	def removeEdgeByID(self,ID):
+		
+		"""Remove edge from lineloop.
+		
+		Args:
+			ID (int): ID of edge to be removed.
+			
+		Returns:
+			list: Updated edgeIDs list.
+			
+		"""
+		
+		idx=self.edges.index(abs(ID))
+		self.edges.remove(abs(ID))
+		self.orientations.pop(idx)
+		
+		return self.edges
+	
+	def reverseEdge(self,ID):
+		
+		"""Reverses the orientation of an edge in the line loop.
+		
+		Args:
+			ID (int): ID of edge to be reversed.
+		
+		Returns:
+			list: Updated orientations list.
+			
+		"""
+		
+		self.orientations[self.edges.index(abs(ID))]=-self.orientations[self.edges.index(abs(ID))]
+		
+		return self.orientations
+		
+	def checkClosed(self,debug=False):
+		
+		"""Checks if lineLoop is closed.
+		
+		Keyword Args:
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			bool: True if closed.
+		
+		"""
+		
+		b=True
+		
+		for i in range(len(self.edges)):
+			
+			#Get ID of edge
+			edge1Temp=self.edges[i]
+			orient1=self.orientations[i]
+			
+			#Get ID of next edge
+			if i==len(self.edges)-1:
+				edge2Temp=self.edges[i+1]
+				orient2=self.orientations[i+1]
+			else:
+				edge2Temp=self.edges[0]
+				orient2=self.orientations[0]
+				
+			#Get ID of first/last vertex
+			firstVertexId=edge1Temp.getFirstVertex(orient1).Id
+			lastVertexId=edge2Temp.getLastVertex(orient2).Id
+			
+			#Check if vertices are matching
+			if firstVertexId!=lastVertexId:
+				b=False
+				
+				if debug:
+					printWarning("lineLoop with ID " + str(self.Id) + " does not close." )
+					print "Edge with ID " +str(edge1Temp.Id) + " is not matching edge with ID " + str(edge2Temp.Id)
+						
+		return b
+	
+	def writeToFile(self,f):
+		
+		"""Writes line loop to file.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+		
+		f.write("Line Loop("+str(self.Id)+")= {" )
+			
+		for i,s in enumerate(self.edges):
+			f.write(str(self.orientations[i]*s.Id))
+			if i!=len(self.edges)-1:
+				f.write(",")
+			else:
+				f.write("};\n")
+	
+		return f
+	
+class ruledSurface:
+	
+	"""ruledSurface class storing information from gmsh .geo.
+
+	Args:
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain surface belongs to.
+		loopID (int): ID of surrounding loop.
+		Id (int): ID of surface.
+		
+	"""		
+	
+	def __init__(self,domain,loopID,ID):
+		
+		self.domain=domain
+		self.Id=ID
+		
+		self.lineLoop=self.domain.getLineLoopById(loopID)[0]
+	
+	def writeToFile(self,f):
+		
+		"""Writes ruled surface to file.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+		
+		f.write("Ruled Surface("+str(self.Id)+")= {"+str(self.lineLoop.Id)+ "};\n" )
+	
+		return f
+	
+class surfaceLoop:
+	
+	"""surfaceLoop class storing information from gmsh .geo.
+
+	Args:
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain loop belongs to.
+		surfaceIDs (list): List of surfaces.
+		Id (int): ID of loop.
+		
+	"""		
+	
+	def __init__(self,domain,surfaceIDs,ID):
+		
+		self.domain=domain
+		self.Id=ID
+		
+		self.surfaces=self.initSurfaces(surfaceIDs)	
+		
+	def initSurfaces(self,IDs):
+		
+		"""Constructs ``surfaces`` list at object initiations 
+		from list of IDs.
+		
+		Args:
+			IDs (list): List of IDs.
+			
+		Returns:
+			list: List of pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface objects.
+		
+		"""
+		
+		self.surfaces=[]
+		
+		for ID in IDs:
+			self.addSurfaceByID(ID)
+		
+		return self.surfaces
+	
+	def addSurfaceByID(self,ID):
+		
+		"""Adds surface to surfaceloop.
+		
+		Args:
+			ID (int): ID of surface to be added.
+			
+		Returns:
+			list: Updated surfaceIDs list.
+			
+		"""
+		
+		self.surfaces.append(self.domain.getRuledSurfaceById(ID)[0])
+		
+		return self.surfaces
+	
+	def insertSurfaceByID(self,ID,pos):
+		
+		"""Inserts surface to surfaceloop at position.
+		
+		Args:
+			ID (int): ID of surface to be inserted.
+			pos (int): Position at which ID to be inserted.
+			
+		Returns:
+			list: Updated surfaceIDs list.
+			
+		"""
+		
+		self.surfaces.insert(pos,self.domain.getRuledSurfaceById(ID)[0])
+		
+		return self.surfaces
+	
+	def removeSurfaceByID(self,ID):
+		
+		"""Remove surface from surfaceloop.
+		
+		Args:
+			ID (int): ID of surface to be removed.
+			
+		Returns:
+			list: Updated surfaceIDs list.
+			
+		"""
+		
+		self.surfaces.remove(self.domain.getRuledSurfaceById(ID)[0])
+		
+		return self.surfaces
+	
+	def writeToFile(self,f):
+		
+		"""Writes surface loop to file.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+		
+		f.write("Surface Loop("+str(self.Id)+")= {" )
+		
+		for i,s in enumerate(self.surfaces):
+			f.write(str(s.Id))
+			if i!=len(self.surfaces)-1:
+				f.write(",")
+			else:
+				f.write("};\n")
+	
+		return f
+	
+class volume:
+
+	"""Volume class storing information from gmsh .geo.
+
+	Args:
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain surface belongs to.
+		surfaceLoopID (int): ID of surrounding surface loop.
+		Id (int): ID of surface loop.
+		
+	"""		
+	
+	def __init__(self,domain,surfaceLoopID,ID):
+		
+		self.domain=domain
+		self.Id=ID
+		
+		self.surfaceLoop=self.domain.getSurfaceLoopById(surfaceLoopID)[0]
+	
+	def writeToFile(self,f):
+		
+		"""Writes Volume to file.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+		
+		f.write("Volume("+str(self.Id)+")= {"+str(self.surfaceLoop.Id)+ "};\n" )
+	
+		return f
+				
+			
