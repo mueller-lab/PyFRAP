@@ -317,7 +317,7 @@ class OverrideInstall(install):
 		rets.append(os.system('cp -rv /Volumes/'+folderFn+'/Gmsh.app/Contents/MacOS/share/ '+ cwd))
 		rets.append(os.system('cp -rv /Volumes/'+folderFn+'/Gmsh.app/Contents/MacOS/gmsh '+ cwd))
 		
-		fnWorked=rets.index(0)
+		fnWorked=possFiles[rets.index(0)]
 		
 		#Unmount gmsh
 		os.system('hdiutil detach /Volumes/'+folderFn+'/')
