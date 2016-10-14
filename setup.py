@@ -174,8 +174,12 @@ class OverrideInstall(install):
 			shutil.rmtree(exePath)
 		except:
 			pass
-		shutil.copytree(folderFn+"/",exePath)
 		
+		if os.path.isdir(folderFn):
+			shutil.copytree(folderFn+"/",exePath)
+		else:
+			shutil.copytree(folderFn,exePath)
+				
 		#Remove downloaded files
 		os.remove(fnDL)
 		
@@ -305,17 +309,23 @@ class OverrideInstall(install):
 		
 		#Copy gmsh executable to cwd 
 		#Note: It seems to vary where gmsh executable is in mounted dmg file, hence we 
-		#just have to try out
+		#just have to try out, take the one that actually worked and remember it
+		rets=[]
+		possFiles=["bin/","share/","gmsh"]
 		
-		os.system('cp -rv /Volumes/'+folderFn+'/Gmsh.app/Contents/MacOS/bin/ '+ cwd)
-		os.system('cp -rv /Volumes/'+folderFn+'/Gmsh.app/Contents/MacOS/share/ '+ cwd)
-		os.system('cp -rv /Volumes/'+folderFn+'/Gmsh.app/Contents/MacOS/gmsh '+ cwd)
+		rets.append(os.system('cp -rv /Volumes/'+folderFn+'/Gmsh.app/Contents/MacOS/bin/ '+ cwd))
+		rets.append(os.system('cp -rv /Volumes/'+folderFn+'/Gmsh.app/Contents/MacOS/share/ '+ cwd))
+		rets.append(os.system('cp -rv /Volumes/'+folderFn+'/Gmsh.app/Contents/MacOS/gmsh '+ cwd))
+		
+		fnWorked=rets.index(0)
 		
 		#Unmount gmsh
 		os.system('hdiutil detach /Volumes/'+folderFn+'/')
-
-		self.gmshPath='executables/gmsh/bin/./gmsh'
 		
+		#Build filename of acutally copied file
+		folderFn=cwd+fnWorked
+		
+		self.gmshPath='executables/gmsh/bin/./gmsh'
 		
 		return fnDL,folderFn
 		
