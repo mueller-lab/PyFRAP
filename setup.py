@@ -238,14 +238,14 @@ class OverrideInstall(install):
 		except ImportError:
 			log.info("Cannot find wget, will not be downloading gmsh. You will need to install it later manually")	
 				
+	
+	def downloadFileIfNotExist(self,url):
 		
-	def downloadGmshWin(self,arch,gmshVersion):
-		
-		"""Downloads Gmsh from Gmsh website for Windows
+		"""Downloads URL if file does not already exist.
 		
 		Args:
-			arch (str): System architecture, e.g. 64/32.
-			gmshVersion (str): gmshVersion String, e.g. 2.12.0 .
+			url (str): URL to download.
+			
 		Returns:
 			tuple: Tuple containing:
 			
@@ -256,11 +256,36 @@ class OverrideInstall(install):
 		
 		import wget
 		
-		#Download Gmsh
-		url='http://gmsh.info/bin/Windows/gmsh-'+gmshVersion+'-Windows'+arch+'.zip'
-		folderFn=wget.download(url)
+		cwd=os.getcwd()
+		
+		if not os.path.exists(cwd+os.path.basename(url)):
+			folderFn=wget.download(url)
+		else:
+			folderFn=cwd+os.path.basename(url)
 		fnDL=str(folderFn)
 		print
+		
+		return folderFn, fnDL
+			
+	def downloadGmshWin(self,arch,gmshVersion):
+		
+		"""Downloads Gmsh from Gmsh website for Windows
+		
+		Args:
+			arch (str): System architecture, e.g. 64/32.
+			gmshVersion (str): gmshVersion String, e.g. 2.12.0 .
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* fnDL (str): Donwload filename
+				* folderFn (str): Filename of extracted download files
+			
+		"""
+		
+		#Download Gmsh
+		url='http://gmsh.info/bin/Windows/gmsh-'+gmshVersion+'-Windows'+arch+'.zip'
+		self.downloadFileIfNotExist(url)
 		
 		#Decompress
 		import zipfile 
@@ -288,13 +313,11 @@ class OverrideInstall(install):
 			
 		"""
 		
-		import wget
 		
-		#Download Gmsh
+		
+		#Download Gmsh (if file isn't there yet)
 		url='http://gmsh.info/bin/MacOSX/gmsh-'+gmshVersion+'-MacOSX'+'.dmg'
-		folderFn=wget.download(url)
-		
-		fnDL=str(folderFn)
+		self.downloadFileIfNotExist(url)
 		
 		#Mount dmg file (Here the user need to read through LICENSE, don't know how to fix this)
 		print "executing: ", 'hdiutil attach '+folderFn 
@@ -343,15 +366,10 @@ class OverrideInstall(install):
 				* folderFn (str): Filename of extracted download files
 			
 		"""
-		
-		import wget
-		
+	
 		#Download Gmsh
 		url='http://gmsh.info/bin/Linux/gmsh-'+gmshVersion+'-Linux'+arch+'.tgz'
-		
-		folderFn=wget.download(url)
-		fnDL=str(folderFn)
-		print
+		self.downloadFileIfNotExist(url)
 		
 		#Decompress
 		import tarfile
