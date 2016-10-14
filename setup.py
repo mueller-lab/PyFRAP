@@ -261,6 +261,7 @@ class OverrideInstall(install):
 		if not os.path.exists(cwd+os.path.basename(url)):
 			folderFn=wget.download(url)
 		else:
+			print cwd+os.path.basename(url) +" alreay exists, will not download."
 			folderFn=cwd+os.path.basename(url)
 		fnDL=str(folderFn)
 		print
