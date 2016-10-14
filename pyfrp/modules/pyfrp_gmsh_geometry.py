@@ -42,6 +42,9 @@ If you want to know more about gmsh, go to http://gmsh.info/doc/texinfo/gmsh.htm
 #Numpy/Scipy
 import numpy as np
 
+#String
+import string
+
 #PyFRAP modules
 import pyfrp_plot_module
 from pyfrp_term_module import *
@@ -71,6 +74,43 @@ def getAngle(vec1,vec2):
 			return getAngle(vec2,vec1)
 		return a
 
+def flipCoordinate(x,destAxis,origAxis='x',debug=False):
+	
+		"""Transforms coodinate from one axis to another by
+		rolling the coordinates, e.g. clockwise turning the 
+		point.
+		
+		``destAxis`` and ``origAxis`` are given as one of 
+		``x,y,z``. 
+		
+		Args:
+			x (numpy.ndarray): Coordinate to turn.
+			destAxis (str): Destination axis.
+			
+		Keyword Args:	
+			origAxis (str): Original axis.
+			debug (bool): Print debugging output.
+		
+		Returns:
+			numpy.ndarray: Transformed coordinate.
+		
+		"""
+		
+			
+		# Calculate differences between axis
+		axisDiff=abs(string.lowercase.index(destAxis)-string.lowercase.index(origAxis))
+		
+		# Roll
+		xnew=np.roll(x,axisDiff)
+		
+		# Print debugging messages
+		if debug:
+			print "Transforming coordinate " , x, " from axis ", origAxis, " to axis ", destAxis , "."
+			print "axisDiff = ", axisDiff
+			print "xnew = ", xnew
+		
+		return xnew 
+		
 #===========================================================================================================================================================================
 #Class definitions
 #===========================================================================================================================================================================
@@ -189,6 +229,61 @@ class domain:
 		
 		return a
 	
+	def addCircleByParameters(self,center,radius,z,volSize,plane="z"):
+		
+		"""Adds circle to domain by given center and radius.
+		
+		Will create 5 new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.vertex` objects 
+		``[vcenter,v1,v2,v3,v4]`` and four new `pyfrp.modules.pyfrp_gmsh_geometry.arc` objects
+		[a1,a2,a3,a4] and builds circle.
+		
+		Circle  will be at ``z=z`` and vertices will have mesh size ``volSize``.
+		
+		.. image:: ../imgs/pyfrp_gmsh_geometry/addCircleByParameters.png
+		
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		
+		Args:
+			center (numpy.ndarray): Center of circle.
+			radius (float): Radius of the circle.
+			z (float): Height at which circle is placed.
+			volSize (float): Height at which circle is placed.
+		
+		Keyword Args:
+			plane (str): Plane in which circle is placed.
+			
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.arc: New line instance.
+		
+		"""
+		
+		# Define coordinates
+		xcenter=flipCoordinate([center[0],center[1],z],plane,origAxis="z")
+		x1=flipCoordinate([center[0]+radius,center[1],z],plane,origAxis="z")
+		x2=flipCoordinate([center[0],center[1]+radius,z],plane,origAxis="z")
+		x3=flipCoordinate([center[0]-radius,center[1],z],plane,origAxis="z")
+		x4=flipCoordinate([center[0],center[1]-radius,z],plane,origAxis="z")
+		
+		# Add vertices
+		vcenter=self.addVertex(xcenter,volSize=volSize)
+		v1=self.addVertex(x1,volSize=volSize)
+		v2=self.addVertex(x2,volSize=volSize)
+		v3=self.addVertex(x3,volSize=volSize)
+		v4=self.addVertex(x4,volSize=volSize)
+		
+		# Add Arcs
+		a1=self.addArc(v1,vcenter,v2)
+		a2=self.addArc(v2,vcenter,v3)
+		a3=self.addArc(v3,vcenter,v4)
+		a4=self.addArc(v4,vcenter,v1)
+		
+		return [vcenter,v1,v2,v3,v4],[a1,a2,a3,a4]
+		
+		
+	#def addCylinderByParamters(self,center,radius,z,height,volSize,plane="z"):
+		
+		###NOTE: CONTINUE here
+		
 	def checkIdExists(self,Id,objList):
 		
 		"""Checks if any object in ``objList`` already has ID ``Id``.
@@ -706,7 +801,7 @@ class vertex:
 		
 		"""
 		
-		f.write("Point("+str(self.Id)+")= {" + str(self.x[0]) + ","+ str(self.x[1])+ "," + str(self.x[2]) + "};\n" )
+		f.write("Point("+str(self.Id)+")= {" + str(self.x[0]) + ","+ str(self.x[1])+ "," + str(self.x[2]) + ',' + str(self.volSize) + "};\n" )
 		
 		return f
 	

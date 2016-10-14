@@ -62,7 +62,7 @@ class fitSelector(pyfrp_gui_basics.listSelectorDialog):
 		self.singleFit=singleFit
 		
 		
-		pyfrp_gui_basics.listSelectorDialog.__init__(self,[],parent,leftTitle="Available Fits",rightTitle="Selected Fits")
+		pyfrp_gui_basics.listSelectorDialog.__init__(self,parent,[],leftTitle="Available Fits",rightTitle="Selected Fits")
 		
 		
 		
@@ -236,7 +236,7 @@ class crucialParameterSelector(pyfrp_gui_basics.listSelectorDialog):
 		
 		fittingParms=self.getFittingParms()
 		
-		pyfrp_gui_basics.listSelectorDialog.__init__(self,fittingParms,parent,leftTitle="Available Parameters",rightTitle="Selected Parameters",itemsRight=self.molecule.crucialParameters)
+		pyfrp_gui_basics.listSelectorDialog.__init__(self,parent,fittingParms,leftTitle="Available Parameters",rightTitle="Selected Parameters",itemsRight=self.molecule.crucialParameters)
 		
 		self.setWindowTitle("Select crucial parameters")
 		self.show()

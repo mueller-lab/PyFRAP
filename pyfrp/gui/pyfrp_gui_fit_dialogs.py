@@ -377,14 +377,14 @@ class fitSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		self.fit.setX0D(float(text))
 		
 	def setX0Prod(self):
-		text=str(self.qleX0D.text())
+		text=str(self.qleX0Prod.text())
 		if text=="":
 			printWarning("You must give a value for x0.")
 			return
 		self.fit.setX0Prod(float(text))
 		
 	def setX0Degr(self):
-		text=str(self.qleX0D.text())
+		text=str(self.qleX0Degr.text())
 		if text=="":
 			printWarning("You must give a value for x0.")
 			return

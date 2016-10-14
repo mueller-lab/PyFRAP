@@ -396,4 +396,23 @@ class molecule:
 			
 		return	True
 		
+	def printResults(self):
 		
+		"""Prints results summarized in :py:func:`pyfrp.subclasses.pyfrp_molecule.sumUpResults`."""
+		
+		printObjAttr('name',self)
+		printObjAttr('DOptMu',self)
+		printObjAttr('DOptMuStd',self)
+		printObjAttr('DOptMuSterr',self)
+		printObjAttr('DOptPx',self)
+		printObjAttr('DOptPxStd',self)
+		printObjAttr('DOptPxSterr',self)
+		printObjAttr('prodOpt',self)
+		printObjAttr('prodOpt',self)
+		printObjAttr('prodOptStd',self)
+		printObjAttr('prodOptSterr',self)
+		printObjAttr('degrOpt',self)
+		printObjAttr('degrOptStd',self)
+		printObjAttr('degrOptSterr',self)
+		printObjAttr('Rsq',self)
+		printObjAttr('MeanRsq',self)

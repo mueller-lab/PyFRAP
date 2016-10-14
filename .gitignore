@@ -54,6 +54,10 @@ pyfrp/temp/
 # Don't push wiki
 PyFRAP.wiki/
 
+# Don't push commit note document
+pyfrp/latest_commit.txt
+
+
 
 
 

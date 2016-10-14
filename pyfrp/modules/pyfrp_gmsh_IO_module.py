@@ -947,10 +947,42 @@ def repairDefaultGeoFiles(debug=False):
 		return False
 	else:
 		return True
+
+
 	
-#def increaseElementIDs(fn):
+#def buildCylinderDomain(startId,center,radius,height,volSizePx):
+	
+	#d=pyfrp_gmsh_geometry.domain([center])
 	
 	
+	#d.addVertex()
+	
+	#def addVertex(self,x,Id=None,volSize=None):
+		
+		#"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.vertex` instance
+		#at point ``x`` and appends it to ``vertices`` list.
+		
+		#.. note:: ``volSize`` does not have any effect on the geometry itself but is simply 
+		   #stored in the vertex object for further usage.
+		
+		#Args:
+			#x (numpy.ndarray): Coordinate of vertex.
+			
+		#Keyword Args:
+			#Id (int): ID of vertex.
+			#volSize (float): Element size at vertex.
+		
+		#Returns:
+			#pyfrp.modules.pyfrp_gmsh_geometry.vertex: New vertex instance.
+		
+		#"""
+		
+		#newId=self.getNewId(self.vertices,Id)
+		
+		#v=vertex(self,x,newId,volSize=volSize)
+		#self.vertices.append(v)	
+		
+		#return v
 
 		
 

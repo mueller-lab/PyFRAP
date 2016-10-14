@@ -1190,7 +1190,7 @@ class pyfrp(QtGui.QMainWindow):
 		
 		ret=self.selectEmbryoGenMode()
 		if ret==-1:
-			return
+			return 0
 		elif ret==0:
 			#Generate name
 			embryoNames=pyfrp_misc_module.objAttrToList(self.currMolecule.embryos,"name")
@@ -1253,7 +1253,7 @@ class pyfrp(QtGui.QMainWindow):
 		currEmbryo=self.getCurrentEmbryo()
 		
 		if self.checkSelectedNode(typ='molecule') or self.objectBar.currentItem()==None:
-			return 
+			return 0
 		
 		ret=pyfrp_gui_embryo_dialogs.embryoDialog(currEmbryo,self).exec_()
 		
@@ -1423,33 +1423,51 @@ class pyfrp(QtGui.QMainWindow):
 	def openROIManager(self):
 		
 		"""Open ROI Manager for current embryo.
+		
+		Returns:
+			int: Dialog Code (0 when cancelled, 1 when accepted.)
 		"""
 		
 		currEmbryo=self.getCurrentEmbryo()
 		if currEmbryo!=None:
 			ret=pyfrp_gui_ROI_manager.ROImanager(currEmbryo,self).exec_()
-			self.updateROIsNodeChildren()
-		return
+			
+			if ret==0:
+				return ret
+			elif ret==1:	
+				self.updateROIsNodeChildren()
+				return ret
+		return 0
 	
 	def createDefaultROIs(self):
 		
 		"""Create default ROIs for current embryo.
+		
+		Returns:
+			int: Dialog Code (0 when cancelled, 1 when accepted.)
 		"""
 		
 		currEmbryo=self.getCurrentEmbryo()
 		if currEmbryo!=None:
 			ret=pyfrp_gui_ROI_manager.defaultROIsDialog(currEmbryo,self).exec_()
-			self.updateROIsNodeChildren()
-		return
+			if ret==0:
+				return ret
+			elif ret==1:	
+				self.updateROIsNodeChildren()
+				return ret
+		return 0
 	
 	def defaultROIsWizard(self):
 		
 		"""Small Wizard that helps creating a set of default ROIs for current embryo.
+		
+		Returns:
+			int: Dialog Code (0 when cancelled, 1 when accepted.)
 		"""
 		
 		currEmbryo=self.getCurrentEmbryo()
 		if currEmbryo==None:
-			return
+			return 0
 		
 		#Select Slice ROI
 		sliceSelector = pyfrp_gui_ROI_manager.ROISelector(currEmbryo,'radialSlice',self,msg='Select Slice ROI',sliceHeight=currEmbryo.sliceHeightPx,sliceWidth=currEmbryo.sliceWidthPx,color='g',name='Slice')
@@ -1490,6 +1508,8 @@ class pyfrp(QtGui.QMainWindow):
 		currEmbryo.genDefaultROIs(center,radius,rimFactor=0.66,masterROI=sliceROI,bleachedROI=bleachedROI,rimROI=rimROI,clean=True)
 		
 		self.updateROIsNodeChildren()
+		
+		return 1
 
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Updates all ROI Idxs
@@ -1545,7 +1565,10 @@ class pyfrp(QtGui.QMainWindow):
 				ret=pyfrp_gui_geometry_dialogs.coneDialog(currEmbryo.geometry,self).exec_()	
 			else:
 				ret=pyfrp_gui_geometry_dialogs.geometryDialog(currEmbryo.geometry,self).exec_()	
-		return
+				
+			return ret
+		
+		return 0
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Open Geometry Editor for current embryo
