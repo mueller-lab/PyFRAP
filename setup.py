@@ -285,7 +285,7 @@ class OverrideInstall(install):
 		
 		#Download Gmsh
 		url='http://gmsh.info/bin/Windows/gmsh-'+gmshVersion+'-Windows'+arch+'.zip'
-		self.downloadFileIfNotExist(url)
+		folderFn, fnDL=self.downloadFileIfNotExist(url)
 		
 		#Decompress
 		import zipfile 
@@ -317,7 +317,7 @@ class OverrideInstall(install):
 		
 		#Download Gmsh (if file isn't there yet)
 		url='http://gmsh.info/bin/MacOSX/gmsh-'+gmshVersion+'-MacOSX'+'.dmg'
-		self.downloadFileIfNotExist(url)
+		folderFn, fnDL=self.downloadFileIfNotExist(url)
 		
 		#Mount dmg file (Here the user need to read through LICENSE, don't know how to fix this)
 		print "executing: ", 'hdiutil attach '+folderFn 
@@ -369,7 +369,7 @@ class OverrideInstall(install):
 	
 		#Download Gmsh
 		url='http://gmsh.info/bin/Linux/gmsh-'+gmshVersion+'-Linux'+arch+'.tgz'
-		self.downloadFileIfNotExist(url)
+		folderFn, fnDL=self.downloadFileIfNotExist(url)
 		
 		#Decompress
 		import tarfile
