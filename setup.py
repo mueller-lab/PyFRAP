@@ -348,7 +348,7 @@ class OverrideInstall(install):
 		os.system('hdiutil detach /Volumes/'+folderFn+'/')
 		
 		#Build filename of acutally copied file
-		folderFn=cwd+fnWorked
+		folderFn=cwd+"/"+fnWorked
 		
 		self.gmshPath='executables/gmsh/bin/./gmsh'
 		
