@@ -178,7 +178,7 @@ class OverrideInstall(install):
 		if os.path.isdir(folderFn):
 			shutil.copytree(folderFn+"/",exePath)
 		else:
-			shutil.copytree(folderFn,exePath)
+			shutil.copy(folderFn,exePath)
 				
 		#Remove downloaded files
 		os.remove(fnDL)
@@ -186,13 +186,23 @@ class OverrideInstall(install):
 		#Get fileList before
 		filesAfter=os.listdir('.')
 		
+		self.cleanDiff(filesBefore,filesAfter)
+		
+	def cleanDiff(self,filesBefore,filesAfter):
+		
 		#Difference between files
 		filesDiff=list(set(filesAfter)-set(filesBefore))
-		try:
-			shutil.rmtree(filesDiff[0])
-		except:
-			pass
-			
+		
+		for fn in filesDiff:
+				
+			try:
+				if os.path.isdir(fn):
+					shutil.rmtree(fn)
+				else:
+					os.remove(fn)
+			except:
+				print "cleanDiff report: Was not able to delete file:" + fn
+				
 	def downloadGmsh(self):
 		
 		"""Downloads Gmsh, moves it to executables directory and cleans up afterwards. 
@@ -325,10 +335,11 @@ class OverrideInstall(install):
 		print "executing: ", 'hdiutil attach '+folderFn 
 		os.system('hdiutil attach '+folderFn)
 		folderFn=folderFn.replace('.dmg','')
-		try:
-			os.mkdir(folderFn)
-		except OSError:
-			pass
+		
+		#try:
+			#os.mkdir(folderFn)
+		#except OSError:
+			#pass
 		
 		cwd=os.getcwd()
 		
