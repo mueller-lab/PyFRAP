@@ -256,7 +256,7 @@ class OverrideInstall(install):
 		
 		import wget
 		
-		cwd=os.getcwd()
+		cwd=os.getcwd()+"/"
 		
 		if not os.path.exists(cwd+os.path.basename(url)):
 			print cwd+os.path.basename(url) +" does not exist, will download it."
