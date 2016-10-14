@@ -175,9 +175,15 @@ class OverrideInstall(install):
 		except:
 			pass
 		
+		
+		
 		if os.path.isdir(folderFn):
 			shutil.copytree(folderFn+"/",exePath)
 		else:
+			try:
+				os.mkdir(os.path.dirname(exePath))
+			except:
+				print "Was not able to create folder " + os.path.dirname(exePath)
 			shutil.copy(folderFn,exePath)
 				
 		#Remove downloaded files
@@ -248,7 +254,6 @@ class OverrideInstall(install):
 		except ImportError:
 			log.info("Cannot find wget, will not be downloading gmsh. You will need to install it later manually")	
 				
-	
 	def downloadFileIfNotExist(self,url):
 		
 		"""Downloads URL if file does not already exist.
@@ -361,7 +366,7 @@ class OverrideInstall(install):
 		#Build filename of acutally copied file
 		folderFn=cwd+"/"+fnWorked
 		
-		self.gmshPath='executables/gmsh/bin/./gmsh'
+		self.gmshPath='executables/gmsh/./gmsh'
 		
 		return fnDL,folderFn
 		
