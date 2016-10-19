@@ -295,13 +295,13 @@ def readLine(line,parmDic,domain):
 			vend,idx=domain.getVertexById(vals[2])
 			domain.addArc(vstart,vcenter,vend,Id=Id)
 		elif typ=="Line Loop":
-			domain.addLineLoop(Id,edgeIDs=vals)
+			domain.addLineLoop(Id=Id,edgeIDs=vals)
 		elif typ=="Ruled Surface":
-			domain.addRuledSurface(Id,lineLoopID=vals[0])
+			domain.addRuledSurface(Id=Id,lineLoopID=vals[0])
 		elif typ=="Surface Loop":
-			domain.addSurfaceLoop(Id,surfaceIDs=vals)
+			domain.addSurfaceLoop(Id=Id,surfaceIDs=vals)
 		elif typ=="Volume":
-			domain.addVolume(Id,surfaceLoopID=vals[0])	
+			domain.addVolume(Id=Id,surfaceLoopID=vals[0])	
 		else:
 			#This is a object like surface or volume which we don't care about
 			pass
@@ -950,39 +950,6 @@ def repairDefaultGeoFiles(debug=False):
 
 
 	
-#def buildCylinderDomain(startId,center,radius,height,volSizePx):
-	
-	#d=pyfrp_gmsh_geometry.domain([center])
-	
-	
-	#d.addVertex()
-	
-	#def addVertex(self,x,Id=None,volSize=None):
-		
-		#"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.vertex` instance
-		#at point ``x`` and appends it to ``vertices`` list.
-		
-		#.. note:: ``volSize`` does not have any effect on the geometry itself but is simply 
-		   #stored in the vertex object for further usage.
-		
-		#Args:
-			#x (numpy.ndarray): Coordinate of vertex.
-			
-		#Keyword Args:
-			#Id (int): ID of vertex.
-			#volSize (float): Element size at vertex.
-		
-		#Returns:
-			#pyfrp.modules.pyfrp_gmsh_geometry.vertex: New vertex instance.
-		
-		#"""
-		
-		#newId=self.getNewId(self.vertices,Id)
-		
-		#v=vertex(self,x,newId,volSize=volSize)
-		#self.vertices.append(v)	
-		
-		#return v
 
 		
 

@@ -2030,9 +2030,15 @@ class embryo:
 				normValSim=normNsim
 				normVal=normNdata
 			
+			print "in switch"
+			
 			if debug:
 				printNote('Switched to region ' +  normName + ' for computation of normalization value.' )
 		else:	
+			
+			print normBdata+bkgdBdata, normBsim+bkgdBsim
+			
+			print "not in switch"
 			normVal=max([normBdata,normBsim])
 			if sepSim:
 				normValSim=normBsim

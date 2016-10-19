@@ -504,6 +504,43 @@ def makeSubplot(size,titles=None,tight=False,sup=None,proj=None,fig=None,show=Tr
 	#Return axes handle
 	return fig,axes
 
+def makeGeometryPlot(titles=None,tight=False,sup=None,fig=None,show=True,unit="px"):
+	
+	"""Generates matplotlib figure  and single axes optimized for geometry plots.
+	
+	See also :py:func:`pyfrp.modules.pyfrp_plot_module.makeSubplot`.
+	
+	Keyword Args:
+		titles (list): List of axes titles.
+		tight (bool): Use tight layout.
+		sup (str): Figure title.
+		fig (matplotlib.figure): Figure used for axes.
+		show (bool): Show figure right away.
+		unit (str): Unit displayed in axes label.
+	
+	Returns:
+		tuple: Tuple containing:
+			
+			* fig (matplotlib.figure): Figure.
+			* axes (list): List of Matplotlib axes.
+	
+	"""
+	
+	fig,axes=makeSubplot([1,1],proj=['3d'],titles=titles,tight=tight,sup=sup,fig=fig,show=show)
+	
+	if unit==None:
+		axes[0].set_xlabel("x")
+		axes[0].set_ylabel("y")
+		axes[0].set_zlabel("z")
+	else:	
+		axes[0].set_xlabel("x ("+unit+")")
+		axes[0].set_ylabel("y ("+unit+")")
+		axes[0].set_zlabel("z ("+unit+")")
+	
+	return fig,axes
+	
+	
+
 def adjustImshowRange(axes,vmin=None,vmax=None):
 	
 	"""Adjust display range of ``matplotlib.pyplot.imshow`` plots in 

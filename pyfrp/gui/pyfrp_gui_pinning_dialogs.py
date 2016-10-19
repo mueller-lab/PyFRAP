@@ -180,7 +180,7 @@ class idealPinningDialog(defaultPinningDialog):
 		self.show()
 		
 	def setSwitchThresh(self):
-		self.switchTresh=float(str(self.qleSwitchThresh.text()))
+		self.switchThresh=float(str(self.qleSwitchThresh.text()))
 	
 	def checkSepSim(self,val):
 		self.sepSim=bool(2*val)	
@@ -230,6 +230,7 @@ class idealPinningDialog(defaultPinningDialog):
 		self.lblNormVal.setText(self.normName)
 		
 	def donePressed(self):
+
 		bkgdVal, normVal, bkgdValSim, normValSim=self.embryo.computeIdealFRAPPinVals(bkgdName=self.bkgdName,normName=self.normName,debug=self.debug,useMin=self.useMin,useMax=self.useMax,sepSim=self.sepSim,switchThresh=self.switchThresh)
 		self.embryo.pinAllROIs(bkgdVal=bkgdVal,normVal=normVal,bkgdValSim=bkgdValSim,normValSim=normValSim,debug=self.debug)
 		self.done(1)

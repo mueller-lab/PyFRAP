@@ -1421,7 +1421,7 @@ class ROI(object):
 			color=self.color
 		
 		if title==None:
-			title="Fit"+fit.name
+			title="Fit "+fit.name
 			
 		ax = pyfrp_plot_module.plotTS(fit.tvecFit,self.getFittedVec(fit),ax=ax,linewidth=linewidth,color=color,
 		label=self.name + ' ' + fit.name,title=title,sup=self.name+" fitted",linestyle=linestyles[1],legend=legend,show=show)

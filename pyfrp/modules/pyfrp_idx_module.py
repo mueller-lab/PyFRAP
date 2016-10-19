@@ -63,7 +63,8 @@ import sys
 if os.environ.get('READTHEDOCS', None) != 'True':
 	from scipy.interpolate.interpnd import _ndim_coords_from_arrays
 	from scipy.spatial import cKDTree
-
+	from scipy.spatial import Delaunay
+	
 #PyFRAP modules
 import pyfrp_misc_module as pyfrp_misc
 import pyfrp_plot_module as pyfrp_plt
@@ -1189,8 +1190,73 @@ def nearestNeighbour3D(xi,yi,zi,x,y,z,k=1,minD=None):
 		
 	return indexes, dists
 	
+def triangulatePoly(coords):
 	
+	"""Triangulates a polygon with given coords using a Delaunay triangulation.
 	
+	Uses http://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.Delaunay.html#scipy.spatial.Delaunay to 
+	calculate triangulation, then filters the triangles actually lying within the polygon.
+	
+	Args:
+		coords (list): List of (x,y)-coordinates of corners.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* 
+	
+	"""
+	
+	triFinal=[]
+	
+	print coords
+	
+	#Triangulate
+	tri=Delaunay(coords)
+	
+	#Remember assigment of points by traingulation function
+	coordsTri=tri.points
+	
+	for i in range(len(tri.simplices)):
+	
+		# Get COM of triangle
+		mid=getCenterOfMass(coords[tri.simplices.copy()[i]])
+		
+		#Check if triangle is inside original polygon
+		if checkInsidePolyVec(mid[0],mid[1],coords):
+			triFinal.append(tri.simplices.copy()[i])
+		
+	return triFinal,coordsTri	
+	
+def getCenterOfMass(xs,axis=0,masses=None):
+	
+	r"""Computes center of mass of a given set of points.
+	
+	.. note:: If ``masses==None``, then all points are assigned :math:`m_i=1`.
+	
+	Center of mass is computed by:
+	
+	.. math:: C=\frac{1}{M}\sum\limits_i m_i (x_i)^T
+	
+	where 
+	
+	.. math:: M = \sum\limits_i m_i
+	
+	Args:
+		xs (numpy.ndarray): Coordinates.
+		
+	Keyword Args:
+		masses (numpy.ndarray): List of masses.
+	
+	Returns:
+		numpy.ndarray: Center of mass.
+	
+	"""
+	
+	if masses==None:
+		masses=np.ones(xs.shape[0])
+	
+	return (masses*xs.T).T.sum(axis=axis)/float(xs.shape[axis])
 
 			
 

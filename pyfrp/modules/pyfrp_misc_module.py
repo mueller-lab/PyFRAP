@@ -1444,3 +1444,22 @@ def getIdxOfNLargest(x,N):
 		
 	return nLargest, indices
 
+def modIdx(i,l):
+	
+	"""Returns index of list when 
+	input is larger than list by returning the modulo of the length of
+	the list. 
+	
+	Useful if lists refer to loop etc.
+	
+	Args:
+		i (int): Index.
+		l (list): Some list
+		
+	Returns:
+		int: New index.
+	
+	"""
+	
+	return np.mod(i,len(l))
+	

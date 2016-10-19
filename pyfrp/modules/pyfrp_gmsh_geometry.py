@@ -50,6 +50,7 @@ import pyfrp_plot_module
 from pyfrp_term_module import *
 import pyfrp_misc_module
 import pyfrp_gmsh_IO_module
+import pyfrp_idx_module
 
 #===========================================================================================================================================================================
 #Module Functions
@@ -194,7 +195,7 @@ class domain:
 		
 		"""
 		
-		newId=self.getNewId(self.lines,Id)
+		newId=self.getNewId(self.edges,Id)
 		
 		e=line(self,v1,v2,newId)
 		self.lines.append(e)
@@ -221,7 +222,7 @@ class domain:
 		"""
 		
 		
-		newId=self.getNewId(self.arcs,Id)
+		newId=self.getNewId(self.edges,Id)
 			
 		a=arc(self,vstart,vcenter,vend,newId)
 		self.arcs.append(a)
@@ -239,6 +240,16 @@ class domain:
 		
 		Circle  will be at ``z=z`` and vertices will have mesh size ``volSize``.
 		
+		For example:
+		
+		>>> d=pyfrp_gmsh_geometry.domain()
+		>>> d.addCircleByParameters([256,256],100,50,30.)
+		>>> d.addCircleByParameters([256,256],100,50,30.,plane="x")
+		>>> d.addCircleByParameters([256,256],100,50,30.,plane="y")
+		>>> d.draw()
+		
+		will generate:
+		
 		.. image:: ../imgs/pyfrp_gmsh_geometry/addCircleByParameters.png
 		
 		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
@@ -247,13 +258,16 @@ class domain:
 			center (numpy.ndarray): Center of circle.
 			radius (float): Radius of the circle.
 			z (float): Height at which circle is placed.
-			volSize (float): Height at which circle is placed.
+			volSize (float): Mesh size of vertices.
 		
 		Keyword Args:
 			plane (str): Plane in which circle is placed.
 			
 		Returns:
-			pyfrp.modules.pyfrp_gmsh_geometry.arc: New line instance.
+			tuple: Tuple containing:
+			
+				* vertices (list): List of vertices.
+				* arcs (list): List of arcs.
 		
 		"""
 		
@@ -278,12 +292,372 @@ class domain:
 		a4=self.addArc(v4,vcenter,v1)
 		
 		return [vcenter,v1,v2,v3,v4],[a1,a2,a3,a4]
+	
+	def addPolygonByParameters(self,coords,volSize,z=0.,plane="z"):
+		
+		"""Adds polygon to domain by given vertex coordinates.
+		
+		Will create a list of new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.vertex` objects 
+		and a list of new `pyfrp.modules.pyfrp_gmsh_geometry.line` objects
+		connecting the vertices.
+		
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		
+		.. note:: Vertices can be given either as a 
+		
+			* list of coordinate triples ``[[x1,y1,z1],[x2,y2,z2],...]``.
+			* list of x-y-coordinates and a given z-coordinate ``[[x1,y1,z],[x2,y2,z],...]``.
+		
+		For example:
+		
+		>>> d=pyfrp_gmsh_geometry.domain()
+		>>> d.addPolygonByParameters([[100,100,100],[200,200,100],[200,100,100]],30.)
+		>>> d.addPolygonByParameters([[100,100,100],[200,200,100],[200,100,100]],30.,plane="x")
+		>>> d.addPolygonByParameters([[100,100,100],[200,200,100],[200,100,100]],30.,plane="y")
+		>>> d.draw()
+		
+		will generate:
+		
+		.. image:: ../imgs/pyfrp_gmsh_geometry/addPolygonByParameters.png
 		
 		
-	#def addCylinderByParamters(self,center,radius,z,height,volSize,plane="z"):
+		.. note:: Vertices are created in the order of the coordinates and connected in the same order.
 		
-		###NOTE: CONTINUE here
+
+		Args:
+			coords (list): List of coordinates.
+			volSize (float): Mesh size of vertices.
+			
+		Keyword Args:
+			plane (str): Plane in which polygon is placed.
+			z (float): Height at which polygon is placed.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* vertices (list): List of vertices.
+				* lines (list): List of connecting lines.
 		
+		"""
+		
+		# Define coordinates
+		xs=[]
+		for c in coords:
+			if len(c)==3:
+				xs.append(flipCoordinate([c[0],c[1],c[2]],plane,origAxis="z"))
+			else:
+				xs.append(flipCoordinate([c[0],c[1],z],plane,origAxis="z"))
+		
+		# Add vertices
+		vertices=[]
+		for x in xs:
+			vertices.append(self.addVertex(x,volSize=volSize))
+		
+		# Add Arcs
+		lines=[]
+		for i in range(len(vertices)):
+			lines.append(self.addLine(vertices[i],vertices[pyfrp_misc_module.modIdx(i+1,vertices)]))
+			
+		return vertices,lines
+	
+	def addRectangleByParameters(self,offset,sidelengthX,sidelengthY,z,volSize,plane="z"):
+		
+		"""Adds rectangle to domain by given offset and sidelengths.
+		
+		Will create a list of four :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.vertex` objects 
+		and a list of four `pyfrp.modules.pyfrp_gmsh_geometry.line` objects
+		connecting the vertices.
+		
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		
+		.. note:: The ``offset`` is defined as the bottom left corner.
+		
+		For example:
+		
+		>>> d=pyfrp_gmsh_geometry.domain()
+		>>> d.addRectangleByParameters([256,256],100,200,50,30.)
+		>>> d.addRectangleByParameters([256,256],100,200,50,30.,plane="x")
+		>>> d.addRectangleByParameters([256,256],100,200,50,30.,plane="y")
+		>>> d.draw()
+		
+		will generate:
+		
+		.. image:: ../imgs/pyfrp_gmsh_geometry/addRectangleByParameters.png
+		
+		Args:
+			offset (numpy.ndarray): Offset of rectangle.
+			sidelengthX (float): Sidelength in x-direction.
+			sidelengthY (float): Sidelength in y-direction.
+			z (float): Height at which rectangle is placed.
+			volSize (float): Mesh size of vertices.
+			
+		Keyword Args:
+			plane (str): Plane in which rectangle is placed.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* vertices (list): List of vertices.
+				* lines (list): List of connecting lines.
+		
+		"""
+		
+		coords=[[offset[0],offset[1],z],[offset[0]+sidelengthX,offset[1],z],
+		[offset[0]+sidelengthX,offset[1]+sidelengthY,z],[offset[0],offset[1]+sidelengthY,z]]
+		
+		return self.addPolygonByParameters(coords,volSize,plane=plane)
+	
+	def addSquareByParameters(self,offset,sidelength,z,volSize,plane="z"):
+		
+		"""Adds square to domain by given offset and sidelength.
+		
+		Will create a list of four :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.vertex` objects 
+		and a list of four `pyfrp.modules.pyfrp_gmsh_geometry.line` objects
+		connecting the vertices.
+		
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		
+		.. note:: The ``offset`` is defined as the bottom left corner.
+		
+		For example:
+		
+		>>> d=pyfrp_gmsh_geometry.domain()
+		>>> d.addSquareByParameters([256,256],100,50,30.)
+		>>> d.addSquareByParameters([256,256],100,50,30.,plane="x")
+		>>> d.addSquareByParameters([256,256],100,50,30.,plane="y")
+		>>> d.draw()
+		
+		will generate:
+		
+		.. image:: ../imgs/pyfrp_gmsh_geometry/addSquareByParameters.png
+		
+		Args:
+			offset (numpy.ndarray): Offset of square.
+			sidelength (float): Sidelength of square.
+			
+			z (float): Height at which square is placed.
+			volSize (float): Mesh size of vertices.
+			
+		Keyword Args:
+			plane (str): Plane in which square is placed.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* vertices (list): List of vertices.
+				* lines (list): List of connecting lines.
+		
+		"""
+		
+		return self.addRectangleByParameters(offset,sidelength,sidelength,z,volSize,plane=plane)
+	
+	def addPrismByParameters(self,coords,volSize,height=1.,z=0.,plane="z",genLoops=True,genSurfaces=True,genVol=True):
+		
+		"""Adds prism to domain by given vertex coordinates.
+		
+		Will create.
+		
+			* 2 new polygons, see :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addPolygonByParameters`.
+			* n :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.line` objects connecting the two polyogns.
+		
+		If selected, will create:
+			
+			* n+2 :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.lineLoop` objects around the 6 surfaces.
+			* n+2 corresponding :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface` objects.
+			* 1 :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop`.
+			* 1 corresponding :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.volume`.
+		
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		
+		.. note:: Vertices can be given either as a 
+		
+			* list of coordinate triples ``[[x1,y1,z1],[x2,y2,z2],...]``. Then the list of vertices needs to be of length :math:`2n`, where
+			  where :math:`n` is the number of corners of the top and lower polygon. Otherwise :py:func:`addPrismByParameters` will crash.
+			* list of x-y-coordinates, a given z-coordinate and height. This will place the vertices at ``[[x1,y1,z],[x2,y2,z],...]`` and 
+			  ``[[x1,y1,z+height],[x2,y2,z+height],...]``.
+		
+		For example:
+		
+		>>> d=pyfrp_gmsh_geometry.domain()
+		>>> d.addPrismByParameters([[256,256],[200,220],[200,200],[210,210],[220,200]],30.,z=50.,height=40.,plane="z",genLoops=True,genSurfaces=True,genVol=True)
+		>>> d.draw()
+		
+		will generate:
+		
+		.. image:: ../imgs/pyfrp_gmsh_geometry/addPrismByParameters.png
+		
+		.. note:: Vertices are created in the order of the coordinates and connected in the same order.
+		
+		Args:
+			coords (list): List of coordinates.
+			volSize (float): Mesh size of vertices.
+			
+		Keyword Args:
+			plane (str): Plane in which prism is placed.
+			z (float): Height at which first polygon is placed.
+			height (float): Height of prism.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* vertices (list): List of vertices.
+				* lines (list): List of lines.
+				* loops (list): List of loops.
+				* surfaces (list): List of surfaces.
+				* surfaceLoop (pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop): Generated surface loop.
+				* vol (pyfrp.modules.pyfrp_gmsh_geometry.volume): Generated volume.
+		
+		"""
+		
+		# Create upper and lower polygons
+		if len(coords[0])==3:
+			if np.mod(len(coords),2)!=0:
+				printError("addPrismByParameters: You gave a list of 3-dimensional vertex coordinates. However,the number of coordinates is odd, will not be able to continue.")
+				return
+				
+			vertices,lines = self.addPolygonByParameters(coords,volSize,z=0.,plane="z")
+			vertices1=vertices[:len(vertices)/2]
+			vertices2=vertices[len(vertices)/2:]
+			lines1=lines[:len(lines)/2]
+			lines2=lines[len(lines)/2:]
+				
+		else:	
+			vertices1,lines1 = self.addPolygonByParameters(coords,volSize,z=z,plane="z")
+			vertices2,lines2 = self.addPolygonByParameters(coords,volSize,z=z+height,plane="z")
+			
+			
+		# Connect them with lines
+		lines3=[]
+		for i in range(len(vertices1)):
+			lines3.append(self.addLine(vertices1[i],vertices2[i]))
+		
+		# Add loops
+		loops=[]
+		if genLoops:
+			
+			# Loops of upper and lower polygon
+			loops.append(self.addLineLoop(edgeIDs=pyfrp_misc_module.objAttrToList(lines1,"Id")))
+			loops.append(self.addLineLoop(edgeIDs=pyfrp_misc_module.objAttrToList(lines2,"Id")))
+			
+			# Loops of side faces
+			for i in range(len(lines1)):
+				loops.append(self.addLineLoop(edgeIDs=[-lines1[i].Id,lines3[i].Id,lines2[i].Id,-lines3[pyfrp_misc_module.modIdx(i+1,lines1)].Id]))
+				
+		# Add surfaces
+		surfaces=[]
+		if genSurfaces:
+			for loop in loops:
+				surfaces.append(self.addRuledSurface(lineLoopID=loop.Id))
+				
+		# Generate surface loop and volume
+		if genVol:
+			surfaceLoop=self.addSurfaceLoop(surfaceIDs=pyfrp_misc_module.objAttrToList(self.ruledSurfaces,"Id"))
+			vol=self.addVolume(surfaceLoopID=surfaceLoop.Id)
+		else:
+			surfaceLoop=None
+			vol=None		
+		
+		return [vertices1,vertices2],[lines1,lines2,lines3],loops,surfaces,surfaceLoop,vol
+		
+	def addCylinderByParamters(self,center,radius,z,height,volSize,plane="z",genLoops=True,genSurfaces=True,genVol=True):
+		
+		"""Adds cylinder to domain by given center and radius and height.
+		
+		Will create.
+		
+			* 2 new circles at ``z=z`` and ``z=z+height``, see :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addCircleByParameters`.
+			* 4 :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.line` objects connecting the two circles.
+		
+		If selected, will create:
+			
+			* 6 :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.lineLoop` objects around the 6 surfaces.
+			* 6 corresponding :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface` objects.
+			* 1 :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop`.
+			* 1 corresponding :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.volume`.
+		
+		For example:
+		
+		>>> d=pyfrp_gmsh_geometry.domain()
+		>>> d.addCylinderByParamters([256,256],100,50,100,30.,plane="z",genLoops=True,genSurfaces=True,genVol=True)
+		>>> d.draw()
+		
+		would return:
+		
+		.. image:: ../imgs/pyfrp_gmsh_geometry/addCylinderByParameters.png
+		
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		
+		Args:
+			center (numpy.ndarray): Center of cylinder.
+			radius (float): Radius of the cylinder.
+			z (float): Height at which cylinder is placed.
+			height (float): Height of cylinder.
+			volSize (float): Mesh size of vertices.
+		
+		Keyword Args:
+			plane (str): Plane in which cylinder is placed.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* vertices (list): List of vertices.
+				* arcs (list): List of arcs.
+				* lines (list): List of lines.
+				* loops (list): List of loops.
+				* surfaces (list): List of surfaces.
+				* surfaceLoop (pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop): Generated surface loop.
+				* vol (pyfrp.modules.pyfrp_gmsh_geometry.volume): Generated volume.
+		
+		"""
+		
+		# Check input
+		if genVol and not genSurfaces:
+			printError("Cannot create volume when there are no surfaces.")
+		if genSurfaces and not genLoops:
+			printError("Cannot create surfaces when there are no loops.")
+			
+		# Create circles
+		vertices1,arcs1=self.addCircleByParameters(center,radius,z,volSize,plane=plane)
+		vertices2,arcs2=self.addCircleByParameters(center,radius,z+height,volSize,plane=plane)
+		
+		# Create connecting lines
+		lines=[]
+		lines.append(self.addLine(vertices1[1],vertices2[1]))
+		lines.append(self.addLine(vertices1[2],vertices2[2]))
+		lines.append(self.addLine(vertices1[3],vertices2[3]))
+		lines.append(self.addLine(vertices1[4],vertices2[4]))
+		
+		# Generate loops
+		loops=[]
+		if genLoops:
+			loops.append(self.addLineLoop(edgeIDs=[arcs1[0].Id,arcs1[1].Id,arcs1[2].Id,arcs1[3].Id]))
+			loops.append(self.addLineLoop(edgeIDs=[arcs2[0].Id,arcs2[1].Id,arcs2[2].Id,arcs2[3].Id]))
+			loops.append(self.addLineLoop(edgeIDs=[-lines[0].Id,arcs1[0].Id,lines[1].Id,-arcs2[0].Id]))
+			loops.append(self.addLineLoop(edgeIDs=[-lines[1].Id,arcs1[1].Id,lines[2].Id,-arcs2[1].Id]))
+			loops.append(self.addLineLoop(edgeIDs=[-lines[2].Id,arcs1[2].Id,lines[3].Id,-arcs2[2].Id]))
+			loops.append(self.addLineLoop(edgeIDs=[-lines[3].Id,arcs1[3].Id,lines[0].Id,-arcs2[3].Id]))
+				  
+		# Generate surfaces
+		surfaces=[]
+		surfaceIds=[]
+		if genSurfaces:
+			for loop in loops:
+				surfaces.append(self.addRuledSurface(lineLoopID=loop.Id))
+				surfaceIds.append(surfaces[-1].Id)
+				
+		# Generate surface loop and volume
+		if genVol:
+			surfaceLoop=self.addSurfaceLoop(surfaceIDs=surfaceIds)
+			vol=self.addVolume(surfaceLoopID=surfaceLoop.Id)
+		else:
+			surfaceLoop=None
+			vol=None
+		
+		return [vertices1,vertices2],[arcs1,arcs2],lines,loops,surfaces,surfaceLoop,vol
+			
 	def checkIdExists(self,Id,objList):
 		
 		"""Checks if any object in ``objList`` already has ID ``Id``.
@@ -342,7 +716,7 @@ class domain:
 		"""
 		
 		if len(objList)==0:
-			newId=0
+			newId=1
 		else:
 			IdList=pyfrp_misc_module.objAttrToList(objList,'Id')
 			newId=max(IdList)+1		
@@ -370,6 +744,32 @@ class domain:
 				return e,i
 		return False,False
 	
+	def getEdgeByVertices(self,v1,v2):
+		
+		"""Returns edge between vertex ``v1`` and ``v2``.
+		
+		Returns ``(False,False)`` if edge cannot be found.
+		
+		Args:
+			v1 (pyfrp.modules.pyfrp_gmsh_geometry.vertex): Vertex 1.
+			v2 (pyfrp.modules.pyfrp_gmsh_geometry.vertex): Vertex 2.
+			
+		Returns:
+			tuple: Tuple containing:
+				
+				* e (pyfrp.modules.pyfrp_gmsh_geometry.edge): Edge.
+				* i (int): Position in ``edges`` list.
+		
+		"""
+		
+		for i,e in enumerate(self.edges):
+			vertices=[e.getFirstVertex(1),e.getLastVertex(1)]
+		
+			if v1 in vertices and v2 in vertices:
+				return e,i
+		return False,False	
+		
+	
 	def getLineLoopById(self,ID):
 		
 		"""Returns lineLoop with ID ``ID``.
@@ -390,6 +790,7 @@ class domain:
 		for i,l in enumerate(self.lineLoops):
 			if l.Id==ID:
 				return l,i
+	
 		return False,False
 	
 	def getRuledSurfaceById(self,ID):
@@ -505,7 +906,8 @@ class domain:
 			color='k'
 		
 		if ax==None:
-			fig,axes = pyfrp_plot_module.makeSubplot([1,1],proj=['3d'])
+			fig,axes = pyfrp_plot_module.makeGeometryPlot()
+			
 			ax=axes[0]
 		
 		for v in self.vertices:
@@ -556,7 +958,7 @@ class domain:
 			l.append(v.x)
 		return l
 	
-	def addLineLoop(self,Id,edgeIDs=[]):
+	def addLineLoop(self,Id=None,edgeIDs=[]):
 		
 		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.lineLoop` instance
 		with given edgeIDs. 
@@ -576,7 +978,7 @@ class domain:
 		
 		return l
 	
-	def addSurfaceLoop(self,Id,surfaceIDs=[]):
+	def addSurfaceLoop(self,Id=None,surfaceIDs=[]):
 		
 		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop` instance
 		with given surfaceIDs. 
@@ -596,7 +998,7 @@ class domain:
 		
 		return l
 	
-	def addRuledSurface(self,Id,lineLoopID=None):
+	def addRuledSurface(self,Id=None,lineLoopID=None):
 		
 		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface` instance
 		with given lineLoop. 
@@ -609,14 +1011,14 @@ class domain:
 		
 		"""
 		
-		newId=self.getNewId(self.surfaceLoops,Id)
+		newId=self.getNewId(self.ruledSurfaces,Id)
 		
 		l=ruledSurface(self,lineLoopID,newId)
 		self.ruledSurfaces.append(l)
 		
 		return l
 	
-	def addVolume(self,Id,surfaceLoopID=None):
+	def addVolume(self,Id=None,surfaceLoopID=None):
 		
 		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.volume` instance
 		with given surfaceLoop. 
@@ -720,7 +1122,55 @@ class domain:
 		
 		for e in getattr(self,element):		
 			e.Id=e.Id+offset
+	
+	def getMaxID(self,element):
+		
+		"""Returns maximum ID for a specific element.
+		
+		Possible elements are:
+		
+			* vertices
+			* lines
+			* arcs
+			* lineLoops
+			* ruledSurfaces
+			* surfaceLoops
+			* volumes
+		
+		Args:
+			element (str): Element type.
 			
+		Returns:
+			int: Maximum ID.
+		"""
+		
+		IDs=[]
+		
+		for e in getattr(self,element):
+			IDs.append(e.Id)
+			
+		return max(IDs)
+	
+	def getAllMaxID(self):
+		
+		"""Returns maximum ID over all elements.
+			
+		Returns:
+			int: Maximum ID.
+		"""
+		
+		IDs=[]
+		
+		IDs.append(self.getMaxID("vertices"))
+		IDs.append(self.getMaxID("lines"))
+		IDs.append(self.getMaxID("arcs"))
+		IDs.append(self.getMaxID("lineLoops"))
+		IDs.append(self.getMaxID("ruledSurfaces"))
+		IDs.append(self.getMaxID("surfaceLoops"))
+		IDs.append(self.getMaxID("volumes"))
+		
+		return max(IDs)
+		
 class vertex:
 	
 	"""Vertex class storing information from gmsh .geo Points.
@@ -767,7 +1217,7 @@ class vertex:
 			ann=False
 		
 		if ax==None:
-			fig,axes = pyfrp_plot_module.makeSubplot([1,1],proj=['3d'])
+			fig,axes = pyfrp_plot_module.makeGeometryPlot()
 			ax=axes[0]
 			
 		ax.scatter(self.x[0],self.x[1],self.x[2],c=color)
@@ -905,7 +1355,7 @@ class line(edge):
 			ann=False
 		
 		if ax==None:
-			fig,axes = pyfrp_plot_module.makeSubplot([1,1],proj=['3d'])
+			fig,axes = pyfrp_plot_module.makeGeometryPlot()
 			ax=axes[0]
 		ax.plot([self.v1.x[0],self.v2.x[0]],[self.v1.x[1],self.v2.x[1]],zs=[self.v1.x[2],self.v2.x[2]],color=color,linestyle='-')
 		if ann:
@@ -1208,7 +1658,7 @@ class arc(edge):
 			ann=False
 		
 		if ax==None:
-			fig,axes = pyfrp_plot_module.makeSubplot([1,1],proj=['3d'])
+			fig,axes = pyfrp_plot_module.makeGeometryPlot()
 			ax=axes[0]
 			
 		x,y,z=self.getPlotVec()
@@ -1396,16 +1846,18 @@ class lineLoop:
 			
 		"""
 		
-		self.orientations[self.edges.index(abs(ID))]=-self.orientations[self.edges.index(abs(ID))]
+		e=self.domain.getEdgeById(abs(ID))[0]
+		self.orientations[self.edges.index(e)]=-self.orientations[self.edges.index(e)]
 		
 		return self.orientations
 		
-	def checkClosed(self,debug=False):
+	def checkClosed(self,fix=False,debug=False):
 		
 		"""Checks if lineLoop is closed.
 		
 		Keyword Args:
 			debug (bool): Print debugging messages.
+			fix (bool): Close if necessary.
 			
 		Returns:
 			bool: True if closed.
@@ -1421,13 +1873,9 @@ class lineLoop:
 			orient1=self.orientations[i]
 			
 			#Get ID of next edge
-			if i==len(self.edges)-1:
-				edge2Temp=self.edges[i+1]
-				orient2=self.orientations[i+1]
-			else:
-				edge2Temp=self.edges[0]
-				orient2=self.orientations[0]
-				
+			edge2Temp=self.edges[pyfrp_misc_module.modIdx(i+1,self.edges)]
+			orient2=self.orientations[pyfrp_misc_module.modIdx(i+1,self.edges)]
+			
 			#Get ID of first/last vertex
 			firstVertexId=edge1Temp.getFirstVertex(orient1).Id
 			lastVertexId=edge2Temp.getLastVertex(orient2).Id
@@ -1436,11 +1884,22 @@ class lineLoop:
 			if firstVertexId!=lastVertexId:
 				b=False
 				
+				if fix:
+					self.reverseEdge(edge2Temp.Id)
+					b=True
+			
+					if debug:
+						print "Edge with ID " +str(edge1Temp.Id) + " was not matching edge with ID " + str(edge2Temp.Id) + ". \n Fixed this."
+				
+					
 				if debug:
 					printWarning("lineLoop with ID " + str(self.Id) + " does not close." )
 					print "Edge with ID " +str(edge1Temp.Id) + " is not matching edge with ID " + str(edge2Temp.Id)
 						
 		return b
+	
+	
+			
 	
 	def writeToFile(self,f):
 		
@@ -1465,6 +1924,15 @@ class lineLoop:
 	
 		return f
 	
+	def getVertices(self):
+		
+		"""Returns all vertices included in loop."""
+		
+		vertices=[]
+		for i,edge in enumerate(self.edges):
+			vertices.append(edge.getFirstVertex(self.orientations[i]))
+		return vertices	
+			
 class ruledSurface:
 	
 	"""ruledSurface class storing information from gmsh .geo.
@@ -1481,8 +1949,115 @@ class ruledSurface:
 		self.domain=domain
 		self.Id=ID
 		
-		self.lineLoop=self.domain.getLineLoopById(loopID)[0]
+		
+		self.initLineLoop(loopID)
 	
+	def initLineLoop(self,loopID,debug=False):
+	
+		"""Checks length of lineLoop and if length of lineLoop is greater
+		than 4, will perform triangulation so Gmsh can handle surface."""
+		
+		#Get lineLoop
+		self.lineLoop=self.domain.getLineLoopById(loopID)[0]
+		
+		#Check length
+		if len(self.lineLoop.edges)<=4:
+			return False
+		
+		#Get vertices
+		vertices=self.lineLoop.getVertices()
+		
+		#Get coordinates
+		coords=pyfrp_misc_module.objAttrToList(vertices,"x")
+		
+		#Compute normal vector
+		self.getNormal()
+		
+		#Check if normal to plane
+		if not self.normalToPlane():
+			printError("ruledSurface with ID" +  str(self.Id) + "is not normal to a plane and has more than 4 edges. PyFRAP is not able to triangulate surface down to smaller pieces.")
+			return False
+		
+		#Get coordinates in plane
+		coordsPlane=np.asarray(coords)[:,np.where(self.normal!=1)[0]]
+	
+		#Create triangulation
+		tri,coordsTri = pyfrp_idx_module.triangulatePoly(coordsPlane)
+		
+		#Loop through each triangle 
+		for i in range(len(tri)):
+			
+			edges=[]
+			
+			#Loop through each vertex 
+			for j in range(len(tri[i])):
+				v1=vertices[tri[i][j]]
+				v2=vertices[tri[i][pyfrp_misc_module.modIdx(j+1,tri[i])]]
+				
+				#Check if edge already exists
+				if not self.domain.getEdgeByVertices(v1,v2)[0]:
+					edges.append(self.domain.addLine(v1,v2))
+				else:
+					edges.append(self.domain.getEdgeByVertices(v1,v2)[0])
+			
+			#Add line loop
+			edgeIDs=pyfrp_misc_module.objAttrToList(edges,"Id")
+			loop=self.domain.addLineLoop(edgeIDs=edgeIDs)
+			loop.checkClosed(fix=True,debug=True)
+			
+			#Add ruledSurface if necessary
+			if i==0:
+				self.lineLoop=loop
+			else:
+				self.domain.addRuledSurface(lineLoopID=loop.Id,Id=self.Id+i)
+		
+		#Delete original loop
+		self.domain.lineLoops.remove(self.domain.getLineLoopById(loopID)[0])
+		
+		return True
+		
+	def normalToPlane(self):
+		
+		"""Checks if surface lies within either x-y-/x-z-/y-z-plane.
+		
+		Does this by checking if ``1.`` is in the normal vector.
+		
+		Returns:
+			bool: True if in plane.
+		
+		"""
+		
+		return 1. in self.normal
+	
+	def getNormal(self):
+		
+		"""Computes normal to surface using Newell's method.
+		
+		Adapted from http://stackoverflow.com/questions/39001642/calculating-surface-normal-in-python-using-newells-method.
+		
+		Returns:
+			numpy.ndarray: Normal vector to surface.
+		"""
+		
+		#Get vertices
+		vertices=self.lineLoop.getVertices()
+		
+		#Newell's method
+		n = [0.0, 0.0, 0.0]
+		
+		for i, v in enumerate(vertices):
+			v2 = vertices[(i+1) % len(vertices)]
+			n[0] += (v.x[1] - v2.x[1]) * (v.x[2] + v2.x[2])
+			n[1] += (v.x[2] - v2.x[2]) * (v.x[0] - v2.x[0])
+			n[2] += (v.x[0] - v2.x[0]) * (v.x[1] - v2.x[1])
+		
+		normalised = [i/sum(n) for i in n]
+		
+		self.normal=np.asarray(normalised)
+		
+		return self.normal
+
+		
 	def writeToFile(self,f):
 		
 		"""Writes ruled surface to file.
