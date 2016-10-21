@@ -48,6 +48,9 @@ from numpy import *
 #PyFRAP Modules
 import pyfrp_gmsh_geometry
 import pyfrp_misc_module
+import pyfrp_gmsh_module
+
+from pyfrp_term_module import *
 
 #Misc
 import shutil
@@ -948,7 +951,165 @@ def repairDefaultGeoFiles(debug=False):
 	else:
 		return True
 
+def getCorrespondingGeoFile(fn,meshFileExt=".msh"):
+	
+	"""Returns the corresponding geometry file 
+	to a mesh file.
+	
+	Assumes that meshfile has same name and lives in the same folder.
+	
+	Args:
+		fn (str): Path to mesh file.
+		
+	Keyword Args:
+		meshFileExt (str): Extension of meshfile.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* exists (bool): Flag if corresponding file exits.
+			* fnGeo (str): Path to geometry file.
+		
+	"""
+	
+	fnGeo=fn.replace(meshFileExt,".geo")
+	
+	if os.path.isfile(fnGeo):
+		return True,fnGeo
+	else:
+		return False,""
+	
 
+def isMergeFile(fn):
+	
+	"""Checks if geo file is a merge file and returns 
+	and returns the meshes used inside the merge file.
+	
+	Args:
+		fn (str): Path to geo file.
+			
+	Returns:
+		tuple: Tuple containing:
+		
+			* isMerge (bool): Flag if corresponding file is merge file.
+			* mergedFiles (list): List of mesh files used in merge file.
+		
+	"""
+	
+	isMerge=False
+	mergedFiles=[]
+	
+	with open(fn,'rb') as f:
+		
+		for line in f:
+			if line.startswith("Merge"):
+				isMerge=True
+				splitted=line.split('"')
+				mergedFiles.append(splitted[1])
+			
+	return isMerge,mergedFiles	
+
+def genMergeGeoFile(meshFiles,fnGeo):
+	
+	"""Generates merged .geo file.
+	
+	Args:
+		meshFiles (list): List of meshfiles that will be included.
+		fnGeo (str): Output geometry file.
+		
+	Returns:
+		bool: True if no error/warning occured.
+	"""
+	
+	b=True
+	with open(fnGeo,'wb') as f:
+		
+		for fn in meshFiles:
+			if os.path.isfile(fn):
+				writeMergeLine(f,fn)
+			else:
+				b=False
+				printWarning("genMergeGeoFile: Mesh file "+fn+" cannot be detected. This might lead to problems.")	
+		f.write("Coherence Mesh;")
+		
+	return b	
+		
+def writeMergeLine(f,fnMsh):
+	
+	"""Adds merge line to geo file.
+	
+	Args:
+		f (file): File handle.
+		fnMsh (str): Mesh file to be added.
+	
+	Returns:
+		file: File handle.
+	
+	"""
+	
+	f.write('Merge "' +  fnMsh +'";\n' )
+	
+	return f
+		
+def mergeMeshes(meshFiles,fn,run=True,debug=False,redirect=False,fnStout=None,fnSterr=None,volSizeMax=None):
+	
+	"""Generates meshfile merging all meshes in meshFiles.
+	
+	If one of the files that is supposed to be merged is already a merged file, then this
+	function will try to find the original mesh files to write a complete merged file.
+	See also :py:func:`isMergeFile` and :py:func:`genMergeGeoFile`.
+	
+	If ``run==True`` is selected, then gmsh will be run via :py:func:`pyfrp.modules.pyfrp_gmsh_module.runGmsh` and 
+	generate the corresponding .msh file of the merged .geo file.
+	
+	Args:
+		meshFiles (list): List of path to mesh files.
+		fn (str): Name of output .geo file.
+	
+	Keyword Args:	
+		run (bool): Run gmsh on merged .geo file.
+		debug (bool): Print debugging messages.
+		redirect (bool): Redirect gmsh stout/sterr into seperate files.
+		fnStout (str): File for gmsh stout.
+		fnSterr (str): File for gmsh sterr.
+		volSizeMax (float): Maximum allowed mesh element size.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* fn (str): Path to generated .geo file.
+			* fnOut (str): Path to generated .msh file.
+
+	"""
+	
+	meshFilesToMerge=[]
+	
+	for meshFile in meshFiles:
+		
+		meshFile=os.path.abspath(meshFile)
+		
+		b,geoFile=getCorrespondingGeoFile(meshFile)
+		
+		isMerge,mergedFiles=isMergeFile(geoFile)
+		
+		if isMerge:
+			meshFilesToMerge=meshFilesToMerge+mergedFiles
+		else:
+			meshFilesToMerge.append(meshFile)
+			
+	genMergeGeoFile(meshFilesToMerge,fn)
+	
+	if run:
+		fnOut=pyfrp_gmsh_module.runGmsh(fn,debug=debug,redirect=redirect,fnStout=fnStout,fnSterr=fnSterr,volSizeMax=volSizeMax)
+	else:
+		fnOut=""
+		
+	return fn,fnOut
+
+
+	
+	
+	
 	
 
 		

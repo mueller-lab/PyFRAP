@@ -63,6 +63,10 @@ from pyfrp.modules import pyfrp_plot_module
 from pyfrp.modules import pyfrp_misc_module
 from pyfrp.modules.pyfrp_term_module import *
 
+#OS
+import os,os.path
+import shutil
+
 #===========================================================================================================================================================================
 #Class definitions
 #===========================================================================================================================================================================
@@ -372,7 +376,6 @@ class geometry(object):
 		
 		return min(x), max(x) , min(y), max(y)
 		
-	
 	def printDetails(self):
 		
 		"""Prints out all details of geometry object.
@@ -381,7 +384,54 @@ class geometry(object):
 		print "Geometry of embryo ", self.embryo.name, " Details."
 		printAllObjAttr(self)
 		print 
+	
+	def moveGeoFile(self,fn):
 		
+		"""Moves geometry file to different directory.
+		
+		.. note:: This function actually copies the file so that files in ``pyfrp/meshfiles/`` 
+		   will not be removed.
+		
+		Will update ``geometry.fnGeo`` to the new file location.
+		
+		.. note:: If existent, will also copy the corresponding mesh file.
+		
+		Args:
+			fn (str): Path of folder where geo file is supposed to go.
+		
+		Returns:
+			str: New file location.
+		
+		"""
+		
+		shutil.copy(self.fnGeo,fn)
+		
+		if os.path.isfile(self.fnGeo.replace('.geo','.msh')):
+			shutil.copy(self.fnGeo.replace('.geo','.msh'),fn)
+			
+			if hasattr(self.embryo,'simulation'):
+				self.embryo.simulation.mesh.fnMesh=os.path.join(fn,os.path.basename(self.fnGeo).replace('.geo','.msh'))
+				
+		self.fnGeo=os.path.join(fn,os.path.basename(self.fnGeo))
+	
+		return self.fnGeo
+	
+	def getMaxGeoID(self):
+		
+		"""Returns maximum ID over all elements in .geo file.
+		
+		Sell also :py:func:`readGeoFile` and :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.getAllMaxID`.
+		
+		Returns:
+			int: Maximum ID.
+		
+		"""
+		
+		domain=self.readGeoFile()
+		
+		return domain.getAllMaxID()
+		
+	
 class zebrafishDomeStage(geometry):
 	
 	"""Geometry describing a zebrafish embryo in dome stage.

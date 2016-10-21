@@ -392,7 +392,7 @@ class refineROIMeshSettingsDialog(basicForceMeshSettingsDialog):
 		if self.roiUsed==None:
 			printWarning("No ROI selected. Going to do nothing.")
 		else:
-			self.roiUsed.refineInMesh(factor=self.factor,addZ=self.addZ,findIdxs=self.findIdxs,debug=self.debug)
+			self.roiUsed.refineInMeshByField(factor=self.factor,addZ=self.addZ,findIdxs=self.findIdxs,debug=self.debug)
 		
 		self.done(1)
 	

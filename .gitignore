@@ -17,6 +17,9 @@ dist/
 # Don't push shell scripts
 *.sh
 
+# Don't push some python scripts
+replaceInCode.py
+
 # Don't push any .txt files
 
 

@@ -52,6 +52,9 @@ from pyfrp.modules import pyfrp_plot_module
 from pyfrp.modules import pyfrp_img_module
 from pyfrp.modules import pyfrp_integration_module
 from pyfrp.modules import pyfrp_fit_module
+from pyfrp.modules import pyfrp_gmsh_geometry
+from pyfrp.modules import pyfrp_gmsh_module
+
 
 from pyfrp.modules.pyfrp_term_module import *
 
@@ -64,6 +67,10 @@ import time
 
 #Copy
 import copy
+
+#OS
+import os
+import shutil
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Main ROI class
@@ -1516,7 +1523,7 @@ class ROI(object):
 		zExtend=self.getZExtend()
 		return xExtend,yExtend,zExtend
 		
-	def refineInMesh(self,factor=3.,addZ=15.,findIdxs=True,debug=False,run=True):
+	def refineInMeshByField(self,factor=3.,addZ=15.,findIdxs=True,debug=False,run=True):
 		
 		"""Refines mesh inside ROI by adding box field to mesh file.
 		
@@ -1555,14 +1562,14 @@ class ROI(object):
 			
 		return fnOut
 	
-	def adaptRefineInMesh(self,nNodesReq,factor=3.,addZ=15.,zIncrement=1.,fIncrement=1.,nNodesMax='inf',debug=False,ROIReq=None):
+	def adaptRefineInMeshByField(self,nNodesReq,factor=3.,addZ=15.,zIncrement=1.,fIncrement=1.,nNodesMax='inf',debug=False,ROIReq=None):
 		
 		"""Refines mesh inside ROI adaptively until a given number of nodes inside ROI 
 		is reached.
 		
 		Does this by:
 			
-			* Refining through :py:func:`refineInMesh`.
+			* Refining through :py:func:`refineInMeshByField`.
 			* Computing mesh indices via :py:func:`computeMeshIdx`.
 			* If number of nodes did not change, increase ``addZ``, else increase ``factor``.
 			* Check if desired number of nodes is reached or not, if not, repeat.
@@ -1612,7 +1619,7 @@ class ROI(object):
 		#As long as requirement isn't met, refine
 		while nNodes<nNodesReq:
 			
-			self.refineInMesh(factor=factor,addZ=addZ,findIdxs=True,debug=False,run=True)
+			self.refineInMeshByField(factor=factor,addZ=addZ,findIdxs=True,debug=False,run=True)
 			
 			#Compute updated idxs
 			nNodesAllNew=self.embryo.simulation.mesh.getNNodes()
@@ -1831,7 +1838,99 @@ class ROI(object):
 		
 		return max(distances[0][self.meshIdx]),max(distances[1][self.meshIdx]),max(distances[2][self.meshIdx])
 		
-
+	def genGmshDomain(self,volSizePx=20.,genLoops=True,genSurfaces=True,genVol=True,minID=None):
+		
+		"""Translates ROI into gmsh domain object.
+		
+		This object can then be used to write ROIs to ``.geo`` files.
+				
+		.. note:: If ``minID==None``, will grab maximum ID via :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getMaxGeoID` and add 1.
+		
+		Keyword Args:
+			volSizePx (float): Mesh size of vertices.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			minID (int): Id at which geo IDs should start.
+			
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.domain: Domain object.
+		
+		"""
+		
+		if minID==None:
+			minID=self.embryo.geometry.getMaxGeoID()+1
+		
+		d=pyfrp_gmsh_geometry.domain()
+		printWarning("This ROI type does not have genGmshDomain right now. This might change in further versions.")
+		return d
+	
+	def writeToGeoFile(self,fn=None,volSizePx=20.,genLoops=True,genSurfaces=True,genVol=True,minID=None):
+		
+		"""Writes ROI to geo file.
+		
+		.. note:: If ``fn`` is not given, will save .geo file of ROI in same folder as the geometry file of the embryo with the following path:
+		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.geo`` .
+		   
+		See also :py:func:`pyfrp.subclasses.pyfrp_ROI.polySliceROI.genGmshDomain`.   
+		
+		Keyword Args:
+			volSizePx (float): Mesh size of vertices.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			minID (int): Id at which geo IDs should start.
+			
+		Returns:
+			str: Path to geo file.
+		
+		"""
+		
+		if fn==None:
+			folder=os.path.dirname(self.embryo.geometry.fnGeo)
+			fn=pyfrp_misc_module.slashToFn(folder)+self.embryo.name+"_"+self.name+".geo"
+			fn=fn.replace(" ","_")
+			
+			
+		printWarning("ROI of type "+str(self.getType)+" does not have writeToGeoFile right now. This might change in further versions.")
+		
+		return fn	
+	
+	def genMeshFile(self,fn=None,volSizePx=20.,debug=False,minID=None):
+		"""Writes ROI to geo file.
+		
+		.. note:: If ``fn`` is not given, will save .msh file of ROI in same folder as the geometry file of the embryo with the following path:
+		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.msh`` .
+		   
+		See also :py:func:`pyfrp.subclasses.pyfrp_ROI.polySliceROI.writeToGeoFile`.   
+		
+		Keyword Args:
+			volSizePx (float): Mesh size of vertices.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			minID (int): Id at which geo IDs should start.
+			
+		Returns:
+			str: Path to mesh file.
+		
+		"""
+		
+		#Check filename
+		if fn!=None:
+			if not fn.endswith(".geo"):
+				fn,ext=os.path.splitext(fn)
+				fn=fn+".geo"
+		
+		#Make geo file
+		fn=self.writeToGeoFile(fn=fn,volSizePx=volSizePx,minID=minID)
+		fnMsh=fn.replace(".geo",".msh")
+		
+		#Run gmsh
+		pyfrp_gmsh_module.runGmsh(fn,fnOut=fnMsh,debug=debug,volSizeMax=volSizePx)
+	
+		return fnMsh
+	
 class radialROI(ROI):
 	
 	"""Radial ROI class.
@@ -2253,6 +2352,76 @@ class radialSliceROI(sliceROI,radialROI):
 		self.yExtend=[self.center[1]-self.radius,self.center[1]+self.radius]
 		return self.xExtend, self.yExtend
 	
+	def genGmshDomain(self,volSizePx=20.,genLoops=True,genSurfaces=True,genVol=True,minID=None):
+		
+		"""Translates ROI into gmsh domain object.
+		
+		This object can then be used to write ROIs to ``.geo`` files.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addCuboidByParameters`.
+		
+		.. note:: If ``minID==None``, will grab maximum ID via :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getMaxGeoID` and add 1.
+		
+		Keyword Args:
+			volSizePx (float): Mesh size of vertices.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			minID (int): Id at which geo IDs should start.
+		
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.domain: Domain object.
+		
+		"""
+		
+		d=pyfrp_gmsh_geometry.domain()
+		d.addCylinderByParameters([self.center[0],self.center[1]],self.radius,self.height,self.width,volSizePx,
+			   plane="z",genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol)
+		
+		if minID==None:
+			minID=self.embryo.geometry.getMaxGeoID()+1
+		
+		d.incrementAllIDs(minID)
+		
+		return d	
+	
+	def writeToGeoFile(self,fn=None,volSizePx=20.,genLoops=True,genSurfaces=True,genVol=True,minID=None):
+		
+		"""Writes ROI to geo file.
+		
+		.. note:: If ``fn`` is not given, will save .geo file of ROI in same folder as the geometry file of the embryo with the following path:
+		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.geo`` .
+		   
+		See also :py:func:`pyfrp.subclasses.pyfrp_ROI.polySliceROI.genGmshDomain`.   
+		
+		Keyword Args:
+			volSizePx (float): Mesh size of vertices.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			minID (int): Id at which geo IDs should start.
+				
+		Returns:
+			str: Path to geo file.
+		
+		"""
+		
+		
+		if fn==None:
+			folder=os.path.dirname(self.embryo.geometry.fnGeo)
+			fn=pyfrp_misc_module.slashToFn(folder)+self.embryo.name+"_"+self.name+".geo"
+			fn=fn.replace(" ","_")
+			
+			
+		d=self.genGmshDomain(volSizePx=volSizePx,genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol,minID=minID)
+		d.writeToFile(fn)
+		
+		return fn	
+	
+	
+	
+	
+	
 	#def plotIn3D(self,domain=None,ax=None):
 	
 	###NOTE need this function here!!!
@@ -2532,6 +2701,73 @@ class squareSliceROI(squareROI,sliceROI):
 		self.xExtend=[self.offset[0],self.offset[0]+self.sidelength]
 		self.yExtend=[self.offset[1],self.offset[1]+self.sidelength]
 		return self.xExtend, self.yExtend
+	
+	def genGmshDomain(self,volSizePx=20.,genLoops=True,genSurfaces=True,genVol=True,minID=None):
+		
+		"""Translates ROI into gmsh domain object.
+		
+		This object can then be used to write ROIs to ``.geo`` files.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addCuboidByParameters`.
+		
+		.. note:: If ``minID==None``, will grab maximum ID via :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getMaxGeoID` and add 1.
+		
+		Keyword Args:
+			volSizePx (float): Mesh size of vertices.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+		
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.domain: Domain object.
+		
+		"""
+		
+		d=pyfrp_gmsh_geometry.domain()
+		d.addCuboidByParameters([self.offset[0],self.offset[1],self.height],self.sidelength,self.sidelength,self.width,volSizePx,
+			   plane="z",genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol)
+		
+		if minID==None:
+			minID=self.embryo.geometry.getMaxGeoID()+1
+		
+		d.incrementAllIDs(minID)
+		
+		return d	
+	
+	def writeToGeoFile(self,fn=None,volSizePx=20.,genLoops=True,genSurfaces=True,genVol=True,minID=None):
+		
+		"""Writes ROI to geo file.
+		
+		.. note:: If ``fn`` is not given, will save .geo file of ROI in same folder as the geometry file of the embryo with the following path:
+		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.geo`` .
+		   
+		See also :py:func:`pyfrp.subclasses.pyfrp_ROI.polySliceROI.genGmshDomain`.   
+		
+		Keyword Args:
+			volSizePx (float): Mesh size of vertices.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			minID (int): Id at which geo IDs should start.
+			
+		Returns:
+			str: Path to geo file.
+		
+		"""
+		
+		
+		if fn==None:
+			folder=os.path.dirname(self.embryo.geometry.fnGeo)
+			fn=pyfrp_misc_module.slashToFn(folder)+self.embryo.name+"_"+self.name+".geo"
+			fn=fn.replace(" ","_")
+			
+		
+		d=self.genGmshDomain(volSizePx=volSizePx,genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol,minID=minID)
+		d.writeToFile(fn)
+		
+		
+		
+		return fn
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Rectangle ROI class
@@ -2817,6 +3053,72 @@ class rectangleSliceROI(rectangleROI,sliceROI):
 		self.yExtend=[self.offset[1],self.offset[1]+self.sidelengthY]
 		return self.xExtend, self.yExtend
 	
+	def genGmshDomain(self,volSizePx=20.,genLoops=True,genSurfaces=True,genVol=True,minID=None):
+		
+		"""Translates ROI into gmsh domain object.
+		
+		This object can then be used to write ROIs to ``.geo`` files.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addCuboidByParameters`.
+		
+		.. note:: If ``minID==None``, will grab maximum ID via :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getMaxGeoID` and add 1.
+		
+		Keyword Args:
+			volSizePx (float): Mesh size of vertices.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			minID (int): Id at which geo IDs should start.
+		
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.domain: Domain object.
+		
+		"""
+		
+		d=pyfrp_gmsh_geometry.domain()
+		d.addCuboidByParameters([self.offset[0],self.offset[1],self.height],self.sidelengthX,self.sidelengthY,self.width,volSizePx,
+			   plane="z",genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol)
+		
+		if minID==None:
+			minID=self.embryo.geometry.getMaxGeoID()+1
+		
+		d.incrementAllIDs(minID)
+		
+		return d	
+	
+	def writeToGeoFile(self,fn=None,volSizePx=20.,genLoops=True,genSurfaces=True,genVol=True,minID=None):
+		
+		"""Writes ROI to geo file.
+		
+		.. note:: If ``fn`` is not given, will save .geo file of ROI in same folder as the geometry file of the embryo with the following path:
+		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.geo`` .
+		   
+		See also :py:func:`pyfrp.subclasses.pyfrp_ROI.polySliceROI.genGmshDomain`.   
+		
+		Keyword Args:
+			volSizePx (float): Mesh size of vertices.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			minID (int): Id at which geo IDs should start.
+		
+		Returns:
+			str: Path to geo file.
+		
+		"""
+		
+		
+		if fn==None:
+			folder=os.path.dirname(self.embryo.geometry.fnGeo)
+			fn=pyfrp_misc_module.slashToFn(folder)+self.embryo.name+"_"+self.name+".geo"
+			fn=fn.replace(" ","_")
+			
+		d=self.genGmshDomain(volSizePx=volSizePx,genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol,minID=minID)
+		d.writeToFile(fn)
+		
+		return fn	
+	
+	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Polygon ROI class
 			
@@ -3002,8 +3304,8 @@ class polyROI(ROI):
 				self.corners[idx]=[x,y]
 				
 		return self.corners		
-		
 	
+
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Polygon and slice ROI class
 			
@@ -3094,6 +3396,72 @@ class polySliceROI(polyROI,sliceROI):
 		
 		return self.xExtend, self.yExtend
 	
+	def genGmshDomain(self,volSizePx=20.,genLoops=True,genSurfaces=True,genVol=True,minID=None):
+		
+		"""Translates ROI into gmsh domain object.
+		
+		This object can then be used to write ROIs to ``.geo`` files.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addPrismByParameters`.
+		
+		.. note:: If ``minID==None``, will grab maximum ID via :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getMaxGeoID` and add 1.
+		
+		Keyword Args:
+			volSizePx (float): Mesh size of vertices.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			minID (int): Id at which geo IDs should start.
+		
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.domain: Domain object.
+		
+		"""
+		
+		d=pyfrp_gmsh_geometry.domain()
+		d.addPrismByParameters(self.corners,volSizePx,z=self.zmin,height=self.zmax,plane="z",genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol)
+		
+		if minID==None:
+			minID=self.embryo.geometry.getMaxGeoID()+1
+		
+		d.incrementAllIDs(minID)
+		
+		return d
+	
+	def writeToGeoFile(self,fn=None,volSizePx=20.,genLoops=True,genSurfaces=True,genVol=True,minID=None):
+		
+		"""Writes ROI to geo file.
+		
+		.. note:: If ``fn`` is not given, will save .geo file of ROI in same folder as the geometry file of the embryo with the following path:
+		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.geo`` .
+		   
+		See also :py:func:`pyfrp.subclasses.pyfrp_ROI.polySliceROI.genGmshDomain`.   
+		
+		Keyword Args:
+			volSizePx (float): Mesh size of vertices.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			minID (int): Id at which geo IDs should start.
+		
+		Returns:
+			str: Path to geo file.
+		
+		"""
+		
+		
+		if fn==None:
+			folder=os.path.dirname(self.embryo.geometry.fnGeo)
+			fn=pyfrp_misc_module.slashToFn(folder)+self.embryo.name+"_"+self.name+".geo"
+			fn=fn.replace(" ","_")
+			
+		d=self.genGmshDomain(volSizePx=volSizePx,genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol,minID=minID)
+		d.writeToFile(fn)
+		
+		return fn	
+			
+		
+		
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Polygon and slice ROI class
 	

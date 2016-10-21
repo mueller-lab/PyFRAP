@@ -453,9 +453,9 @@ class domain:
 	
 	def addPrismByParameters(self,coords,volSize,height=1.,z=0.,plane="z",genLoops=True,genSurfaces=True,genVol=True):
 		
-		"""Adds prism to domain by given vertex coordinates.
+		r"""Adds prism to domain by given vertex coordinates.
 		
-		Will create.
+		Will create:
 		
 			* 2 new polygons, see :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addPolygonByParameters`.
 			* n :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.line` objects connecting the two polyogns.
@@ -496,6 +496,9 @@ class domain:
 			plane (str): Plane in which prism is placed.
 			z (float): Height at which first polygon is placed.
 			height (float): Height of prism.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
 			
 		Returns:
 			tuple: Tuple containing:
@@ -558,8 +561,59 @@ class domain:
 			vol=None		
 		
 		return [vertices1,vertices2],[lines1,lines2,lines3],loops,surfaces,surfaceLoop,vol
+	
+	def addCuboidByParameters(self,offset,sidelengthX,sidelengthY,height,volSize,plane="z",genLoops=True,genSurfaces=True,genVol=True):
 		
-	def addCylinderByParamters(self,center,radius,z,height,volSize,plane="z",genLoops=True,genSurfaces=True,genVol=True):
+		"""Adds Cuboid to domain by given offset, sidelengths in x- and y-direction and height.
+		
+		Will define vertices and then call :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addPrismByParameters.
+		
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		
+		For example:
+		
+		>>> d=pyfrp_gmsh_geometry.domain()
+		
+		>>> d.draw()
+		
+		will generate:
+		
+		.. image:: ../imgs/pyfrp_gmsh_geometry/addCuboidByParameters.png
+		
+		Args:
+			offset (numpy.ndarray): Offset of cuboid.
+			sidelengthX (float): Sidelength in x-direction.
+			sidelengthY (float): Sidelength in y-direction.
+			height (float): Height of cuboid.
+			volSize (float): Mesh size of vertices.
+			
+		Keyword Args:
+			plane (str): Plane in which prism is placed.
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genVol (bool): Generate surface loop and corresponding volume.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* vertices (list): List of vertices.
+				* lines (list): List of lines.
+				* loops (list): List of loops.
+				* surfaces (list): List of surfaces.
+				* surfaceLoop (pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop): Generated surface loop.
+				* vol (pyfrp.modules.pyfrp_gmsh_geometry.volume): Generated volume.
+		
+		"""
+		
+		# Define coordinates
+		coords=[[offset[0],offset[1]],[offset[0]+sidelengthX,offset[1]],
+		[offset[0]+sidelengthX,offset[1]+sidelengthY],[offset[0],offset[1]+sidelengthY]]
+		
+		return self.addPrismByParameters(coords,volSize,height=height,z=offset[2],plane="z",genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol)
+	
+	
+	
+	def addCylinderByParameters(self,center,radius,z,height,volSize,plane="z",genLoops=True,genSurfaces=True,genVol=True):
 		
 		"""Adds cylinder to domain by given center and radius and height.
 		
@@ -578,7 +632,7 @@ class domain:
 		For example:
 		
 		>>> d=pyfrp_gmsh_geometry.domain()
-		>>> d.addCylinderByParamters([256,256],100,50,100,30.,plane="z",genLoops=True,genSurfaces=True,genVol=True)
+		>>> d.addCylinderByParameters([256,256],100,50,100,30.,plane="z",genLoops=True,genSurfaces=True,genVol=True)
 		>>> d.draw()
 		
 		would return:
@@ -1897,9 +1951,6 @@ class lineLoop:
 					print "Edge with ID " +str(edge1Temp.Id) + " is not matching edge with ID " + str(edge2Temp.Id)
 						
 		return b
-	
-	
-			
 	
 	def writeToFile(self,f):
 		
