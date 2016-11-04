@@ -51,66 +51,12 @@ from pyfrp_term_module import *
 import pyfrp_misc_module
 import pyfrp_gmsh_IO_module
 import pyfrp_idx_module
+import pyfrp_geometry_module
+import pyfrp_IO_module
 
-#===========================================================================================================================================================================
-#Module Functions
-#===========================================================================================================================================================================
+#Matplotlib
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-def getAngle(vec1,vec2):
-	
-		"""Returns angle between two vectors in radians.
-		
-		Args:
-			vec1 (numpy.ndarray): Vector 1.
-			vec2 (numpy.ndarray): Vector 2.
-		
-		Returns: 
-			float: Angle.
-		
-		"""
-		
-		a=np.arccos(np.dot(vec1,vec2)/(np.linalg.norm(vec1)*np.linalg.norm(vec2)))
-		
-		if a<0:
-			return getAngle(vec2,vec1)
-		return a
-
-def flipCoordinate(x,destAxis,origAxis='x',debug=False):
-	
-		"""Transforms coodinate from one axis to another by
-		rolling the coordinates, e.g. clockwise turning the 
-		point.
-		
-		``destAxis`` and ``origAxis`` are given as one of 
-		``x,y,z``. 
-		
-		Args:
-			x (numpy.ndarray): Coordinate to turn.
-			destAxis (str): Destination axis.
-			
-		Keyword Args:	
-			origAxis (str): Original axis.
-			debug (bool): Print debugging output.
-		
-		Returns:
-			numpy.ndarray: Transformed coordinate.
-		
-		"""
-		
-			
-		# Calculate differences between axis
-		axisDiff=abs(string.lowercase.index(destAxis)-string.lowercase.index(origAxis))
-		
-		# Roll
-		xnew=np.roll(x,axisDiff)
-		
-		# Print debugging messages
-		if debug:
-			print "Transforming coordinate " , x, " from axis ", origAxis, " to axis ", destAxis , "."
-			print "axisDiff = ", axisDiff
-			print "xnew = ", xnew
-		
-		return xnew 
 		
 #===========================================================================================================================================================================
 #Class definitions
@@ -129,6 +75,7 @@ class domain:
 		surfaceLoops (list): List of surfaceLoops.
 		ruledSurfaces (list): List of ruledSurfaces.
 		volumes (list): List of volumes.
+		fields (list): List of fields.
 		annXOffset (float): Offset of annotations in x-direction.
 		annYOffset (float): Offset of annotations in y-direction.
 		annZOffset (float): Offset of annotations in z-direction.
@@ -137,6 +84,8 @@ class domain:
 	
 	def __init__(self):
 		
+		
+		#Lists to keep track of all geometrical entities.
 		self.edges=[]
 		self.vertices=[]
 		self.arcs=[]
@@ -145,11 +94,13 @@ class domain:
 		self.ruledSurfaces=[]
 		self.surfaceLoops=[]
 		self.volumes=[]
+		self.fields=[]
+		self.bkgdField=None
 		
+		#Some settings for plotting
 		self.annXOffset=3.
 		self.annYOffset=3.
 		self.annZOffset=3.
-		
 		
 	def addVertex(self,x,Id=None,volSize=None):
 		
@@ -252,7 +203,7 @@ class domain:
 		
 		.. image:: ../imgs/pyfrp_gmsh_geometry/addCircleByParameters.png
 		
-		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_geometry_module.flipCoordinate`.
 		
 		Args:
 			center (numpy.ndarray): Center of circle.
@@ -272,11 +223,11 @@ class domain:
 		"""
 		
 		# Define coordinates
-		xcenter=flipCoordinate([center[0],center[1],z],plane,origAxis="z")
-		x1=flipCoordinate([center[0]+radius,center[1],z],plane,origAxis="z")
-		x2=flipCoordinate([center[0],center[1]+radius,z],plane,origAxis="z")
-		x3=flipCoordinate([center[0]-radius,center[1],z],plane,origAxis="z")
-		x4=flipCoordinate([center[0],center[1]-radius,z],plane,origAxis="z")
+		xcenter=pyfrp_geometry_module.flipCoordinate([center[0],center[1],z],plane,origAxis="z")
+		x1=pyfrp_geometry_module.flipCoordinate([center[0]+radius,center[1],z],plane,origAxis="z")
+		x2=pyfrp_geometry_module.flipCoordinate([center[0],center[1]+radius,z],plane,origAxis="z")
+		x3=pyfrp_geometry_module.flipCoordinate([center[0]-radius,center[1],z],plane,origAxis="z")
+		x4=pyfrp_geometry_module.flipCoordinate([center[0],center[1]-radius,z],plane,origAxis="z")
 		
 		# Add vertices
 		vcenter=self.addVertex(xcenter,volSize=volSize)
@@ -301,7 +252,7 @@ class domain:
 		and a list of new `pyfrp.modules.pyfrp_gmsh_geometry.line` objects
 		connecting the vertices.
 		
-		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_geometry_module.flipCoordinate`.
 		
 		.. note:: Vertices can be given either as a 
 		
@@ -344,9 +295,9 @@ class domain:
 		xs=[]
 		for c in coords:
 			if len(c)==3:
-				xs.append(flipCoordinate([c[0],c[1],c[2]],plane,origAxis="z"))
+				xs.append(pyfrp_geometry_module.flipCoordinate([c[0],c[1],c[2]],plane,origAxis="z"))
 			else:
-				xs.append(flipCoordinate([c[0],c[1],z],plane,origAxis="z"))
+				xs.append(pyfrp_geometry_module.flipCoordinate([c[0],c[1],z],plane,origAxis="z"))
 		
 		# Add vertices
 		vertices=[]
@@ -368,7 +319,7 @@ class domain:
 		and a list of four `pyfrp.modules.pyfrp_gmsh_geometry.line` objects
 		connecting the vertices.
 		
-		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_geometry_module.flipCoordinate`.
 		
 		.. note:: The ``offset`` is defined as the bottom left corner.
 		
@@ -415,7 +366,7 @@ class domain:
 		and a list of four `pyfrp.modules.pyfrp_gmsh_geometry.line` objects
 		connecting the vertices.
 		
-		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_geometry_module.flipCoordinate`.
 		
 		.. note:: The ``offset`` is defined as the bottom left corner.
 		
@@ -467,7 +418,7 @@ class domain:
 			* 1 :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop`.
 			* 1 corresponding :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.volume`.
 		
-		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_geometry_module.flipCoordinate`.
 		
 		.. note:: Vertices can be given either as a 
 		
@@ -568,7 +519,7 @@ class domain:
 		
 		Will define vertices and then call :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addPrismByParameters.
 		
-		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_geometry_module.flipCoordinate`.
 		
 		For example:
 		
@@ -639,7 +590,7 @@ class domain:
 		
 		.. image:: ../imgs/pyfrp_gmsh_geometry/addCylinderByParameters.png
 		
-		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.flipCoordinate`.
+		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_geometry_module.flipCoordinate`.
 		
 		Args:
 			center (numpy.ndarray): Center of cylinder.
@@ -913,6 +864,28 @@ class domain:
 				return l,i
 		return False,False
 	
+	def getFieldById(self,ID):
+		
+		"""Returns field with ID ``ID``.
+		
+		Returns ``(False,False)`` if field cannot be found.
+		
+		Args:
+			ID (int): ID of field.
+				
+		Returns:
+			tuple: Tuple containing:
+				
+				* f (pyfrp.modules.pyfrp_gmsh_geometry.field): Field.
+				* i (int): Position in ``fields`` list.
+		
+		"""
+		
+		for i,f in enumerate(self.fields):
+			if f.Id==ID:
+				return f,i
+		return False,False
+	
 	def getVertexById(self,ID):
 		
 		"""Returns vertex with ID ``ID``.
@@ -926,7 +899,7 @@ class domain:
 			tuple: Tuple containing:
 				
 				* v (pyfrp.modules.pyfrp_gmsh_geometry.vertex): Vertex.
-				* i (int): Position in ``edges`` list.
+				* i (int): Position in ``vertices`` list.
 		
 		"""
 		
@@ -934,8 +907,30 @@ class domain:
 			if v.Id==ID:
 				return v,i
 		return False,False
+	
+	def getVertexByX(self,x):
 		
-	def draw(self,ax=None,color=None,ann=None):
+		"""Returns vertex at coordinate ``x``.
+		
+		Returns ``(False,False)`` if vertex cannot be found.
+		
+		Args:
+			x (numpy.ndarry): Coordinate of vertex.
+				
+		Returns:
+			tuple: Tuple containing:
+				
+				* v (pyfrp.modules.pyfrp_gmsh_geometry.vertex): Vertex.
+				* i (int): Position in ``vertices`` list.
+		
+		"""
+		
+		for i,v in enumerate(self.vertices):
+			if (np.array(x)==v.x).sum()==len(v.x):
+				return v,i
+		return False,False
+		
+	def draw(self,ax=None,color=None,ann=None,drawSurfaces=False,surfaceColor='b',alpha=0.2):
 		
 		"""Draws complete domain.
 		
@@ -947,7 +942,10 @@ class domain:
 			ax (matplotlib.axes): Matplotlib axes to be plotted in.
 			color (str): Color of domain.
 			ann (bool): Show annotations.
-				
+			drawSurfaces (bool): Also draw surfaces.
+			surfaceColor (str): Color of surface.
+			alpha (float): Transparency of surfaces.
+			
 		Returns:
 			matplotlib.axes: Axes.
 		
@@ -970,6 +968,9 @@ class domain:
 			e.draw(ax=ax,color=color,ann=ann)	
 		for a in self.arcs:
 			a.draw(ax=ax,color=color,ann=ann)	
+		if drawSurfaces:
+			for s in self.ruledSurfaces:
+				s.draw(ax=ax,color=surfaceColor,alpha=alpha)
 		
 		return ax
 		
@@ -1012,6 +1013,16 @@ class domain:
 			l.append(v.x)
 		return l
 	
+	def setGlobalVolSize(self,volSize):
+		
+		"""Sets volSize for all nodes in geometry.
+		
+		"""
+		
+		for v in self.vertices:
+			v.volSize=volSize
+			
+	
 	def addLineLoop(self,Id=None,edgeIDs=[]):
 		
 		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.lineLoop` instance
@@ -1032,6 +1043,33 @@ class domain:
 		
 		return l
 	
+	def addAllSurfacesToLoop(self):
+		
+		"""Adds all surfaces in domain to a single surfaceLoop.
+		
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop: New surfaceLoop instance.
+		
+		"""
+		
+		surfaceIDs=pyfrp_misc_module.objAttrToList(self.ruledSurfaces,'Id')
+		
+		return self.addSurfaceLoop(surfaceIDs=surfaceIDs)
+	
+	def addEnclosingVolume(self):
+		
+		"""Adds volume enclosing all surfaces. 
+		
+		See also :py:func:`addAllSurfacesToLoop`.
+		
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.volume: New volume instance.
+		
+		"""
+		
+		s=self.addAllSurfacesToLoop()
+		return self.addVolume(surfaceLoopID=s.Id)
+		
 	def addSurfaceLoop(self,Id=None,surfaceIDs=[]):
 		
 		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop` instance
@@ -1092,6 +1130,104 @@ class domain:
 		
 		return l
 	
+	def addBoxField(self,Id=None,volSizeIn=10.,volSizeOut=20.,xRange=[],yRange=[],zRange=[]):
+		
+		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.boxField` instance. 
+			
+		Keyword Args:
+			Id (int): ID of field.
+			volSizeIn (float): Mesh element volume inside box.
+			volSizeOut (float): Mesh element volume outside box.
+			xRange (list): Range of box field in x-direction given as ``[minVal,maxVal]``.
+			yRange (list): Range of box field in y-direction given as ``[minVal,maxVal]``.
+			zRange (list): Range of box field in z-direction given as ``[minVal,maxVal]``.
+			
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.boxField: New boxField instance.
+		
+		"""
+		
+		newId=self.getNewId(self.fields,Id)
+		l=boxField(self,newId,volSizeIn=volSizeIn,volSizeOut=volSizeOut,xRange=xRange,yRange=yRange,zRange=zRange)
+		self.fields.append(l)
+		
+		return l
+	
+	def addThresholdField(self,Id=None,IField=None,LcMin=5.,LcMax=20.,DistMin=30.,DistMax=60.):
+		
+		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.thresholdField` instance. 
+			
+		.. image:: ../imgs/pyfrp_gmsh_geometry/thresholdField.png
+	
+		Keyword Args:
+			Id (int): ID of field.
+			IField (int): ID of vertex that is center to threshold field.
+			LcMin (float): Minimum volSize of threshold field.
+			LcMax (float): Maximum volSize of threshold field.
+			DistMin (float): Minimun density of field.
+			DistMax (float): Maximum density of field.
+				
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.thresholdField: New thresholdField instance.
+			
+		"""
+			
+		newId=self.getNewId(self.fields,Id)
+		l=thresholdField(self,newId,IField=IField,LcMin=LcMin,LcMax=LcMax,DistMin=DistMin,DistMax=DistMax)
+		self.fields.append(l)
+		
+		return l
+	
+	def addAttractorField(self,Id=None,NodesList=[]):
+		
+		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.attractorField` instance. 
+			
+		Keyword Args:
+			Id (int): ID of field.
+			NodesList (list): List of IDs of the Nodes that attractor field centers around.
+				
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.attractorField: New attractorField instance.
+			
+		"""
+			
+		newId=self.getNewId(self.fields,Id)
+		l=attractorField(self,newId,NodesList=NodesList)
+		self.fields.append(l)
+		
+		return l
+	
+	def addMinField(self,Id=None,FieldsList=[]):
+		
+		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.minField` instance. 
+			
+		Keyword Args:
+			Id (int): ID of field.
+			NodesList (list): List of IDs of the Nodes that attractor field centers around.
+				
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.attractorField: New attractorField instance.
+			
+		"""
+			
+		newId=self.getNewId(self.fields,Id)
+		l=minField(self,newId,FieldsList=FieldsList)
+		self.fields.append(l)
+		
+		return l
+	
+	def addBoundaryLayerField(self,Id=None,AnisoMax=10000000000,hwall_n=1.,hwall_t=1,ratio=1.1,thickness=10.,hfar=1.,IntersectMetrics=1,Quads=0.):
+		
+		""" NOTE: Description here
+		
+		
+		"""
+		
+		newId=self.getNewId(self.fields,Id)
+		l=boundaryLayerField(self,newId,AnisoMax=AnisoMax,hwall_n=hwall_n,hwall_t=hwall_t,ratio=ratio,thickness=thickness,hfar=hfar,IntersectMetrics=IntersectMetrics,Quads=Quads)
+		self.fields.append(l)
+		
+		return l
 	
 	def writeToFile(self,fn):
 		
@@ -1111,6 +1247,7 @@ class domain:
 			self.writeElements("ruledSurfaces",f)
 			self.writeElements("surfaceLoops",f)
 			self.writeElements("volumes",f)
+			self.writeElements("fields",f)
 
 	def writeElements(self,element,f):
 			
@@ -1167,6 +1304,7 @@ class domain:
 			* ruledSurfaces
 			* surfaceLoops
 			* volumes
+			* fields
 		
 		Args:
 			offset (int): Offset to be added.
@@ -1177,6 +1315,48 @@ class domain:
 		for e in getattr(self,element):		
 			e.Id=e.Id+offset
 	
+	def setDomainGlobally(self):
+		
+		"""Makes sure that ``self`` is domain for all 
+		elements.
+			
+		"""
+		
+		self.setDomainForElementType("vertices")
+		self.setDomainForElementType("lines")
+		self.setDomainForElementType("arcs")
+		self.setDomainForElementType("lineLoops")
+		self.setDomainForElementType("ruledSurfaces")
+		self.setDomainForElementType("surfaceLoops")
+		self.setDomainForElementType("volumes")
+		self.setDomainForElementType("fields")
+		
+		
+	def setDomainForElementType(self,element):
+		
+		"""Makes sure that ``self`` is domain for all 
+		elements of given type.
+		
+		Possible elements are:
+		
+			* vertices
+			* lines
+			* arcs
+			* lineLoops
+			* ruledSurfaces
+			* surfaceLoops
+			* volumes
+			* fields
+			
+		Args:
+			offset (int): Offset to be added.
+			element (str): Element type to increment.
+		
+		"""
+		
+		for e in getattr(self,element):
+			e.domain=self
+		
 	def getMaxID(self,element):
 		
 		"""Returns maximum ID for a specific element.
@@ -1202,9 +1382,12 @@ class domain:
 		
 		for e in getattr(self,element):
 			IDs.append(e.Id)
+		
+		try:
+			return max(IDs)
+		except ValueError:
+			0.
 			
-		return max(IDs)
-	
 	def getAllMaxID(self):
 		
 		"""Returns maximum ID over all elements.
@@ -1224,6 +1407,206 @@ class domain:
 		IDs.append(self.getMaxID("volumes"))
 		
 		return max(IDs)
+	
+	def getAllFieldsOfType(self,typ):
+		
+		"""Returns all fields of domain with specific typ.
+		
+		Returns:
+			list: List of :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.field` objects.
+		
+		"""
+		
+		fs=[]
+		for f in self.fields:
+			if f.typ==typ:
+				fs.append(f)
+		return fs		
+	
+	def getBkgdField(self):
+		
+		"""Returns background field of domain.
+		
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.field: Background field.
+			
+		"""
+		
+		return self.bkgdField
+	
+	def hasBkgdField(self):
+		
+		"""Checks if domain already has a background field.
+		
+		Returns:
+			bool: True if background field already exists.
+		"""
+	
+		return self.bkgdField!=None
+	
+	def genMinBkgd(self,FieldsList=[]):
+		
+		"""Generates minimum field as background field.
+		
+		If domain already has minimum field, will take it and set it 
+		as background field. If domain has multiple minimum fields, will take 
+		the first one that appears in ``fields`` list.
+		
+		Keyword Args:
+			FieldsList (list): List of field IDs included in minField.
+		
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.minField: Minimum field. 
+		
+		"""
+		
+		#Generate minField if not existent
+		minFields=self.getAllFieldsOfType("min")
+		if len(minFields)==0:
+			if len(FieldsList)==0:
+				FieldsList=pyfrp_misc_module.objAttrToList(self.fields,'Id')
+			minField=self.addMinField(FieldsList=FieldsList)
+		else:
+			if self.hasBkgdField():
+				if self.getBkgdField() in minFields:
+					minField=self.getBkgdField()
+				else:
+					minField=minFields[0]
+					minField.setAsBkgdField()
+		
+		if not self.hasBkgdField():
+			minField.setAsBkgdField()
+		
+		return self.getBkgdField()
+	
+	def getAllObjectsWithProp(self,objName,attr,val):
+		
+		"""Filters all objects of type objName given attribute value.
+		
+		Possible objects names are:
+		
+			* vertices
+			* lines
+			* arcs
+			* lineLoops
+			* ruledSurfaces
+			* surfaceLoops
+			* volumes
+			* fields
+		
+		.. note:: ``val`` can have any datatype.
+		
+		Args:
+			objName (str): Name of object list.
+			attr (str): Name of attribute.
+			val (str): Value of attribute.
+		
+		Returns:
+			list: List of objects that fulfill requirement.
+		"""
+		
+		objects=getattr(self,objName)
+		filteredObjects=pyfrp_misc_module.getAllObjWithAttrVal(objects,attr,val)
+		
+		return filteredObjects
+	
+	def simplifySurfaces(self,iterations=3,triangIterations=2,addPoints=False,fixSurfaces=True):
+		
+		"""
+		"""
+		
+		for k in range(iterations):
+		
+			x=len(self.ruledSurfaces)
+			y=len(self.lineLoops)
+			z=len(self.edges)
+			
+			
+			#Loop through surfaces
+			for i,surface in enumerate(self.ruledSurfaces):
+				
+				#Get all surfaces with same normal vector
+				sameNormal=self.getAllObjectsWithProp("ruledSurfaces","normal",surface.normal)
+				
+				print "==============================="
+				print "Geometry currently has ", len(self.ruledSurfaces)
+				print "Currently picked surface" , surface.Id
+				print "Found ", len(sameNormal) , ""
+				print "Normal vector is", surface.normal
+				
+				#raw_input() 
+				
+				#Loop through all with same normal
+				for j,sN in enumerate(sameNormal):
+					if sN==surface:
+						continue
+					
+					#print i,j,surface.Id, sN.Id
+					
+					ax=None
+					
+					if surface.fuse(sN):
+						print "successfully fused ", surface.Id, sN.Id
+						
+						
+				#raw_input()
+						
+		
+		
+			print "Surfaces: Before =" , x , " After:" , len(self.ruledSurfaces) 
+			print "lineLoops: Before =" , y , " After:" , len(self.lineLoops) 
+			print "Edges: Before =" , z , " After:" , len(self.edges) 
+			zz=len(self.edges) 
+			self.cleanUpUnusedEdges()
+			
+			print "Edges CleanUp Before =", zz, " After:" , len(self.edges) 
+			#raw_input()
+		
+		self.fixAllLoops()
+		
+		if fixSurfaces:
+			self.fixAllSurfaces(iterations=triangIterations,addPoints=addPoints)
+			
+	def cleanUpUnusedEdges(self):
+		
+		for edge in self.edges:
+			edge.delete()
+	
+	def fixAllLoops(self):
+		
+		for loop in self.lineLoops:
+			loop.fix()
+	
+	def fixAllSurfaces(self,debug=False,iterations=2,addPoints=False):
+		
+		for surface in self.ruledSurfaces:
+		
+			surface.initLineLoop(surface.lineLoop.Id,debug=debug,iterations=iterations,addPoints=addPoints)
+	
+	def save(self,fn):
+		
+		"""Saves domain to pickle file."""
+		
+		pyfrp_IO_module.saveToPickle(self,fn=fn)
+	
+	def merge(self,d):
+		
+		"""Merges domain d into this domain."""
+		
+		d.incrementAllIDs(self.getAllMaxID()+1)
+		
+		self.edges=self.edges+d.edges
+		self.vertices=self.vertices+d.vertices
+		self.arcs=self.arcs+d.arcs
+		self.lines=self.lines+d.lines
+		self.lineLoops=self.lineLoops+d.lineLoops
+		self.ruledSurfaces=self.ruledSurfaces+d.ruledSurfaces
+		self.surfaceLoops=self.surfaceLoops+d.surfaceLoops
+		self.volumes=self.volumes+d.volumes
+		self.fields=self.fields+d.fields
+		
+		self.setDomainGlobally()
+		
 		
 class vertex:
 	
@@ -1281,7 +1664,7 @@ class vertex:
 		pyfrp_plot_module.redraw(ax)
 		
 		return ax
-		
+	
 	def setX(self,x):
 		
 		"""Sets coordinate if vertex to ``x``.
@@ -1309,6 +1692,77 @@ class vertex:
 		
 		return f
 	
+	def addToAttractor(self,attrField=None,LcMin=5.,LcMax=20.,DistMin=30.,DistMax=60.):
+		
+		"""Adds vertex to a attractor field. 
+		
+		If no field is given, will create new one with given parameters. Will also create 
+		a new threshhold field around attractor and add fields to minField. If no minField exists,
+		will create a new one too and set it as background field.
+		
+		See also :py:func:`addAttractorField`, :py:func:`addThresholdField`, :py:func:`addMinField` and :py:func:`genMinBkgd`.
+		
+		Keyword Args:
+			attrField (pyfrp.modules.pyfrp_gmsh_geometry.attractorField): Attractor field object.
+			LcMin (float): Minimum volSize of threshold field.
+			LcMax (float): Maximum volSize of threshold field.
+			DistMin (float): Minimun density of field.
+			DistMax (float): Maximum density of field.
+			
+		Returns:	
+			pyfrp.modules.pyfrp_gmsh_geometry.attractorField: Attractor field around vertex.
+		
+		"""
+		
+		#Generate attractor field if not given
+		if attrField==None:
+			attrField=self.domain.addAttractorField(NodesList=[self.Id])
+		else:
+			attrField.addNodeByID(self.Id)
+		
+		#Generate threshhold field if not already existent
+		threshFields=attrField.includedInThresholdField()
+		if len(threshFields)==0:
+			threshField=self.domain.addThresholdField(IField=attrField.Id,LcMin=LcMin,LcMax=LcMax,DistMin=DistMin,DistMax=DistMax)
+		else:
+			threshField=threshFields[0]
+		
+		self.domain.genMinBkgd(FieldsList=[threshField.Id])
+		
+		return attrField	
+	
+	def addToBoundaryLayer(self,boundField=None,**fieldOpts):
+		
+		"""Adds vertex to a boundary layer field. 
+		
+		If no field is given, will create new one with given parameters and add it to a minField. If no minField exists,
+		will create a new one too and set it as background field.
+		
+		See also :py:func:`addBoundaryLayerField` :py:func:`addMinField` and :py:func:`genMinBkgd`.
+		
+		Keyword Args:
+			boundField (pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField): Boundary layer field object.
+			fieldOpts (dict): See documentation of boundary layer field of all available options.
+			
+		Returns:	
+			pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField: Boundary layer field around vertex.
+		
+		"""
+		
+		#Generate attractor field if not given
+		if boundField==None:
+			boundField=self.domain.addBoundaryLayerField()
+		
+		#Add Vertex
+		boundField.addNodeByID(self.Id)
+		
+		#Set options
+		boundField.setFieldAttributes(**fieldOpts)
+		
+		#Generate background field
+		self.domain.genMinBkgd(FieldsList=[boundField.Id])
+			
+		return boundField	
 	
 class edge:
 	
@@ -1353,6 +1807,108 @@ class edge:
 		elif typ==0:
 			return "line"
 	
+	def addToBoundaryLayer(self,boundField=None,**fieldOpts):
+		
+		"""Adds edge to a boundary layer field. 
+		
+		If no field is given, will create new one with given parameters and add it to a minField. If no minField exists,
+		will create a new one too and set it as background field.
+		
+		See also :py:func:`addBoundaryLayerField` :py:func:`addMinField` and :py:func:`genMinBkgd`.
+		
+		Keyword Args:
+			boundField (pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField): Boundary layer field object.
+			fieldOpts (dict): See documentation of boundary layer field of all available options.
+			
+		Returns:	
+			pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField: Boundary layer field around edge.
+		
+		"""
+		
+		#Generate attractor field if not given
+		if boundField==None:
+			boundField=self.domain.addBoundaryLayerField()
+		
+		#Add Vertex
+		boundField.addEdgeByID(self.Id)
+		
+		#Set options
+		boundField.setFieldAttributes(**fieldOpts)
+		
+		#Generate background field
+		self.domain.genMinBkgd(FieldsList=[boundField.Id])
+			
+		return boundField	
+	
+	def includedInLoop(self):
+		
+		"""Checks if edge is included in a loop.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* included (bool): True if included.
+				* loops (list): List of :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.lineLoop` objects that include edge. 
+			
+		"""
+		
+		loops=[]
+		
+		for i,loop in enumerate(self.domain.lineLoops):
+			if self in loop.edges:
+				loops.append(loop)
+		return len(loops)>0,loops
+	
+	def includedInField(self):
+		
+		"""Checks if edge is included in a field.
+		
+		.. note:: Only checks for boundary layer fields, since they are the only ones who can evolve around edge.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* included (bool): True if included.
+				* fields (list): List of :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.fields` objects that include edge. 
+			
+		"""
+		
+		fields=[]
+		
+		for field in self.domain.fields:
+			if field.typ=="boundaryLayer":
+				if self in field.EdgesList:
+					fields.append(fields)
+		return len(fields)>0,fields
+	
+	def delete(self,debug=False):
+		
+		"""Deletes edge if it is not used in any loop or field.
+		
+		Returns:
+			bool: True if deletion was successful.
+		"""
+		
+		incl,loops=self.includedInLoop()
+		if incl:
+			if debug:
+				printWarning("Was not able to delete edge with ID " + str(self.Id) +". Still part of " + str(len(loops)) + " loops.")
+			return False
+		
+		incl,fields=self.includedInField()
+		if incl:
+			if debug:
+				printWarning("Was not able to delete edge with ID " + str(self.Id) +". Still part of field with ID " + str(len(fields)))
+			return False
+		
+		if self.typ==0:
+			self.domain.lines.remove(self)
+		if self.typ==1:
+			self.domain.arcs.remove(self)
+		self.domain.edges.remove(self)
+		
+		return True
+		
 class line(edge):
 	
 		
@@ -1480,7 +2036,6 @@ class line(edge):
 		
 		return f
 	
-	
 class arc(edge):
 	
 	"""Arc class storing information from gmsh .geo cicle.
@@ -1520,7 +2075,7 @@ class arc(edge):
 		"""Computes and returns offset angle of arc.
 		"""
 		
-		self.angleOffset=getAngle(self.pOffset,self.vstart.x-self.vcenter.x)
+		self.angleOffset=pyfrp_geometry_module.getAngle(self.pOffset,self.vstart.x-self.vcenter.x)
 		
 		return self.angleOffset
 	
@@ -1529,7 +2084,7 @@ class arc(edge):
 		"""Computes and returns angle of arc.
 		"""
 		
-		self.angle=getAngle(self.vstart.x-self.vcenter.x,self.vend.x-self.vcenter.x)
+		self.angle=pyfrp_geometry_module.getAngle(self.vstart.x-self.vcenter.x,self.vend.x-self.vcenter.x)
 		return self.angle
 	
 	def computePOffset(self):
@@ -1904,7 +2459,93 @@ class lineLoop:
 		self.orientations[self.edges.index(e)]=-self.orientations[self.edges.index(e)]
 		
 		return self.orientations
+	
+	def draw(self,ax=None,color=None,ann=None):
 		
+		"""Draws complete lineLoop.
+		
+		.. note:: If ``ann=None``, will set ``ann=False``.
+		
+		.. note:: If no axes is given, will create new one.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes to be plotted in.
+			color (str): Color of lineLoop.
+			ann (bool): Show annotations.
+				
+		Returns:
+			matplotlib.axes: Axes.
+		
+		"""
+		
+		if ann==None:
+			ann=False
+		
+		if color==None:
+			color='k'
+		
+		if ax==None:
+			fig,axes = pyfrp_plot_module.makeGeometryPlot()
+			ax=axes[0]
+		
+		for e in self.edges:
+			e.draw(ax=ax,color=color,ann=ann)
+		
+		return ax
+	
+	def printLoop(self):
+		
+		ids=np.array(pyfrp_misc_module.objAttrToList(self.edges,"Id"))
+		orients=np.array(self.orientations)
+		
+		print "Line Loop with ID = "+ str(self.Id)+": "+str(ids*orients)
+	
+		
+	
+	def fix(self):
+		
+		"""Fixes loop.
+		"""
+		
+		edgesNew=[self.edges[0]]
+		orientationsNew=[self.orientations[0]]
+		
+		for i in range(1,len(self.edges)):
+			
+			lastEdge=edgesNew[i-1]
+			vLast=lastEdge.getLastVertex(orientationsNew[i-1])
+			
+			for j in range(len(self.edges)):
+				
+				currEdge=self.edges[j]
+				currOrient=self.orientations[j]
+						
+				if currEdge==lastEdge:
+					continue
+				
+				if vLast == currEdge.getFirstVertex(currOrient):
+					edgesNew.append(currEdge)
+					orientationsNew.append(currOrient)
+					break 
+				
+				elif vLast == currEdge.getLastVertex(currOrient):
+					edgesNew.append(currEdge)
+					orientationsNew.append(-currOrient)
+					break
+					
+				if j==len(self.edges)-1:
+					printWarning("Could not fix loop with ID" + str(self.Id))
+					print "Edge with ID " +str(lastEdge.Id) + " is not matching with any other edge."
+					return False
+				
+		self.edges=edgesNew
+		self.orientations=orientationsNew
+		
+		return True
+		
+				
+			
+	
 	def checkClosed(self,fix=False,debug=False):
 		
 		"""Checks if lineLoop is closed.
@@ -1982,8 +2623,203 @@ class lineLoop:
 		vertices=[]
 		for i,edge in enumerate(self.edges):
 			vertices.append(edge.getFirstVertex(self.orientations[i]))
-		return vertices	
+		return vertices
+	
+	def hasCommonEdge(self,loop):
+		
+		"""Checks if lineLoop has common edges with other lineLoop.
+		
+		Args:
+			loop (pyfrp.modules.pyfrp_gmsh_geometry.lineLoop): lineLoop object.
+		
+		Returns:
+			tuple: Tuple containing:
 			
+				* hasCommon (bool): True if loops have common edge.
+				* edges (list): List of common edges.
+						
+		"""
+		
+		edges=[]
+		for e in self.edges:
+			if e in loop.edges:
+				edges.append(e)
+		
+		return len(edges)>0,edges
+	
+	def fuse(self,loop,maxL=1000,debug=False,surface=None):
+		
+		"""Fuses lineLoop with other loop.
+		
+		"""
+		
+		#Find common edge
+		b,commonEdges=self.hasCommonEdge(loop)
+		
+		if not b:
+			printWarning("Cannot fuse lineLoop with ID " + str(self.Id) + " and lineLoop with ID "+ str(loop.Id) +" . Loops do not have common edge.")
+			return False
+		
+		global ax
+		try:
+			ax
+		except NameError:
+			ax=None
+		
+		#Sort edges of loop and pop edges that are in common
+		idx=loop.edges.index(commonEdges[0])
+		idxLast=loop.edges.index(commonEdges[-1])+1
+		
+		edgeTemp1,edges=pyfrp_misc_module.popRange(loop.edges,idx,idxLast)
+		orientTemp1,orientations=pyfrp_misc_module.popRange(loop.orientations,idx,idxLast)
+		
+		edges=list(np.roll(loop.edges,len(loop.edges)-idx))
+		orientations=list(np.roll(loop.orientations,len(loop.edges)-idx))
+		
+		#Pop common edge out of this loop
+		idx=self.edges.index(commonEdges[0])
+		idxLast=self.edges.index(commonEdges[-1])+1
+		edgeTemp2,self.edges=pyfrp_misc_module.popRange(self.edges,idx,idxLast)
+		orientTemp2,self.orientations=pyfrp_misc_module.popRange(self.orientations,idx,idxLast)
+		
+		#Figure out if edges of other loop are in right order or need to be reversed
+		if orientTemp1[0]==orientTemp2[0]:
+			edges.reverse()
+			orientations.reverse()
+			
+		if len(edges)>maxL:
+			if debug:
+				printWarning("Cannot fuse lineLoop with ID " + str(self.Id) + " and lineLoop with ID "+ str(loop.Id) +" . Resulting loop exceeds maxL.")
+			return False
+		
+		#Insert edges of second loop into loop
+		self.edges[idx:idx]=edges
+		self.orientations[idx:idx]=orientations
+		
+		#Check if closed in the end
+		self.checkClosed(fix=True,debug=debug)
+		
+		#Delete second lineLoop
+		if surface!=None:
+			loop.removeFromSurface(surface)
+		b=loop.delete()
+		
+		bs=[]
+		#Delete common edge
+		for edge in edgeTemp1:
+			bs.append(edge.delete())
+		
+		return True
+	
+	def includedInSurface(self):
+		
+		"""Checks if loop is included in a surface.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* included (bool): True if included.
+				* loops (list): List of :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface` objects that include loop. 
+		
+		"""
+		
+		surfaces=[]
+		
+		for surface in self.domain.ruledSurfaces:
+			if self==surface.lineLoop:
+				surfaces.append(surface)
+		
+		return len(surfaces)>0,surfaces
+
+	def delete(self,debug=False):
+		
+		"""Deletes loop if it is not used in any surface.
+		
+		Returns:
+			bool: True if deletion was successful.
+		"""
+		
+		incl,surfaces=self.includedInSurface()
+		if incl:
+			printWarning("Was not able to delete loop with ID " + str(self.Id) +". Still part of " + str(len(surfaces)) + " surfaces.")
+			return False
+		
+		self.domain.lineLoops.remove(self)
+		
+		return True
+	
+	def removeFromSurface(self,surface):
+		
+		"""Removes lineLoop from surface.
+		"""
+		
+		if self==surface.lineLoop:
+			surface.lineLoop=None
+	
+	
+	def removeFromAllSurfaces(self):
+		
+		"""Removes lineLoop from all surfaces.
+		"""
+		
+		for surface in self.domain.ruledSurfaces:
+			self.removeFromSurface(surface)	
+	
+	def isCoplanar(self):
+		
+		"""Returns if all edges lie in single plane.
+		
+		Does this by 
+		
+			* picking the first two vertices as first vector ``vec1 = v1 - v0``
+			* looping through vertices and computung the normal vector  
+			  between ``vec1`` and ``vec2=v[i]-v0``.
+			* Checking if all normal vectors are colinear.  
+		
+		Returns:
+			bool: True if coplanar.
+		
+		"""
+		
+		#Get vertex coordinates
+		coords=pyfrp_misc_module.objAttrToList(self.getVertices(),'x')
+		
+		#Compute normals
+		normals=[]
+		for i in range(2,len(coords)):	
+			n=pyfrp_geometry_module.computeNormal([coords[0],coords[1],coords[i]])
+			normals.append(n)
+		
+		#Check if normals are all colinear
+		b=[]	
+		for i in range(1,len(normals)):
+			
+			# Make sure to skip normal vectors produced from colinear vectors
+			if sum(normals[i])==0:
+				continue
+			
+			b.append(pyfrp_geometry_module.checkColinear(normals[0],normals[i]))
+			
+		return sum(b)==len(b)
+	
+	def getCenterOfMass(self):
+		
+		"""Computes center of mass of surface.
+		
+		Returns:
+			numpy.ndarray: Center of mass.
+		"""
+		
+		coords=np.array(pyfrp_misc_module.objAttrToList(self.getVertices(),'x'))
+		
+		return pyfrp_idx_module.getCenterOfMass(coords)
+	
+	def getEdges(self):
+		
+		"""Returns list of edges included in lineLoop."""
+		
+		return self.edges
+	
 class ruledSurface:
 	
 	"""ruledSurface class storing information from gmsh .geo.
@@ -2003,7 +2839,7 @@ class ruledSurface:
 		
 		self.initLineLoop(loopID)
 	
-	def initLineLoop(self,loopID,debug=False):
+	def initLineLoop(self,loopID,debug=False,addPoints=False,iterations=2):
 	
 		"""Checks length of lineLoop and if length of lineLoop is greater
 		than 4, will perform triangulation so Gmsh can handle surface."""
@@ -2013,59 +2849,86 @@ class ruledSurface:
 		
 		#Check length
 		if len(self.lineLoop.edges)<=4:
-			return False
+			return False,[]
+	
+		#Compute normal vector
+		oldNormal=self.getNormal()
+		
+		#Create triangulation
+		rmat=self.rotateToPlane('xy')
+		newNormal=self.getNormal()
 		
 		#Get vertices
-		vertices=self.lineLoop.getVertices()
+		vertices=self.getVertices()
+		coords=pyfrp_misc_module.objAttrToList(vertices,'x')
 		
-		#Get coordinates
-		coords=pyfrp_misc_module.objAttrToList(vertices,"x")
-		
-		#Compute normal vector
-		self.getNormal()
-		
-		#Check if normal to plane
-		if not self.normalToPlane():
-			printError("ruledSurface with ID" +  str(self.Id) + "is not normal to a plane and has more than 4 edges. PyFRAP is not able to triangulate surface down to smaller pieces.")
-			return False
+		#Get maximum volSize of vertices
+		maxVolSize=max(pyfrp_misc_module.objAttrToList(vertices,'volSize'))
 		
 		#Get coordinates in plane
-		coordsPlane=np.asarray(coords)[:,np.where(self.normal!=1)[0]]
-	
-		#Create triangulation
-		tri,coordsTri = pyfrp_idx_module.triangulatePoly(coordsPlane)
+		coordsPlane=np.asarray(coords)[:,np.where(abs(self.normal)!=1)[0]]
+		
+		#Triangulate
+		tri,coordsTri = pyfrp_idx_module.triangulatePoly(coordsPlane,addPoints=addPoints,iterations=iterations,debug=True)
+		
+		#Add 3D dimension to coordsTri	
+		coordsTri=np.concatenate((coordsTri,coords[0][2]*np.ones((coordsTri.shape[0],1))),axis=1)
+		
+		
 		
 		#Loop through each triangle 
+		surfacesCreated=[]
+		vertices=[]
 		for i in range(len(tri)):
 			
 			edges=[]
 			
 			#Loop through each vertex 
 			for j in range(len(tri[i])):
-				v1=vertices[tri[i][j]]
-				v2=vertices[tri[i][pyfrp_misc_module.modIdx(j+1,tri[i])]]
 				
+				#Get first vertex, create it if necessary
+				v1=self.domain.getVertexByX(coordsTri[tri[i][j]])[0]
+				if v1==False:
+					v1=self.domain.addVertex(coordsTri[tri[i][j]],volSize=maxVolSize)
+				
+				#Get second vertex, create it if necessary
+				v2=self.domain.getVertexByX(coordsTri[tri[i][pyfrp_misc_module.modIdx(j+1,tri[i])]])[0]
+				if v2==False:
+					v2=self.domain.addVertex(coordsTri[tri[i][pyfrp_misc_module.modIdx(j+1,tri[i])]],volSize=maxVolSize)
+							
 				#Check if edge already exists
 				if not self.domain.getEdgeByVertices(v1,v2)[0]:
 					edges.append(self.domain.addLine(v1,v2))
 				else:
 					edges.append(self.domain.getEdgeByVertices(v1,v2)[0])
-			
+				
+				#Remember vertices so we can use them later for turning everything back.
+				vertices=vertices+[v1,v2]
+				
 			#Add line loop
 			edgeIDs=pyfrp_misc_module.objAttrToList(edges,"Id")
 			loop=self.domain.addLineLoop(edgeIDs=edgeIDs)
-			loop.checkClosed(fix=True,debug=True)
+			loop.checkClosed(fix=False,debug=False)
+			loop.fix()
 			
 			#Add ruledSurface if necessary
 			if i==0:
 				self.lineLoop=loop
 			else:
-				self.domain.addRuledSurface(lineLoopID=loop.Id,Id=self.Id+i)
+				snew=self.domain.addRuledSurface(lineLoopID=loop.Id)	
+				surfacesCreated.append(snew)
 		
 		#Delete original loop
 		self.domain.lineLoops.remove(self.domain.getLineLoopById(loopID)[0])
 		
-		return True
+		#Remove duplicates in vertices list.
+		vertices=pyfrp_misc_module.remRepeatsList(vertices)
+		
+		#Rotate back
+		for v in vertices:
+			v.x=np.dot(v.x,rmat.T)
+			
+		return True,surfacesCreated
 		
 	def normalToPlane(self):
 		
@@ -2080,35 +2943,73 @@ class ruledSurface:
 		
 		return 1. in self.normal
 	
-	def getNormal(self):
+	def isCoplanar(self):
 		
-		"""Computes normal to surface using Newell's method.
+		"""Returns if surface lies in single plane.
 		
-		Adapted from http://stackoverflow.com/questions/39001642/calculating-surface-normal-in-python-using-newells-method.
+		Returns:
+			bool: True if coplanar.
+		
+		"""
+		
+		return self.lineLoop.isCoplanar()
+	
+	def getCenterOfMass(self):
+		
+		"""Computes center of mass of surface.
+		
+		Returns:
+			numpy.ndarray: Center of mass.
+		"""
+		
+		return self.lineLoop.getCenterOfMass()
+		
+	def getNormal(self,method='cross'):
+		
+		"""Computes normal to surface.
+		
+		First checks if surface is coplanar using :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface.isCoplanar`.
+		Then finds two independent vectors that span surface and passes them on to 
+		:py:func:`pyfrp.modules.pyfrp_geometry_module.computeNormal`.
+		
+		Currently there are two methods available:
+		
+			* ``cross``, see also :py:func:`normalByCross`.
+			* ``newells``, see also :py:func:`newells`.
+	
+		If method is unknown, will fall back to ``cross``.
+		
+		Keyword Args:
+			method (str): Method of normal computation.
 		
 		Returns:
 			numpy.ndarray: Normal vector to surface.
 		"""
 		
+		if not self.isCoplanar():
+			printWarning("Surface " + str(self.Id) + " is not coplanar. The resulting normal vector might thus be not correct.")
+		
 		#Get vertices
 		vertices=self.lineLoop.getVertices()
 		
-		#Newell's method
-		n = [0.0, 0.0, 0.0]
+		#Find non-colinear vertices
+		vec1=vertices[1].x-vertices[0].x
+		idx=None
+		for i in range(2,len(vertices)):
+			tempVec=vertices[i].x-vertices[0].x
+			if not pyfrp_geometry_module.checkColinear(vec1,tempVec):
+				idx=i
+				break
+		if idx==None:
+			printError("All points in surface "+str(self.Id) + " seem to be colinear. Will not be able to compute normal.")
+			return np.zeros((3,))
 		
-		for i, v in enumerate(vertices):
-			v2 = vertices[(i+1) % len(vertices)]
-			n[0] += (v.x[1] - v2.x[1]) * (v.x[2] + v2.x[2])
-			n[1] += (v.x[2] - v2.x[2]) * (v.x[0] - v2.x[0])
-			n[2] += (v.x[0] - v2.x[0]) * (v.x[1] - v2.x[1])
-		
-		normalised = [i/sum(n) for i in n]
-		
-		self.normal=np.asarray(normalised)
+		#Compute normal
+		coords=[vertices[0].x,vertices[1].x,vertices[i].x]
+		self.normal=pyfrp_geometry_module.computeNormal(coords,method=method)
 		
 		return self.normal
 
-		
 	def writeToFile(self,f):
 		
 		"""Writes ruled surface to file.
@@ -2124,6 +3025,311 @@ class ruledSurface:
 		f.write("Ruled Surface("+str(self.Id)+")= {"+str(self.lineLoop.Id)+ "};\n" )
 	
 		return f
+	
+	def addToBoundaryLayer(self,boundField=None,**fieldOpts):
+		
+		"""Adds surface to a boundary layer field. 
+		
+		If no field is given, will create new one with given parameters and add it to a minField. If no minField exists,
+		will create a new one too and set it as background field.
+		
+		See also :py:func:`addBoundaryLayerField` :py:func:`addMinField` and :py:func:`genMinBkgd`.
+		
+		Keyword Args:
+			boundField (pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField): Boundary layer field object.
+			fieldOpts (dict): See documentation of boundary layer field of all available options.
+			
+		Returns:	
+			pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField: Boundary layer field around edge.
+		
+		"""
+		
+		#Generate boundary field if not given
+		if boundField==None:
+			boundField=self.domain.addBoundaryLayerField()
+		
+		#Add Vertex
+		boundField.addSurfaceByID(self.Id)
+		
+		#Set options
+		boundField.setFieldAttributes(**fieldOpts)
+		
+		#Generate background field
+		self.domain.genMinBkgd(FieldsList=[boundField.Id])
+			
+		return boundField	
+	
+	def hasCommonEdge(self,surface):
+		
+		"""Checks if surface has common edge with other surface.
+		
+		Args:
+			surface (pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface): Surface object.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* hasCommon (bool): True if loops have common edge.
+				* e (pyfrp.modules.pyfrp_gmsh_geometry.edge): Edge that is in common.
+						
+		"""
+		
+		return self.lineLoop.hasCommonEdge(surface.lineLoop)
+		
+	def fuse(self,surface,maxL=1000,debug=False,sameNormal=False):
+		
+		"""Fuses surface with another surface.
+		
+		Will not do anything if surfaces do not have an edge in common. 
+		
+		"""
+	
+		if not self.hasCommonEdge(surface)[0]:
+			if debug:
+				printWarning("Cannot fuse surface with ID " + str(self.Id) + " and surface with ID "+ str(surface.Id) +" . Surfaces do not have common edge.")
+			return False
+			
+		if not self.hasSameNormal(surface):
+			if sameNormal:
+				if debug:
+					printWarning("Cannot fuse surface with ID " + str(self.Id) + " and surface with ID "+ str(surface.Id) +" . Not same normal, but sameNormal="+str(sameNormal))
+				return False
+			
+			if debug:
+				printWarning("Fusing surface with ID " + str(self.Id) + " and surface with ID "+ str(surface.Id) +" will alter surface normal.")
+		
+		b=self.lineLoop.fuse(surface.lineLoop,maxL=maxL,debug=debug,surface=surface)
+		if b:
+			surface.removeFromAllLoops()
+			surface.delete()
+		
+		return b
+	
+	def removeFromAllLoops(self):
+		
+		"""Removes surface from all surface loops.
+		"""
+		
+		for loop in self.domain.surfaceLoops:
+			if self in loop.surfaces:
+				loop.surfaces.remove(self)
+			
+	def hasSameNormal(self,surface,sameOrientation=False):
+		
+		"""Checks if sufrace has the same normal vector as another surface.
+		
+		Args:
+			surface (pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface): Surface object.
+		
+		Keyword Args:
+			sameOrientation (bool): Forces surfaces to also have same orientation.
+			
+		Returns:
+			bool: True if same normal vector.
+			
+		"""
+		
+		if sameOrientation:
+			if pyfrp_misc_module.compareVectors(self.normal,surface.normal):
+				return True
+		else:
+			if pyfrp_misc_module.compareVectors(self.normal,surface.normal) or pyfrp_misc_module.compareVectors(self.normal,-surface.normal):
+				return True
+		return False
+			
+	def includedInLoop(self):
+		
+		"""Checks if surface is included in a surfaceLoop.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* included (bool): True if included.
+				* loops (list): List of :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoops` objects that include surface. 
+		
+		"""
+		
+		loops=[]
+		
+		for loop in self.domain.surfaceLoops:
+			if self in loop.surfaces:
+				loops.append(loop)
+		
+		return len(loops)>0,loops
+
+	def delete(self):
+		
+		"""Deletes surface if it is not used in any surfaceLoop.
+		
+		Returns:
+			bool: True if deletion was successful.
+		"""
+		
+		incl,loops=self.includedInLoop()
+		if incl:
+			printWarning("Was not able to delete loop with ID " + str(self.Id) +". Still part of " + str(len(loops)) + " loops.")
+			return False
+		
+		self.domain.ruledSurfaces.remove(self)
+		
+		return True
+	
+	def draw(self,ax=None,color='b',edgeColor='k',drawLoop=True,ann=None,alpha=0.2):
+		
+		"""Draws surface and fills it with color.
+		
+		.. note:: If ``ann=None``, will set ``ann=False``.
+		
+		.. note:: If no axes is given, will create new one.
+		
+		.. warning:: Does not work for surfaces surrounded by arcs yet.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes to be plotted in.
+			color (str): Color of surface.
+			ann (bool): Show annotations.
+			edgeColor (str): Color of lineLoop around.
+			alpha (float): Transparency of surface. 
+				
+		Returns:
+			matplotlib.axes: Axes.
+		
+		"""
+		
+		if ann==None:
+			ann=False
+			
+		if ax==None:
+			fig,axes = pyfrp_plot_module.makeGeometryPlot()
+			ax=axes[0]
+		
+		if drawLoop:
+			ax=self.lineLoop.draw(ax=ax,color=edgeColor,ann=False)
+		
+		for e in self.lineLoop.edges:
+			if e in self.domain.arcs:
+				printWarning("Cannot draw surface " + str(self.Id) + " yet. Surfaces including arcs are not supported yet.")
+				return ax
+		
+		#Get Vertex coordinates in the form we want (this is probably unnecessarily complicated)
+		vertices=self.lineLoop.getVertices()
+		coords=pyfrp_misc_module.objAttrToList(vertices,'x')
+		coords=np.asarray(coords)
+		coords = zip(coords[:,0], coords[:,1], coords[:,2])
+		coordsNew=[]
+		coordsNew.append(list(coords))	
+		
+		#Add collection
+		coll=Poly3DCollection(coordsNew,alpha=alpha)
+		coll.set_facecolor(color)
+		ax.add_collection3d(coll)
+		
+		#annotation
+		if ann:
+			com=pyfrp_idx_module.getCenterOfMass(np.array(pyfrp_misc_module.objAttrToList(vertices,'x')))
+			ax.text(com[0],com[1],com[2], "s"+str(self.Id), None)
+		
+		#Redraw
+		pyfrp_plot_module.redraw(ax)
+		
+		return ax
+	
+	def getVertices(self):
+		
+		"""Returns all vertices included in surface."""
+		
+		if self.lineLoop==None:
+			return []
+		else:
+			return self.lineLoop.getVertices()
+	
+	def getEdges(self):
+		
+		"""Returns all edges included in surface."""
+		
+		if self.lineLoop==None:
+			return []
+		else:
+			return self.lineLoop.getEdges()
+	
+	
+	def rotateToNormal(self,normal,ownNormal=None):
+		
+		"""Rotates surface such that it lies in the plane
+		with normal vector ``normal``.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_geometry_module.getRotMatrix`.
+		
+		Args:
+			normal (numpy.ndarray): Normal vector.
+		
+		Returns: 
+			numpy.ndarray: Rotation matrix.
+		
+		"""
+		
+		if ownNormal==None:
+			ownNormal=self.getNormal()
+		
+		if pyfrp_geometry_module.checkColinear(normal,ownNormal):
+			rmat=np.identity(3)
+		else:
+			rmat=pyfrp_geometry_module.getRotMatrix(normal,ownNormal)
+		
+		# Rotate
+		for v in self.getVertices():
+			v.x=np.dot(v.x,rmat)
+			
+		return rmat	
+			
+	def rotateToSurface(self,s):
+			
+		"""Rotates surface such that it lies in the same plane
+		as a given surface.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_geometry_module.getRotMatrix`.
+		
+		Args:
+			s (pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface): A surface.
+		
+		Returns: 
+			numpy.ndarray: Rotation matrix.
+		
+		"""
+		
+		return self.rotateToNormal(s.getNormal())
+		
+	def rotateToPlane(self,plane):
+		
+		"""Rotates surface such that it lies in plane.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_geometry_module.getRotMatrix`.
+		
+		Possible planes are:
+		
+			* ``xy``
+			* ``xz``
+			* ``yz``
+			
+		Args:
+			plane (str): Plane to rotate to.
+		
+		Returns: 
+			numpy.ndarray: Rotation matrix.
+		
+		"""
+		
+		if plane=="xz":
+			normal=np.array([0,0,1.])
+		elif plane=="yz":
+			normal=np.array([1.,0,0])
+		elif plane=="xy":
+			normal=np.array([0,0,1.])
+		else:
+			printError("Do not know the plane " +plane +". Will not rotate plane")
+			return
+		
+		return self.rotateToNormal(normal)
 	
 class surfaceLoop:
 	
@@ -2269,4 +3475,647 @@ class volume:
 	
 		return f
 				
+class field:
+
+	"""Field class storing information from gmsh .geo.
+
+	Args:
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain surface belongs to.
+		Id (int): ID of field.
+		typ (str): Type of field.
+		
+	"""		
+	
+	def __init__(self,domain,typ,Id):
+		
+		self.domain=domain
+		self.Id=Id
+		
+		self.typ=typ
+	
+	
+	def setAsBkgdField(self):
+		
+		"""Sets this mesh as background field for the whole domain.
+		"""
+		
+		self.domain.bkgdField=self
+	
+	def isBkgdField(self):
+		
+		"""Returns true if field is background field.
+		
+		Returns:
+			bool: True if background field.
+		"""
+		
+		return self.domain.bkgdField==self
+	
+	def setFieldAttr(self,name,val):
+		
+		"""Sets attribute of field.
+		
+		.. note:: Value can have any data type.
+		
+		Args:
+			name (str): Name of attribute.
+			val (str): Value.
+		
+		"""
+		
+		setattr(self,name,val)
+	
+	def setFieldAttributes(self,**kwargs):
+		
+		"""Sets multiple field attributes.
+		"""
+		
+		for key, value in kwargs.iteritems():
+			self.setFieldAttributes(key,value)
 			
+			
+			
+class boxField(field):
+	
+	"""Box field class storing information from gmsh .geo.
+	
+	Subclasses from :py:class:`field`.
+	
+	Args:
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain surface belongs to.
+		Id (int): ID of field.
+		
+	Keyword Args:
+		volSizeIn (float): Mesh element volume inside box.
+		volSizeOut (float): Mesh element volume outside box.
+		xRange (list): Range of box field in x-direction given as ``[minVal,maxVal]``.
+		yRange (list): Range of box field in y-direction given as ``[minVal,maxVal]``.
+		zRange (list): Range of box field in z-direction given as ``[minVal,maxVal]``.
+		
+	"""
+	
+	def __init__(self,domain,Id,volSizeIn=10.,volSizeOut=20.,xRange=[],yRange=[],zRange=[]):
+	
+		field.__init__(self,domain,"box",Id)
+		
+		self.VOut=volSizeIn
+		self.VIn=volSizeOut
+		self.initBox(xRange,yRange,zRange)
+		
+	def initBox(self,xRange,yRange,zRange):
+		
+		"""Initializes bounding box.
+		"""
+		
+		self.setRange('X',xRange)
+		self.setRange('Y',yRange)
+		self.setRange('Z',zRange)
+		
+	def setRange(self,coord,vec):
+		
+		"""Sets the bounding box range along a given axis.
+		
+		Args:
+			coord (str): Axis along range is set (``"X","Y","Z"``) 
+			vec (list): Range of box ``[minVal,maxVal]``
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* coordMin (float): New minimum value.
+				* coordMax (float): New maximum value.
+				
+		"""
+		
+		try:
+			setattr(self,coord+"Min",vec[0])
+			setattr(self,coord+"Max",vec[1])
+		except IndexError:
+			setattr(self,coord+"Min",None)
+			setattr(self,coord+"Max",None)
+		
+		return getattr(self,coord+"Min"),getattr(self,coord+"Max")
+		
+	def writeToFile(self,f):
+			
+		"""Writes box field to file.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_IO_module.writeBoxField`.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+			
+		f=pyfrp_gmsh_IO_module.writeBoxField(f,self.Id,self.VIn,self.VOut,[self.XMin,self.XMax],[self.YMin,self.YMax],[self.ZMin,self.ZMax])
+		
+		if self.isBkgdField():
+			f=pyfrp_gmsh_IO_module.writeBackgroundField(f,self.Id)
+			
+		return f	
+	
+class attractorField(field):
+	
+	"""Attractor field class storing information from gmsh .geo.
+
+	Subclasses from :py:class:`field`.
+
+	Args:
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain surface belongs to.
+		Id (int): ID of field.
+		
+	Keyword Args:
+		NodesList (list): List of IDs of the Nodes that attractor field centers around.
+			
+	"""
+
+	def __init__(self,domain,Id,NodesList=[]):
+	
+		field.__init__(self,domain,"attractor",Id)
+		
+		
+		self.NodesList=self.initNodesList(NodesList)
+	
+	def initNodesList(self,NodesList):
+		
+		"""Adds a list of vertices to NodesList.
+		
+		See also :py:func:`addNodeByID`.
+		
+		Args:
+			NodesList (list): List of vertex IDs.
+			
+		Returns:
+			list: Updated NodesList.
+		
+		"""
+		
+		self.NodesList=[]
+		
+		for Id in NodesList:
+			self.addNodeByID(Id)
+			
+		return self.NodesList	
+			
+	def addNodeByID(self,ID):
+		
+		"""Adds vertex object to NodesList given the ID of the vertex.
+		
+		Args:
+			ID (int): ID of vertex to be added.
+			
+		Returns:
+			list: Updated NodesList.
+		
+		"""
+		
+		v,b=self.domain.getVertexById(ID)
+		
+		if isinstance(b,int):
+			self.NodesList.append(v)
+		return self.NodesList
+	
+	def setFieldAttr(self,name,val):
+		
+		"""Sets field attribute.
+		
+		.. note:: Value can have any data type.
+		
+		Args:
+			name (str): Name of attribute.
+			val (float): Value of attribute.
+			
+			
+		"""
+		
+		if name=="NodesList":
+			self.initNodesList(val)
+		else:
+			setattr(self,name,val)
+	
+	def writeToFile(self,f):
+			
+		"""Writes attractor field to file.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_IO_module.writeAttractorField`.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+			
+		f=pyfrp_gmsh_IO_module.writeAttractorField(f,self.Id,pyfrp_misc_module.objAttrToList(self.NodesList,'Id'))
+		
+		if self.isBkgdField():
+			f=pyfrp_gmsh_IO_module.writeBackgroundField(f,self.Id)
+			
+		return f	
+	
+	def includedInThresholdField(self):
+		
+		"""Returns all the threshholdFields where attractorField is included in.
+		
+		Returns:
+			list: List of threshholdField objects.
+		
+		"""
+		
+		threshFields=self.domain.getAllFieldsOfType("threshold")
+		
+		included=[]
+		for tField in threshFields:
+			if tField.IField==self.Id:
+				included.append(tField)
+		
+		return included
+		
+		
+class thresholdField(field):		
+	
+	"""Threshold field class storing information from gmsh .geo.
+	
+	Subclasses from :py:class:`field`.
+	
+	
+	
+	Args:
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain surface belongs to.
+		Id (int): ID of field.
+	
+	Keyword Args:
+		IField (int): ID of vertex that is center to threshold field.
+		LcMin (float): Minimum volSize of threshold field.
+		LcMax (float): Maximum volSize of threshold field.
+		DistMin (float): Minimun density of field.
+		DistMax (float): Maximum density of field.
+		
+	"""
+	
+	def __init__(self,domain,Id,IField=None,LcMin=5.,LcMax=20.,DistMin=30.,DistMax=60.):
+		
+		field.__init__(self,domain,"threshold",Id)
+		
+		self.IField=IField
+		self.LcMin=LcMin
+		self.LcMax=LcMax
+		self.DistMin=DistMin
+		self.DistMax=DistMax
+		
+	def writeToFile(self,f):
+			
+		"""Writes threshold field to file.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_IO_module.writeThresholdField`.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+			
+		f=pyfrp_gmsh_IO_module.writeThresholdField(f,self.Id,self.IField,self.LcMin,self.LcMax,self.DistMin,self.DistMax)
+		
+		if self.isBkgdField():
+			f=pyfrp_gmsh_IO_module.writeBackgroundField(f,self.Id)
+			
+		return f	
+		
+class minField(field):
+	
+	"""Minimum field class storing information from gmsh .geo.
+	
+	Subclasses from :py:class:`field`.
+
+	Args:
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain surface belongs to.
+		Id (int): ID of field.
+		
+	Keyword Args:
+		FieldsList (list): List of field IDs.
+		
+	"""
+	
+	def __init__(self,domain,Id,FieldsList=[]):
+		
+		field.__init__(self,domain,"min",Id)
+		
+		self.FieldsList=self.initFieldsList(FieldsList)
+	
+	def setFieldAttr(self,name,val):
+	
+		if name=="FieldsList":
+			self.initFieldsList(val)
+		else:
+			setattr(self,name,val)
+				
+	def initFieldsList(self,FieldsList):
+		
+		"""Adds a list of vertices to NodesList.
+		
+		See also :py:func:`addNodeByID`.
+		
+		Args:
+			FieldsList (list): List of field IDs.
+			
+		Returns:
+			list: Updated FieldsList.
+		
+		"""
+		
+		self.FieldsList=[]
+		
+		for Id in FieldsList:
+			self.addFieldByID(Id)
+		
+		return self.FieldsList
+		
+	def addFieldByID(self,ID):
+		
+		"""Adds field object to FieldsList given the ID of the field.
+		
+		Args:
+			ID (int): ID of field to be added.
+			
+		Returns:
+			list: Updated FieldsList.
+		
+		"""
+		
+		f,b=self.domain.getFieldById(ID)
+		
+		if isinstance(b,int):
+			self.FieldsList.append(f)
+		return self.FieldsList
+		
+	def writeToFile(self,f):
+			
+		"""Writes minimum field to file.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_IO_module.writeMinField`.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+		
+		print self.FieldsList
+		
+		f=pyfrp_gmsh_IO_module.writeMinField(f,self.Id,pyfrp_misc_module.objAttrToList(self.FieldsList,'Id'))
+		
+		if self.isBkgdField():
+			f=pyfrp_gmsh_IO_module.writeBackgroundField(f,self.Id)
+			
+		return f	
+	
+	def addAllFields(self):
+		
+		"""Adds all fields in domain to FieldsList if not 
+		already in there.
+		
+		Returns:
+			list: Updated FieldsList.
+		"""
+		
+		for f in self.domain.fields:
+			if f not in self.FieldsList and f!=self:
+				self.FieldsList.append(f)
+				
+		return self.FieldsList
+	
+		
+class boundaryLayerField(field):
+	
+	r"""Boundary Layer field class storing information from gmsh .geo.
+	
+	Creates boundary layer mesh around vertices, edges or surfacesin geometry. Boundary layer density 
+	is given by
+	
+	.. math:: h_{wall} * ratio^{(dist/h_{wall})}.
+	
+	Subclasses from :py:class:`field`.
+	
+	Adding a box surrounded with a boundary layer to a geometry:
+	
+	>>> vertices,lines,loops,surfaces,sloops,vols=d.addCuboidByParameters([256-50,256-50,-160],100,100,120,10,genVol=False)
+
+	Adjust volSize:
+	
+	>>> d.setGlobalVolSize(30.)
+
+	Add boundary layer:
+	
+	>>> volSizeLayer=10.
+	>>> blf=d.addBoundaryLayerField(hfar=volSizeLayer,hwall_n=volSizeLayer,hwall_t=volSizeLayer,thickness=30.,Quads=0.)
+	>>> blf.addFaceListByID(pyfrp_misc_module.objAttrToList(surfaces,'Id'))
+	>>> blf.setAsBkgdField()
+	>>> d.draw()
+	
+	.. image:: ../imgs/pyfrp_gmsh_geometry/boundaryLayerField_geometry.png
+	
+	Write to file:
+	
+	>>> d.writeToFile("dome_boundary.geo")
+	
+	Generate mesh:
+	
+	>>> fnMesh=pyfrp_gmsh_module.runGmsh("dome_boundary.geo")
+	>>> m=pyfrp_mesh.mesh(None)
+	>>> m.setFnMesh(fnMesh)
+	>>> m.plotMesh()
+	
+	.. image:: ../imgs/pyfrp_gmsh_geometry/boundaryLayerField_mesh.png
+	
+	See also http://gmsh.info/doc/texinfo/gmsh.html#Specifying-mesh-element-sizes .
+	
+	Args:
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain surface belongs to.
+		Id (int): ID of field.
+		
+	Keyword Args:
+		AnisoMax (float): Threshold angle for creating a mesh fan in the boundary layer.
+		IntersectMetrics (int): Intersect metrics of all faces.
+		Quad (int): Generate recombined elements in the boundary layer.
+		har (float): Element size far from the wall.
+		hwall_n (float): Mesh Size Normal to the The Wall.
+		hwall_t (float): Mesh Size Tangent to the Wall.
+		ratio (float): Size Ratio Between Two Successive Layers.
+		thickness (float): Maximal thickness of the boundary layer.
+		List (list): List of field IDs.
+		
+	"""
+	
+	def __init__(self,domain,Id,AnisoMax=10000000000,hwall_n=1.,hwall_t=1,ratio=1.1,thickness=10.,hfar=1.,IntersectMetrics=1,Quads=0.):
+		
+		field.__init__(self,domain,"boundaryLayer",Id)
+		
+		self.AnisoMax=AnisoMax
+		self.Quads=Quads
+		self.hfar=hfar
+		self.hwall_n=hwall_n
+		self.hwall_t=hwall_t
+		self.IntersectMetrics=IntersectMetrics
+		self.ratio=ratio
+		self.thickness=thickness
+	
+		self.EdgesList=[]
+		self.FacesList=[]
+		self.FanNodesList=[]
+		self.FansList=[]
+		self.NodesList=[]
+	
+	
+	def addEdgeListByID(self,IDs):
+		
+		"""Adds a list of edge objects to EdgesList given the ID of the edges.
+		
+		Args:
+			IDs (list): List of IDs of edges to be added.
+			
+		Returns:
+			list: Updated EgesList.
+		
+		"""
+		
+		for ID in IDs:
+			self.addEdgeByID(ID)
+			
+		return self.EdgesList	
+	
+	def addFaceListByID(self,IDs):
+		
+		"""Adds a list of surfaces objects to FacesList given the ID of the surfaces.
+		
+		Args:
+			IDs (list): List of IDs of surfaces to be added.
+			
+		Returns:
+			list: Updated FacesList.
+		
+		"""
+		
+		for ID in IDs:
+			self.addFaceByID(ID)
+			
+		return self.FacesList	
+	
+	def addNodeListByID(self,IDs):
+		
+		"""Adds a list of vertex objects to NodesList given the ID of the vertex.
+		
+		Args:
+			IDs (list): List of IDs of vertices to be added.
+			
+		Returns:
+			list: Updated NodesList.
+		
+		"""
+		
+		for ID in IDs:
+			self.addNodeByID(ID)
+			
+		return self.NodesList	
+	
+	def addEdgeByID(self,ID):
+		
+		"""Adds edge object to EdgesList given the ID of the edge.
+		
+		Args:
+			ID (int): ID of edge to be added.
+			
+		Returns:
+			list: Updated EgesList.
+		
+		"""
+		
+		v,b=self.domain.getEdgeById(ID)
+		
+		if isinstance(b,int):
+			self.EdgesList.append(v)
+		return self.EdgesList
+		
+	def addFaceByID(self,ID):
+		
+		"""Adds surface object to FacesList given the ID of the surface.
+		
+		Args:
+			ID (int): ID of surface to be added.
+			
+		Returns:
+			list: Updated FacesList.
+		
+		"""
+		
+		v,b=self.domain.getRuledSurfaceById(ID)
+		
+		if isinstance(b,int):
+			self.FacesList.append(v)
+		return self.FacesList
+	
+	def addNodeByID(self,ID):
+		
+		"""Adds vertex object to NodesList given the ID of the vertex.
+		
+		Args:
+			ID (int): ID of vertex to be added.
+			
+		Returns:
+			list: Updated NodesList.
+		
+		"""
+		
+		v,b=self.domain.getVertexById(ID)
+		
+		if isinstance(b,int):
+			self.NodesList.append(v)
+		return self.NodesList
+	
+	def buildElementDict(self):
+		
+		"""Builds element dictionary for writing to file.
+		"""
+		
+		elements={}
+		for elmnt in ["EdgesList","FacesList","NodesList"]:
+			if len(getattr(self,elmnt))>0:
+				elements[elmnt]=pyfrp_misc_module.objAttrToList(getattr(self,elmnt),'Id')
+		
+		return elements
+	
+	def writeToFile(self,f):
+			
+		"""Writes boundaryLayerField to file.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_IO_module.writeBoundaryLayerField`.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+		
+		#elements=pyfrp_misc_module.objAttr2Dict(self,attr=["EdgesList","FacesList","NodesList"])
+		
+		elements=self.buildElementDict()
+		fieldOpts=pyfrp_misc_module.objAttr2Dict(self,attr=["AnisoMax","hwall_n","hwall_t","ratio","thickness","hfar","IntersectMetrics","Quads"])
+		
+		f=pyfrp_gmsh_IO_module.writeBoundaryLayerField(f,self.Id,elements,fieldOpts)
+		
+		if self.isBkgdField():
+			f=pyfrp_gmsh_IO_module.writeBackgroundField(f,self.Id)
+			
+		return f	
+	
+	

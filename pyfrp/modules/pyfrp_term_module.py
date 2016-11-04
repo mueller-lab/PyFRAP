@@ -67,7 +67,7 @@ def printDict(dic,maxL=5):
 	"""Prints all dictionary entries in the form key = value.
 	
 	If attributes are of type ``list`` or ``numpy.ndarray``, will check if the size
-	exceeds threshhold. If so, will only print type and dimension of attribute.
+	exceeds threshold. If so, will only print type and dimension of attribute.
 	
 	Args:
 		dic (dict): Dictionary to be printed.
@@ -103,13 +103,13 @@ def printAllObjAttr(obj,maxL=5):
 	"""Prints all object attributes in the form attributeName = attributeValue.
 	
 	If attributes are of type ``list`` or ``numpy.ndarray``, will check if the size
-	exceeds threshhold. If so, will only print type and dimension of attribute.
+	exceeds threshold. If so, will only print type and dimension of attribute.
 	
 	Args:
 		obj (object): Object to be printed.
 	
 	Keyword Args:
-		maxL (int): Maximum length threshhold.
+		maxL (int): Maximum length threshold.
 	
 	"""
 	
@@ -123,14 +123,14 @@ def printAttr(name,attr,maxL=5):
 	"""Prints single attribute in the form attributeName = attributeValue.
 	
 	If attributes are of type ``list`` or ``numpy.ndarray``, will check if the size
-	exceeds threshhold. If so, will only print type and dimension of attribute.
+	exceeds threshold. If so, will only print type and dimension of attribute.
 	
 	Args:
 		name (str): Name of attribute.
 		attr (any): Attribute value.
 		
 	Keyword Args:
-		maxL (int): Maximum length threshhold.
+		maxL (int): Maximum length threshold.
 	
 	"""
 

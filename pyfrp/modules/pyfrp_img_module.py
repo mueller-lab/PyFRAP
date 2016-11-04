@@ -1056,12 +1056,12 @@ def imgHist(img,binMin=0,binMax=65535,nbins=256,binSize=1,binsFit=True,fixSize=F
 
 def fixedThresh(img,thresh,smaller=False,fill=np.nan):
 	
-	"""Apply fixed threshhold to image and fill pixels with values 
+	"""Apply fixed threshold to image and fill pixels with values 
 	greater than thresh with fill value .
 		
 	Args:
-		img (numpy.ndarray): Image for threshholding.
-		thresh (float): Threshhold used.
+		img (numpy.ndarray): Image for thresholding.
+		thresh (float): Threshold used.
 		
 	Keyword Args:
 		fill (float): Fill values for pixels that are smaller or greater than thresh. 
@@ -1071,8 +1071,8 @@ def fixedThresh(img,thresh,smaller=False,fill=np.nan):
 		tuple: Tuple containing:
 
 			* img (numpy.ndarray): Output image.
-			* indX (numpy.ndarray): x-indices of pixels that where threshholded. 
-			* indY (numpy.ndarray): y-indices of pixels that where threshholded. 
+			* indX (numpy.ndarray): x-indices of pixels that where thresholded. 
+			* indY (numpy.ndarray): y-indices of pixels that where thresholded. 
 	"""
 	
 	#Find pixels greater than thresh 
@@ -1620,8 +1620,8 @@ def otsuImageJ(img,maxVal,minVal,debug=False):
 
 	Args:
 		img (numpy.ndarray): Image as 2D-array.
-		maxVal (int): Value assigned to pixels above threshhold.
-		minVal (int): Value assigned to pixels below threshhold.
+		maxVal (int): Value assigned to pixels above threshold.
+		minVal (int): Value assigned to pixels below threshold.
 		
 	Keyword Args:
 		debug (bool): Show debugging outputs and plots.
@@ -1629,7 +1629,7 @@ def otsuImageJ(img,maxVal,minVal,debug=False):
 	Returns:
 		tuple: Tuple containing:
 		
-			* kStar (int): Optimal threshhold
+			* kStar (int): Optimal threshold
 			* binImg (np.ndarray): Binary image
 	"""
 	

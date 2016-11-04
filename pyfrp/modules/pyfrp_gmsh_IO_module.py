@@ -127,7 +127,7 @@ def getId(var,delimOpen="(",delimClose=")"):
 	Id=int(Id.split(delimClose)[0])
 	return typ,Id
 
-def getVals(val,parmDic):
+def getVals(val,parmDic,openDelim="{",closeDelim="}",sep=","):
 	
 	"""Translates value of parameter into list of floats.
 	
@@ -143,25 +143,39 @@ def getVals(val,parmDic):
 		val (str): Value string of geometric variable.
 		parmDic (dict): Parameter dictionary.
 	
+	Keyword Args:
+		openDelim (str): Opening delimiter.
+		closeDelim (str): Closing delimiter.
+		sep (str): Seperator between values.
+	
 	Returns:
 		rList (list): List of translated values.
 	
 	"""
 	
-	valList,i=pyfrp_misc_module.str2list(val,dtype="str",openDelim="{",closeDelim="}",sep=",")
+	if openDelim in val:
+		valList,i=pyfrp_misc_module.str2list(val,dtype="str",openDelim=openDelim,closeDelim=closeDelim,sep=sep)
+		wasList=True
+	else:
+		valList=[val]
+		wasList=False
+	
 	rList=[]
 	
 	for v in valList:
 		v=v.strip()
 		rList.append(applyParmDic(v,parmDic))
-	return rList
-
+	if wasList:	
+		return rList
+	else:
+		return rList[0]
+	
 def convertMathExpr(val):
 	
 	"""Converts math expressions from .geo syntax into python
 	syntax.
 	
-	.. note::Not all translations have been implemented yet. You can 
+	.. note:: Not all translations have been implemented yet. You can 
 	   simply add here expressions by adding a translation to the 
 	   translations list (``translations.append([CExpression,PythonExpression])``).
 	
@@ -205,11 +219,16 @@ def applyParmDic(val,parmDic):
 	keys.reverse()
 	
 	val=convertMathExpr(val)
-	
+
 	for key in keys:
-		val=val.replace(key,str(parmDic[key]))	
+		val=val.replace(key,"("+str(parmDic[key])+")")	
+
+	try:
+		return eval(val)
+	except NameError:
+		printWarning("applyParmDic: Could not evaluate value" + str(val))
+		return val
 	
-	return eval(val)
 	
 def sortKeysByLength(dic):
 	
@@ -240,10 +259,11 @@ def readParameter(line,parmDic):
 	"""
 	
 	var,val = splitLine(line)
+	
 	val=applyParmDic(val,parmDic)
 	return var,val
 
-def readLine(line,parmDic,domain):
+def readGeoLine(line,parmDic,domain):
 	
 	"""Reads in line from .geo file. 
 	
@@ -275,9 +295,14 @@ def readLine(line,parmDic,domain):
 	
 	if "[" in line or "]" in line:
 		#This is a field line
+		
+		domain = readFieldLine(line,domain,parmDic)
+		
 		return parmDic, "field", -3, [], domain
 		
-	
+	if "Background Field" in line:
+		domain=initBkgdField(line,domain)
+		
 	if "{" in line or "}" in line:
 		#This line is some sort of object
 		
@@ -324,7 +349,87 @@ def readLine(line,parmDic,domain):
 		
 		else:
 			return parmDic, "empty", -3, [], domain
+
+def initBkgdField(line,domain):
+	
+	"""Initiates background field when reading a .geo file.
+	
+	Args:
+		line (str): Line in geo file.
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain object.
+	
+	Returns:	
+		pyfrp.modules.pyfrp_gmsh_geometry.domain: Updated domain.
+	
+	"""
+	
+	var,val = splitLine(line)
+	field=domain.getFieldById(int(val))[0]
+	field.setAsBkgdField()
+	
+	return domain
+	
+def initField(val,domain,Id):
+	
+	"""Adds the right type of field object to domain.
+	
+	Args:
+		val (str): Value string.
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain object.
+		Id (int): Id of new field.
 		
+	Returns:	
+		pyfrp.modules.pyfrp_gmsh_geometry.domain: Updated domain.
+		
+	"""
+	
+	if 'Attractor' in val:
+		domain.addAttractorField(Id=Id)
+	elif 'Threshold' in val:
+		domain.addThresholdField(Id=Id)
+	elif 'Min' in val:
+		domain.addMinField(Id=Id)
+	elif 'Box' in val:	
+		domain.addBoxField(Id=Id)
+	elif 'Boundary'	in val:
+		domain.addBoundaryLayerField(Id=Id)
+	return domain
+	
+def readFieldLine(line,domain,parmDic):
+	
+	"""Reads line that belongs to field definition in .geo file.
+	
+	If line defines new field, will create new field using 
+	:py:func:`initField`.
+	
+	Otherwise will try to find field in domain and set new 
+	property value.
+	
+	Args:
+		line (str): Line to read.
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain object.
+		parmDic (dict): Parameter dictionary.
+	
+	Returns:	
+		pyfrp.modules.pyfrp_gmsh_geometry.domain: Updated domain.
+		
+	"""
+	
+	var,val = splitLine(line)
+	typ,Id = getId(var,delimOpen='[',delimClose=']')
+	
+	if "." in var:
+		vals=getVals(val,parmDic)
+		temp,prop=var.split(".")
+		prop=prop.strip()
+
+		domain.getFieldById(Id)[0].setFieldAttr(prop,vals)
+		
+	else:
+		domain=initField(val,domain,Id)
+	
+	return domain
+	
 def readGeoFile(fn):
 		
 	"""Reads in .geo file and tries to extract geometry defined in .geo file
@@ -350,50 +455,92 @@ def readGeoFile(fn):
 	#Read file
 	with open(fn,'r') as f:
 		for line in f:
-			parmDic,typ,Id,vals,domain=readLine(line,parmDic,domain)
+			parmDic,typ,Id,vals,domain=readGeoLine(line,parmDic,domain)
 			
 	return domain,parmDic
-			
-def txtLineReplace(filePath, pattern, subst):
-		
-	"""Replaces line in file that starts with ``pattern`` and substitutes it 
-	with ``subst``.
+
+def readStlFile(fn,domain=None,volSizePx=20.):
 	
-	.. note:: Will create temporary file using ``tempfile.mkstemp()``. You should have 
-	   read/write access to whereever ``mkstemp`` is putting files.
+	"""Reads stl file to domain.
+	
+	.. note:: Uses numpy-stl package. You may need to install via 
+	   ``pip install numpy-stl``
+	
+	If no domain is given, will create new one
 	
 	Args:
-		filePath (str): Filename.
-		pattern (str): Pattern to be looked for.
-		subst (str): String used as a replacement.
-			
+		fn (str): Path to stl file.
+		
+	Keyword Args:
+		volSizePx (float): Mesh density assigned at vertices.
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): A domain object.
+		
+	Returns:
+		pyfrp.modules.pyfrp_gmsh_geometry.domain: A domain object.
+	
+	"""
+	
+	""" NOTE: Continue here: Need something to avoid double creation of edges. Use getEdgeByVertices. Also need to write getVertexByX. 
+	
+	Then need to fuse surfaces: Idea: 
+		- Find all surfaces with same norm vector. 
+		- Loop through them for i in range(end), for j in range(i,end). When has edge in common (need sth like hasEdgeInCommon as a lineLoop/surface method)
+			Then fuse them (might need method for this too, call in the end isClosed with fix=True)
+	
 	"""
 	
 	
-	#Create temp file
-	fh, absPath = mkstemp()
-	newFile = open(absPath,'w')
-	oldFile = open(filePath)
+	from stl import mesh
 	
-	#Loop through file and replace line 
-	for line in oldFile:
+	#Load file
+	mesh=mesh.Mesh.from_file(fn)
+	
+	#New domain
+	if domain==None:
+		domain=pyfrp_gmsh_geometry.domain()
+	
+	#Loop through all surface triangles
+	for triang in mesh.data:
 		
-		if line.startswith(pattern):
-			newFile.write(line.replace(line, subst))
-		else:
-			newFile.write(line)
+		#Loop through all vertices of triangle
+		vertices=[]
+		edges=[]
+		for i,x in enumerate(triang[1]):
 			
-	#close temp file
-	newFile.close()
-	os.close(fh)
-	oldFile.close()
-		
-	#Remove original file
-	os.remove(filePath)
+			#Create vertex if it doesn't exist yet
+			v,ind=domain.getVertexByX(x)
+			if v==False:
+				v=domain.addVertex(x,volSize=volSizePx)
+			
+			vertices.append(v)
+			
+			#Create edge if non-existent
+			if i>0:
+				
+				edge,ind=domain.getEdgeByVertices(vertices[i-1],vertices[i])
+				if edge==False:
+					edges.append(domain.addLine(vertices[i-1],vertices[i]))
+				else:
+					edges.append(edge)
+					
+			if i==len(triang[1])-1:
+				edge,ind=domain.getEdgeByVertices(vertices[i],vertices[0])
+				if edge==False:	
+					edges.append(domain.addLine(vertices[i],vertices[0]))
+				else:
+					edges.append(edge)
+			
+			
+		#Add line loop	
+		loop=domain.addLineLoop(edgeIDs=pyfrp_misc_module.objAttrToList(edges,"Id"))
 	
-	#Move new file
-	shutil.move(absPath, filePath)
-	return			
+		#Add surface
+		surface=domain.addRuledSurface(lineLoopID=loop.Id)
+		surface.normal=triang[0]/np.linalg.norm(triang[0])
+		
+	return domain		
+				
+	
 
 def updateParmGeoFile(fn,name,val):
 	
@@ -411,7 +558,7 @@ def updateParmGeoFile(fn,name,val):
 		
 	
 	substr=name+"="+str(val)+";"+'\n'
-	txtLineReplace(fn,name,substr)
+	pyfrp_misc_module.txtLineReplace(fn,name,substr)
 	
 	return
 
@@ -706,7 +853,7 @@ def removeCommentFromFile(fn,comment):
 	
 	"""
 	
-	txtLineReplace(fn,"//"+comment,"")
+	pyfrp_misc_module.txtLineReplace(fn,"//"+comment,"")
 	return
 
 def removeElementFromFile(fn,elementType,elementId,delimOpen="(",delimClose=")"):
@@ -724,7 +871,7 @@ def removeElementFromFile(fn,elementType,elementId,delimOpen="(",delimClose=")")
 	
 	"""
 	
-	txtLineReplace(fn,elementType+delimOpen+str(elementId)+delimClose,"")
+	pyfrp_misc_module.txtLineReplace(fn,elementType+delimOpen+str(elementId)+delimClose,"")
 	return
 
 	
@@ -831,9 +978,12 @@ def addBoxField(fn,volSizeIn,volSizeOut,rangeX,rangeY,rangeZ,comment="",fnOut=""
 		#Append to field ids
 		fieldIDs.append(newFieldID)
 		
+		#Write minimum field
+		f=writeMinField(f,max(fieldIDs)+1,fieldIDs)
+		
 		#Write Background field
-		f=writeBackgroundField(f,max(fieldIDs)+1,fieldIDs)
-	
+		f=writeBackgroundField(f,max(fieldIDs)+1)
+			
 	#Move new file either to fnOut or to fn itself
 	if fnOut!="":
 		shutil.move(tempPath, fnOut)
@@ -858,11 +1008,31 @@ def writeComment(f,comment):
 	f.write("//"+comment+"\n")
 	return f
 	
-def writeBackgroundField(f,fieldID,ids):
+def writeBackgroundField(f,fieldID):
 	
 	"""Writes background field into into file.
 	
 	.. note:: Will take finest mesh for background field.
+	   See also: http://gmsh.info/doc/texinfo/gmsh.html#Specifying-mesh-element-sizes . 
+	
+	Args:
+		f (file): Filehandle.
+		fieldID (int): ID of new background field.
+	
+	Returns:
+		file: Filehandle.
+	
+	"""
+	
+	f.write("Background Field ="+str(fieldID) +";"+"\n")
+	f.write('\n')
+	return f
+
+def writeMinField(f,fieldID,ids,charExtendFromBoundary=True):	
+	
+	"""Writes minimum field into into file.
+	
+	.. note:: Useful to determine background mesh. It's often reasonable to take the finest mesh for background field.
 	   See also: http://gmsh.info/doc/texinfo/gmsh.html#Specifying-mesh-element-sizes . 
 	
 	Args:
@@ -875,7 +1045,8 @@ def writeBackgroundField(f,fieldID,ids):
 	
 	"""
 	
-	f.write("Mesh.CharacteristicLengthExtendFromBoundary = 1;"+"\n")
+	f.write("Mesh.CharacteristicLengthExtendFromBoundary = "+str(int(charExtendFromBoundary))+";"+"\n")
+	
 	f.write("Field["+str(fieldID)+"] = Min"+";"+"\n")
 	f.write("Field["+str(fieldID)+"].FieldsList = {")
 	for i,d in enumerate(ids):
@@ -884,10 +1055,8 @@ def writeBackgroundField(f,fieldID,ids):
 			f.write(",")
 	f.write("}"+";"+"\n")
 	f.write('\n')
-	f.write("Background Field ="+str(fieldID) +";"+"\n")
-	f.write('\n')
-	return f
 	
+	return f
 	
 def writeBoxField(f,fieldID,volSizeIn,volSizeOut,rangeX,rangeY,rangeZ):	
 	
@@ -909,7 +1078,6 @@ def writeBoxField(f,fieldID,volSizeIn,volSizeOut,rangeX,rangeY,rangeZ):
 	
 	"""
 	
-	
 	f.write("Field["+str(fieldID)+"] = Box"+";"+"\n")
 	f.write("Field["+str(fieldID)+"].VIn = "+str(volSizeIn)+";"+"\n")
 	f.write("Field["+str(fieldID)+"].VOut = "+str(volSizeOut)+";"+"\n")
@@ -920,6 +1088,117 @@ def writeBoxField(f,fieldID,volSizeIn,volSizeOut,rangeX,rangeY,rangeZ):
 	f.write("Field["+str(fieldID)+"].ZMin = "+str(rangeZ[0])+";"+"\n")
 	f.write("Field["+str(fieldID)+"].ZMax = "+str(rangeZ[1])+";"+"\n")
 	f.write('\n')
+	return f
+
+def writeAttractorField(f,fieldID,NodesList):
+	
+	"""Writes attractor field into into file.
+	
+	See also: http://gmsh.info/doc/texinfo/gmsh.html#Specifying-mesh-element-sizes and
+	:py:class:`:pyfrp.modules.pyfrp_gmsh_geometry.attractorField`.
+	
+	Args:
+		f (file): Filehandle.
+		fieldID (int): ID of new box field.
+		NodesList (list): List of vertex IDs at which attractor is placed.
+		
+	Returns:
+		file: Filehandle.
+	
+	"""
+	
+	f.write("Field["+str(fieldID)+"] = Attractor"+";"+"\n")
+	writeFieldProp(f,fieldID,"NodesList",str(NodesList).replace("[","{").replace("]","}"))
+	f.write("\n")
+	
+	return f
+		
+def writeThresholdField(f,fieldID,IField,LcMin,LcMax,DistMin,DistMax):		
+	
+	"""Writes threshold field into into file.
+	
+	See also: http://gmsh.info/doc/texinfo/gmsh.html#Specifying-mesh-element-sizes . 
+	and :py:class:`:pyfrp.modules.pyfrp_gmsh_geometry.thresholdField`.
+	
+	Args:
+		f (file): Filehandle.
+		fieldID (int): ID of new box field.
+		IField (int): ID of vertex that is center to threshold field.
+		LcMin (float): Minimum volSize of threshold field.
+		LcMax (float): Maximum volSize of threshold field.
+		DistMin (float): Minimun density of field.
+		DistMax (float): Maximum density of field.
+		
+	Returns:
+		file: Filehandle.
+	
+	"""
+	
+	f.write("Field["+str(fieldID)+"] = Threshold"+";"+"\n")
+	
+	#writeFieldPropByDict(f,fieldID,IField=IField,LcMin=LcMin,LcMax=LcMax,DistMin=DistMin,DistMax=DistMax)
+	
+	writeFieldProp(f,fieldID,"IField",IField)
+	writeFieldProp(f,fieldID,"LcMin",LcMin)
+	writeFieldProp(f,fieldID,"LcMax",LcMax)
+	writeFieldProp(f,fieldID,"DistMin",DistMin)
+	writeFieldProp(f,fieldID,"DistMax",DistMax)
+	f.write("\n")
+	
+	return f
+
+def writeBoundaryLayerField(f,fieldID,elements,fieldOpts):
+	
+	"""Writes boundary layer mesh.
+	
+	"""
+	
+	f.write("Field["+str(fieldID)+"] = BoundaryLayer"+";"+"\n")
+	
+	f=writeFieldPropByDict(f,fieldID,fieldOpts)
+	f=writeFieldPropByDict(f,fieldID,elements)
+	
+	return f
+
+def writeFieldPropByDict(f,fieldID,dic):
+	
+	"""Writes dictionary of field properties to file.
+	
+	Args:
+		f (file): File to write to.
+		fieldID (int): ID of field.
+		
+	Keyword Args:
+		dic (dict): Keyword Arguments.
+	
+	Returns:
+		file: Filehandle.
+	
+	"""
+	
+	for key, value in dic.iteritems():
+		f=writeFieldProp(f,fieldID,key,value)
+		
+	return f
+	
+def writeFieldProp(f,fieldID,prop,val):
+
+	"""Writes field property to file.
+	
+	Args:
+		f (file): File to write to.
+		fieldID (int): ID of field.
+		prop (str): Name of property to write.
+		val (str): Value to write.
+	
+	Returns:
+		file: Filehandle.
+	
+	"""
+
+	val=str(val).replace("[","{").replace("]","}")
+	f.write("Field["+str(fieldID)+"]."+prop+" = "+ str(val) + ";\n")
+	
 	return f
 	
 def repairDefaultGeoFiles(debug=False):

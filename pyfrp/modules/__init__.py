@@ -18,6 +18,7 @@ from . import pyfrp_gmsh_IO_module
 from . import pyfrp_sim_module
 from . import pyfrp_integration_module
 from . import pyfrp_idx_module
+from . import pyfrp_geometry_module
 from . import pyfrp_gmsh_geometry
 
 #Obsolete/Not-integrated modules  

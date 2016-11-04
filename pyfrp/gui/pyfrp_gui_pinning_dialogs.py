@@ -136,7 +136,7 @@ class idealPinningDialog(defaultPinningDialog):
 		self.lblNormVal = QtGui.QLabel("", self)
 		
 		self.lblSepSim = QtGui.QLabel("Pin simulation seperately:", self)
-		self.lblSwitchThresh = QtGui.QLabel("Switch Threshhold:", self)
+		self.lblSwitchThresh = QtGui.QLabel("Switch Threshold:", self)
 		
 		self.updateBkgdROILbl()
 		self.updateNormROILbl()

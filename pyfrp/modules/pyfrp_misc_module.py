@@ -56,6 +56,8 @@ import time
 import os
 import inspect
 import platform
+import shutil
+from tempfile import mkstemp
 
 #===========================================================================================================================================================================
 #Module Functions
@@ -393,7 +395,7 @@ def objAttr2Dict(obj,attr=[]):
 		obj (object): Object to be printed.
 	
 	Keyword Args:
-		maxL (int): Maximum length threshhold.
+		maxL (int): Maximum length threshold.
 	
 	"""
 	
@@ -788,6 +790,45 @@ def objAttrToList(listOfObjects,AttributeName):
 		l.append(vars(obj)[str(AttributeName)])
 		
 	return l
+
+def getAllObjWithAttrVal(listOfObjects,AttributeName,AttributeValue):
+	
+	"""Filters all objects from a list that have a given attribute value.
+	
+	Args:
+		listOfObjects (list): List of objects that all possess the same attribute.
+		AttributeName (str): Name of attribute.
+		AttributeValue (str): Value of attribute.
+	
+	Returns:
+		list: List of objects that fulfill requirement.
+	"""
+	
+	vals=objAttrToList(listOfObjects,AttributeName)
+	if isinstance(AttributeValue,(list,np.ndarray)):
+		b=[]
+		for v in vals:
+			b.append(compareVectors(v,AttributeValue))
+		idx=np.where(b)[0]
+	else:			
+		idx=np.where(vals==AttributeValue)[0]
+	
+	return list(np.array(listOfObjects)[idx])
+
+def compareVectors(x,y):
+	
+	"""Compares two vectors.
+	
+	Args:
+		x (numpy.ndarray): Vector 1.
+		y (numpy.ndarray): Vector 2.
+		
+	Returns:
+		bool: True if vectors are identical
+		
+	"""
+	
+	return (np.array(x)==np.array(y)).sum()==len(x.flatten())
 	
 def slashToFn(fn):
 	
@@ -809,6 +850,28 @@ def slashToFn(fn):
 		fn=fn+s
 	return fn
 
+def popRange(l,idxStart,idxEnd):
+	
+	"""Basically ``list.pop()`` for range of indices.
+	
+	Args:
+		l (list): A list
+		idxStart (int): Start index of range.
+		idxEnd (int): End index of range.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* popped (list): Popped items.
+			* l (list): Resulting list.
+	
+	"""
+	
+	popped=l[idxStart:idxEnd]
+	l[idxStart:idxEnd]=[]
+	
+	return popped,l
+	
 def sortListsWithKey(l,keyList):
 	
 	"""Sorts two lists according to key list.
@@ -1075,6 +1138,113 @@ def getPath(identifier,fnPath=None,defaultOutput=""):
 	path=os.path.expanduser(path)
 	
 	return path
+
+def setPath(identifier,val,fnPath=None):
+	
+	"""Sets path in path file.
+	
+	If ``fnPath`` is not given, will use the return of ``getPathFile``.
+	
+	Args:
+		identifier (str): Identifier of path.
+		val (str): Value of path.
+		
+	Keyword Args:
+		fnPath (str): Path to path file.
+		
+	"""
+	
+	if fnPath==None:
+		fnPath=getPathFile()
+	else:
+		if not os.path.isfile(fnPath):
+			printWarning(fnPath+" does not exist. Will continue with paths defined in default paths files.")
+			fnPath=getPathFile()
+		
+	txtLineReplace(fnPath,identifier,identifier+"="+str(val)+"\n")
+
+def printPaths(fnPath=None):
+	
+	"""Prints out path file.
+	
+	If ``fnPath`` is not given, will use the return of ``getPathFile``.
+		
+	Keyword Args:
+		fnPath (str): Path to path file.
+		
+	"""
+	
+	if fnPath==None:
+		fnPath=getPathFile()
+		
+	with open(fnPath,'rb') as f:
+		
+		for line in f:
+			print line
+	
+def checkPaths(fnPath=None):
+
+	"""Checks if all paths in paths file exist.
+	
+	If ``fnPath`` is not given, will use the return of ``getPathFile``.
+		
+	Keyword Args:
+		fnPath (str): Path to path file.
+		
+	"""
+	
+	if fnPath==None:
+		fnPath=getPathFile()
+		
+	with open(fnPath,'rb') as f:
+		
+		for line in f:
+			try:
+				ident,val=line.split("=")
+				print ident, val.strip(), os.path.isfile(val.strip())
+			except ValueError:
+				pass
+			
+def txtLineReplace(filePath, pattern, subst):
+		
+	"""Replaces line in file that starts with ``pattern`` and substitutes it 
+	with ``subst``.
+	
+	.. note:: Will create temporary file using ``tempfile.mkstemp()``. You should have 
+	   read/write access to whereever ``mkstemp`` is putting files.
+	
+	Args:
+		filePath (str): Filename.
+		pattern (str): Pattern to be looked for.
+		subst (str): String used as a replacement.
+			
+	"""
+	
+	
+	#Create temp file
+	fh, absPath = mkstemp()
+	newFile = open(absPath,'w')
+	oldFile = open(filePath)
+	
+	#Loop through file and replace line 
+	for line in oldFile:
+		
+		if line.startswith(pattern):
+			newFile.write(line.replace(line, subst))
+		else:
+			newFile.write(line)
+			
+	#close temp file
+	newFile.close()
+	os.close(fh)
+	oldFile.close()
+		
+	#Remove original file
+	os.remove(filePath)
+	
+	#Move new file
+	shutil.move(absPath, filePath)
+	return
 	
 def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True,recoverIdent=['recover','post'],bleachIdent=['bleach'],preIdent=['pre'],colorPrefix='_c00',cleanUp=True):
 	

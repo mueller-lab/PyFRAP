@@ -2313,7 +2313,7 @@ class embryo:
 		
 		if printOut:
 			fitNames = pyfrp_misc_module.objAttrToList(self.fits,'name')
-			printNote("Acceptable fits under threshhold "+ str(thresh) +":")
+			printNote("Acceptable fits under threshold "+ str(thresh) +":")
 			for fit in acc:
 				print fit.name
 			
@@ -2357,7 +2357,7 @@ class embryo:
 		
 		if printOut:
 			fitNames = pyfrp_misc_module.objAttrToList(self.fits,'name')
-			printNote("Acceptable fits under threshhold "+ str(thresh) +":")
+			printNote("Acceptable fits under threshold "+ str(thresh) +":")
 			for fit in acc:
 				print fit.name
 			

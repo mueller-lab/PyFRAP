@@ -1190,7 +1190,7 @@ def nearestNeighbour3D(xi,yi,zi,x,y,z,k=1,minD=None):
 		
 	return indexes, dists
 	
-def triangulatePoly(coords):
+def triangulatePoly(coords,addPoints=False,iterations=2,debug=False):
 	
 	"""Triangulates a polygon with given coords using a Delaunay triangulation.
 	
@@ -1200,33 +1200,90 @@ def triangulatePoly(coords):
 	Args:
 		coords (list): List of (x,y)-coordinates of corners.
 	
+	Keyword Args:
+		addPoints (bool): Allow incremental addition of points.
+		iterations (int): Number of iterations of additional point adding.
+		debug (boo): Print debugging messages.
+		
 	Returns:
 		tuple: Tuple containing:
 		
-			* 
-	
+			* triFinal (list): List of found triangles.
+			* coordsTri (list): List of vertex coordinates.
 	"""
 	
+	#Bookkeeping list
 	triFinal=[]
-	
-	print coords
-	
+		
 	#Triangulate
-	tri=Delaunay(coords)
+	tri=Delaunay(coords,incremental=addPoints)
 	
+	#Backup original coordinates
+	coordsOrg=list(coords)
+	
+	if debug:
+		print "Found ", len(tri.simplices.copy()), "triangles in initial call."
+	
+	#Incrementally refine triangulation
+	if addPoints:
+		for i in range(iterations):
+			
+			mids=[]
+			for j in range(len(tri.simplices)):
+				mid=getCenterOfMass(coords[tri.simplices.copy()[j]])
+				mids.append(mid)
+				
+			coords=np.asarray(list(coords)+mids)
+			tri.add_points(mids,restart=True)
+				
+		if debug:
+			print "Found ", len(tri.simplices.copy()), "triangles after iterations."
+		
+			
 	#Remember assigment of points by traingulation function
 	coordsTri=tri.points
+	
+	midsIn=[]
+	midsOut=[]
+	triOutIdx=[]
+	triInIdx=[]
 	
 	for i in range(len(tri.simplices)):
 	
 		# Get COM of triangle
-		mid=getCenterOfMass(coords[tri.simplices.copy()[i]])
+		mid=getCenterOfMass(coordsTri[tri.simplices.copy()[i]])
 		
 		#Check if triangle is inside original polygon
-		if checkInsidePolyVec(mid[0],mid[1],coords):
+		if checkInsidePolyVec(mid[0],mid[1],coordsOrg):
 			triFinal.append(tri.simplices.copy()[i])
+			midsIn.append(mid)
+			triInIdx.append(i)
+			
+		else:
+			triOutIdx.append(i)
+			midsOut.append(mid)
+	
+	
+	#pyfrp_plt.make_subplot([2,2])
+	
+	#ax=fig.add_subplot(221)
+	#ax.triplot(coordsTri[:,0],coordsTri[:,1],tri.simplices.copy()[triInIdx],c='r')
+	#ax=fig.add_subplot(222)
+	#ax.triplot(coordsTri[:,0],coordsTri[:,1],tri.simplices.copy()[triOutIdx],c='b')
+	#ax=fig.add_subplot(223)
+	#ax.triplot(coordsTri[:,0],coordsTri[:,1],tri.simplices.copy()[triOutIdx],c='b')
+	#ax.triplot(coordsTri[:,0],coordsTri[:,1],tri.simplices.copy()[triInIdx],c='r')
+	
+	#plt.draw()
+	#raw_input()
 		
-	return triFinal,coordsTri	
+	
+	if debug:
+		print "Removed ", len(tri.simplices.copy())-len(triFinal), "triangles through COM criteria."	
+		print "Returning ", len(triFinal), "triangles."	
+		
+		
+	return triFinal,coordsTri
 	
 def getCenterOfMass(xs,axis=0,masses=None):
 	

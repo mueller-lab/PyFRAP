@@ -959,3 +959,10 @@ def closerLabels(ax,padx=10,pady=10):
 	ax.xaxis.labelpad = padx
 	ax.yaxis.labelpad = pady
 	return ax
+
+def getRandomColor():
+	
+	"""Returns triplet defining a random color.
+	"""
+	
+	return np.random.rand(3,1)

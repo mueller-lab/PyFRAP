@@ -222,7 +222,7 @@ def overlapSubSampleError(d,n,k):
 def selectDataByOverlapSubSample(d,n,k,thresh,debug=False):
 	
 	"""Selects data vector based on overlapping
-	subsampling and simple threshholding.
+	subsampling and simple thresholding.
 	
 	This algorithm combines local derivatives with global changes
 	and filters both datasets that have large local changes as well
@@ -234,7 +234,7 @@ def selectDataByOverlapSubSample(d,n,k,thresh,debug=False):
 		d (numpy.ndarray): Data vector.
 		n (int): Size of subsamples.
 		k (int): Overlap.
-		thresh (float): Selecting threshhold.
+		thresh (float): Selecting threshold.
 		
 	Keyword Args:
 		debug (bool): Print debugging messages.
@@ -427,7 +427,7 @@ def compareFitsByAIC(fits,ROIs=None,sigma=1,fromSSD=True,thresh=None):
 	For the computation of the AIC see :py:func:`computeAIC` and 
 	the computation of the Akaike weights :py:func:`computeAkaikeWeights`.
 	
-	If threshhold ``thresh=None``, then will select model with maximum
+	If threshold ``thresh=None``, then will select model with maximum
 	Akaike weight as best model, that is, the model with the highest likelihood
 	of being the best model.
 	If ``thresh`` is given, will return list of acceptable models based on
@@ -493,7 +493,7 @@ def compareFitsByCorrAIC(fits,ROIs=None,sigma=1,fromSSD=True,thresh=None):
 	For the computation of the corrected AIC see :py:func:`computeCorrAIC` and 
 	the computation of the Akaike weights :py:func:`computeAkaikeWeights`.
 	
-	If threshhold ``thresh=None``, then will select model with maximum
+	If threshold ``thresh=None``, then will select model with maximum
 	Akaike weight as best model, that is, the model with the highest likelihood
 	of being the best model.
 	If ``thresh`` is given, will return list of acceptable models based on

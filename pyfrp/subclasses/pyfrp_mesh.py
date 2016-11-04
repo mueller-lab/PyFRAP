@@ -48,6 +48,7 @@ import numpy as np
 
 #Misc
 import os
+import os.path
 
 
 #===========================================================================================================================================================================
@@ -150,8 +151,8 @@ class mesh(object):
 	
 		"""
 		
-		if self.simulation.embryo.geometry==None:
-			printWarning("Geometry of embryo not specified, mesh generation will not work!")
+		#if self.simulation.embryo.geometry==None:
+			#printWarning("Geometry of embryo not specified, mesh generation will not work!")
 		
 		
 		self.fromFile=True
@@ -578,6 +579,11 @@ class mesh(object):
 		
 		#Window
 		renderWindow = vtk.vtkRenderWindow()
+		
+		# This seems to be the key to have a renderer without displaying. However it returns floating 
+		# Errors.
+		#renderWindow.OffScreenRenderingOn() 
+		
 		renderWindow.AddRenderer(renderer)
 		
 		#Interactor
@@ -589,7 +595,152 @@ class mesh(object):
 		renderWindow.GetInteractor().Start()
 		
 		return renderWindow
+	
+	def saveMeshToPS(self,fnOut,fnVTK="",renderer=None):
 		
+		"""Saves mesh to postscript file.
+		
+		Supported extensions are:
+		
+			* '.ps'  (PostScript)
+			* '.eps' (Encapsualted PostScript)
+			* '.pdf' (Portable Document Format)
+			* '.tex' (LaTeX)
+			* '.svg' (Scalable Vector Graphics)
+			
+		If ``fnVTK`` is not given, will generate .vtk file from meshfile stored in ``fnMesh``
+		using :py:func:`writeVTKFile`.
+		
+		If no ``renderer`` is given, will create one using :py:func:`plotMesh`. 
+		
+		.. note:: This function imports *vtk*. *vtk* is only necessary in a few functions,
+		   hence only imported when needed. This should make PyFRAP more portable.
+		
+		Some code taken from http://www.programcreek.com/python/example/23102/vtk.vtkGL2PSExporter .
+		
+		Args:
+			fnOut (str): Path to output file.
+		
+		Keyword Args:
+			fnVTK (str): Path to input vtk file.
+			renderer (vtk.vtkOpenGLRenderer): Renderer.
+			magnification (int): Degree of magnification.
+			
+		Returns:
+			vtk.vtkGL2PSExporter: Exporter object.
+		
+		"""
+		
+		#vtk
+		import vtk
+		
+		#Plot again if necessary
+		if renderer==None:
+			renderer=self.plotMesh(fnVTK=fnVTK)
+		
+		#Generate exporter
+		exp = vtk.vtkGL2PSExporter()
+		exp.SetRenderWindow(renderer)
+		
+		#Get extension
+		basename,ext=os.path.splitext(fnOut)
+		vectorFileFormats = {'.ps': 0, '.eps': 1, '.pdf': 2, '.tex': 3,'.svg':4}
+		
+		exp.SetFilePrefix(basename)
+		exp.SetFileFormat(vectorFileFormats[ext.lower()])
+		
+		exp.Write()
+		
+		return exp
+	
+	
+	def saveMeshToImg(self,fnOut,fnVTK="",renderer=None,magnification=10,show=True):
+		
+		"""Saves mesh to image file.
+		
+		Supported extensions are:
+			
+			* '.ps'  (PostScript)
+			* '.eps' (Encapsualted PostScript)
+			* '.pdf' (Portable Document Format)
+			* '.jpg' (Joint Photographic Experts Group)
+			* '.png' (Portable Network Graphics)
+			* '.pnm' (Portable Any Map)
+			* '.tif' (Tagged Image File Format)
+			* '.bmp' (Bitmap Image)
+		
+		If ``fnVTK`` is not given, will generate .vtk file from meshfile stored in ``fnMesh``
+		using :py:func:`writeVTKFile`.
+		
+		If no ``renderer`` is given, will create one using :py:func:`plotMesh`. 
+		
+		.. note:: This function imports *vtk*. *vtk* is only necessary in a few functions,
+		   hence only imported when needed. This should make PyFRAP more portable.
+		
+		Some code taken from http://www.programcreek.com/python/example/23102/vtk.vtkGL2PSExporter .
+		
+		Args:
+			fnOut (str): Path to output file.
+		
+		Keyword Args:
+			fnVTK (str): Path to input vtk file.
+			renderer (vtk.vtkOpenGLRenderer): Renderer.
+			magnification (int): Degree of magnification.
+			show (bool): Show vtk render window.
+			
+		Returns:
+			vtk.vtkExporter: Exporter object.
+		
+		"""
+		
+		#vtk
+		import vtk
+		
+		#Plot again if necessary
+		if renderer==None:
+			if show:
+				rendererWindow=self.plotMesh(fnVTK=fnVTK)
+				renderer=rendererWindow.GetRenderers().GetFirstRenderer()
+			else:
+				renderer=self.importVTKFile(fnVTK=fnVTK)
+				printWarning("Currently this option leads to segmentation faults. Should be fixed in further version.")
+					
+		#Generate exporter
+		vtkImageWriters = {
+			'.tif': vtk.vtkTIFFWriter(),
+			'.tiff': vtk.vtkTIFFWriter(),
+			'.bmp': vtk.vtkBMPWriter(),
+			'.pnm': vtk.vtkPNMWriter(),
+			'.png': vtk.vtkPNGWriter(),
+			'.jpg': vtk.vtkJPEGWriter(),
+			'.jpeg': vtk.vtkJPEGWriter(),
+			'.ps': vtk.vtkPostScriptWriter(),
+			'.eps': vtk.vtkPostScriptWriter(),  
+			}
+		
+		#Get extension
+		basename,ext=os.path.splitext(fnOut)
+
+		#Large Image renderer for nicer images
+		rendererLarge=vtk.vtkRenderLargeImage()
+		rendererLarge.SetInput(renderer)
+		rendererLarge.SetMagnification(magnification)
+
+		#Get proper writer
+		try:
+			writer = vtkImageWriters[ext.lower()]
+		except KeyError:
+			printError("Extension "+ext+" is currently not supported")
+			return None
+		
+		#Write
+		writer.SetFileName(fnOut)
+		
+		writer.SetInputConnection(rendererLarge.GetOutputPort())
+		writer.Write()
+		
+		return writer
+	
 	def printStats(self,tetLenghts=False):
 		
 		"""Prints out statistics of mesh.

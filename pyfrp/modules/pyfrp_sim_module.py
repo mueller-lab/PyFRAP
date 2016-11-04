@@ -561,7 +561,7 @@ def sigmoidBleachingFct(x,y,z,center,rJump,sliceHeight,maxVal=1.,maxMinValPerc=0
 		* Similarly, bleaching intensity increases with depth. Thus, a linear term controls the values close 
 		  to ``center`` of the sigmoid function. Bleaching closer to the laser than the imaged height will 
 		  be rendered stronger, while bleaching effects below will be decreased by *bumping up* the 
-		  bleached window. However, only until some threshhold is reached.
+		  bleached window. However, only until some threshold is reached.
 		  
 	The sigmoid function is given by:	  
 	

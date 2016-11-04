@@ -20,6 +20,14 @@ pyfrp.modules.pyfrp_fit_module module
     :undoc-members:
     :show-inheritance:
 
+pyfrp.modules.pyfrp_geometry_module module
+------------------------------------------
+
+.. automodule:: pyfrp.modules.pyfrp_geometry_module
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyfrp.modules.pyfrp_gmsh_IO_module module
 -----------------------------------------
 

@@ -64,6 +64,7 @@ from pyfrp.gui import pyfrp_gui_fit_dialogs
 from pyfrp.gui import pyfrp_gui_pinning_dialogs
 from pyfrp.gui import pyfrp_gui_statistics_dialogs
 from pyfrp.gui import pyfrp_gui_basics
+from pyfrp.gui import pyfrp_gui_settings_dialogs
 
 #PyFRAP Classes
 from pyfrp.subclasses import pyfrp_conf
@@ -156,33 +157,11 @@ class pyfrp(QtGui.QMainWindow):
 		
 		self.menubar = self.menuBar()
 		
-		#Main Menubar Entries
+		#Init Menubars
 		self.initMainMenubar()
+		self.initMenubars()
 		
-		#File Menubar Entries
-		self.initFileMenubar()
-		
-		#Edit Menubar Entries
-		self.initEditMenubar()
-		
-		#Embryo Menubar Entries
-		self.initEmbryoMenubar()
-		
-		#Analysis Menubar Entries
-		self.initAnalysisMenubar()
-		
-		#Simulation Menubar Entries
-		self.initSimulationMenubar()
-		
-		#Pinning Menubar Entries
-		self.initPinningMenubar()
-		
-		#Fitting Menubar Entries
-		self.initFittingMenubar()
-		
-		#Stats Menubar Entries
-		self.initStatsMenubar()
-	
+		#Setting
 		#-------------------------------------------
 		#Embryo list
 		#-------------------------------------------
@@ -278,10 +257,9 @@ class pyfrp(QtGui.QMainWindow):
 	#Initialization Methods
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Initiates main menubar
-	
 	def initMainMenubar(self):
+		
+		"""Initiates main menubar."""
 		
 		self.mbFile = self.menubar.addMenu('&File')
 		self.mbEdit = self.menubar.addMenu('&Edit')
@@ -291,8 +269,23 @@ class pyfrp(QtGui.QMainWindow):
 		self.mbPinning = self.menubar.addMenu('&Pinning')
 		self.mbFitting = self.menubar.addMenu('&Fitting')
 		self.mbStatistics = self.menubar.addMenu('&Statistics')
+		self.mbSettings = self.menubar.addMenu('&Settings')
 		
-		return 
+		return
+	
+	def initMenubars(self):
+		
+		"""Initiates all menubars."""
+		
+		self.initFileMenubar()
+		self.initEditMenubar()
+		self.initEmbryoMenubar()
+		self.initAnalysisMenubar()
+		self.initPinningMenubar()
+		self.initFittingMenubar()
+		self.initStatsMenubar()
+		self.initSettingsMenubar()
+	
 	def initFileMenubar(self):
 		
 		"""Creates entries of file menubar and connects actions with gui methods.
@@ -572,6 +565,36 @@ class pyfrp(QtGui.QMainWindow):
 		self.mbStatistics.addAction(selectCrucialParametersButton)
 		self.mbStatistics.addAction(summarizeMoleculeButton)
 	
+	def initSettingsMenubar(self):
+		
+		"""Creates entries of settings menubar and connects actions with gui methods.
+		"""
+		
+		setPathFileButton = QtGui.QAction('Self Path File', self)
+		self.connect(setPathFileButton, QtCore.SIGNAL('triggered()'), self.setPathFile)
+		
+		setGmshButton = QtGui.QAction('Set Gmsh Path', self)
+		self.connect(setGmshButton, QtCore.SIGNAL('triggered()'), self.setGmshPath)
+		
+		setFijiButton = QtGui.QAction('Set Fiji Path', self)
+		self.connect(setFijiButton, QtCore.SIGNAL('triggered()'), self.setFijiPath)
+		
+		printPathsButton = QtGui.QAction('Print Paths', self)
+		self.connect(printPathsButton, QtCore.SIGNAL('triggered()'), self.printPaths)
+		
+		printPathFileButton = QtGui.QAction('Print Path File Location', self)
+		self.connect(printPathFileButton, QtCore.SIGNAL('triggered()'), self.printPathFile)
+		
+		checkPathsButton = QtGui.QAction('Check paths in path file', self)
+		self.connect(checkPathsButton, QtCore.SIGNAL('triggered()'), self.checkPaths)
+		
+		self.mbSettings.addAction(setPathFileButton)
+		self.mbSettings.addAction(setGmshButton)
+		self.mbSettings.addAction(setFijiButton)
+		self.mbSettings.addAction(printPathsButton)
+		self.mbSettings.addAction(printPathFileButton)
+		self.mbSettings.addAction(checkPathsButton)
+		
 	def closeEvent(self, event):
 		
 		"""Closes GUI and saves configuration.
@@ -586,6 +609,7 @@ class pyfrp(QtGui.QMainWindow):
 		if reply == QtGui.QMessageBox.Yes:
 			fn=pyfrp_misc_module.getConfDir()+"lastConfiguration.conf"
 			self.config.consoleHistory=self.console.history
+			self.config.backupPathFile()
 			self.config.save(fn=fn)
 			event.accept()
 		else:
@@ -655,6 +679,8 @@ class pyfrp(QtGui.QMainWindow):
 		
 		self.updateRecentMBs()
 		
+		self.config.copyPathFileToDefaultLocation()
+		
 		return self.config
 		
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -709,7 +735,6 @@ class pyfrp(QtGui.QMainWindow):
 			return True
 		if typ==self.currNodeType:
 			return True
-		
 		
 		return False
 				
@@ -815,10 +840,11 @@ class pyfrp(QtGui.QMainWindow):
 				newROINode=QtGui.QTreeWidgetItem(roisNode,[roi.name,str(int(roi.isAnalyzed())),str(int(roi.isSimulated())),str(int(roi.isFitted()))])
 		self.getCurrentObjNode()
 		
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Returns Current Object Node from objectBar
-
+	
 	def getCurrentObjNode(self):
+		
+		"""Returns Current Object Node from objectBar
+		"""
 		
 		self.currNode=self.objectBar.currentItem()
 		
@@ -2402,7 +2428,71 @@ class pyfrp(QtGui.QMainWindow):
 			v=int(self.verticalSplitter.sizes()[0])
 			
 			self.vtkCanvas.UpdateSize(h,v)
-			
+	
+		
+	def setPath(self,identifier="",path=""):
+		
+		"""Opens path setting dialog and afterwards sets path in path file.
+		
+		Keyword Args:
+			identifier (str): Identifier displayed at dialog startup.
+			path (str): Path displayed at dialog startup.
+				
+		"""
+		
+		pathDialog = pyfrp_gui_settings_dialogs.pathDialog(identifier,path,self)
+		if pathDialog.exec_():
+			identifier,path = pathDialog.getPath()
+		
+		print identifier, path
+		pyfrp_misc_module.setPath(identifier,path)
+		
+	def setGmshPath(self):
+		
+		"""Opens path setting dialog and lets user set path to gmsh binary.
+		"""
+		
+		path=pyfrp_misc_module.getPath('gmshBin')
+		self.setPath(identifier='gmshBin',path=path)
+		
+	def setFijiPath(self):
+		
+		"""Opens path setting dialog and lets user set path to gmsh binary.
+		"""
+		
+		path=pyfrp_misc_module.getPath('fijiBin')
+		self.setPath(identifier='fijiBin',path=path)
+		
+	def printPathFile(self):
+		
+		"""Prints out path file."""
+		
+		print pyfrp_misc_module.getPathFile()
+	
+	def printPaths(self):
+		
+		"""Prints out all content of path file."""
+		
+		pyfrp_misc_module.printPaths()
+		
+	def checkPaths(self):
+		
+		"""Checks if all paths in path file exist."""
+	
+		pyfrp_misc_module.checkPaths()
+		
+	
+	def setPathFile(self):
+		
+		"""Allows setting the path file."""
+		
+		fn = str(QtGui.QFileDialog.getOpenFileName(self, 'Choose path file',pyfrp_misc_module.getConfDir(),))
+		if fn=='':
+			return
+		
+		self.config.setPathFile(fn)
+		
+	
 	##---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	##Make slider plot
 	

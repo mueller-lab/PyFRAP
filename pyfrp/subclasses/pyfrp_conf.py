@@ -37,6 +37,11 @@ from pyfrp.modules import pyfrp_IO_module
 from pyfrp.modules import pyfrp_term_module
 from pyfrp.modules import pyfrp_misc_module
 
+#OS
+import os
+import sys
+import shutil
+
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Config object
 
@@ -54,6 +59,7 @@ class configuration:
 		self.propHidden=False
 		self.backup2File=False
 		self.backup2Memory=True
+		self.pathFile=pyfrp_misc_module.getConfDir()+"paths"
 		
 		#Console History
 		self.consoleHistory=[]
@@ -110,6 +116,30 @@ class configuration:
 	def setRecentFiles(self,r):
 		self.recentFiles=r
 		return self.recentFiles
+	
+	def getPathFile(self):
+		return self.pathFile
+	
+	def setPathFile(self,fn):
+		self.pathFile=fn
+		return self.pathFile
+	
+	def copyPathFileToDefaultLocation(self):
+		
+		#Backup old paths file
+		defaultFile=pyfrp_misc_module.getConfDir()+"paths"
+		
+		shutil.copy(defaultFile,defaultFile+".backup")
+		try:
+			shutil.copy(self.pathFile,defaultFile)
+		except AttributeError:
+			pass
+			
+	def backupPathFile(self):	
+		
+		defaultFile=pyfrp_misc_module.getConfDir()+"paths"
+		
+		shutil.copy(defaultFile,self.pathFile)
 	
 	def getRecentFiles(self,r):
 		return self.recentFiles

@@ -1227,7 +1227,7 @@ class ROI(object):
 		z=z[self.meshIdx]
 		val=val[self.meshIdx]
 		
-		#Finding distance threshhold later used for masking nodes.
+		#Finding distance threshold later used for masking nodes.
 		dmaxX,dmaxY,dmaxZ=self.getMaxNodeDistance()
 		dFact=1.5
 		

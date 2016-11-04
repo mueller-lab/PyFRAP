@@ -351,6 +351,8 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 		cmd = cmd + " -clmax " + str(volSizeMax)
 	if fnOut!=None:
 		cmd = cmd + " -o " + fnOut + " "
+	else:
+		fnOut=fn.replace('.geo','.msh')
 	cmd = cmd+ " " + fn
 	
 	#Print out what will be done
@@ -376,7 +378,7 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 	except:
 		printError("Gmsh is not running properly, something is wrong.")
 
-	return fn
+	return fnOut
 
 def getGmshBin(fnPath=None):
 	
