@@ -124,7 +124,10 @@ def win2linPath(p):
 		
 	"""
 	
+	
+	
 	r=p.replace("\\","/")
+	
 	return r
 
 def fixPath(path):

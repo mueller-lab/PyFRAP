@@ -349,6 +349,8 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 	#Windows the path
 	if platform.system() in ["Windows"]:
 		fn=pyfrp_misc_module.win2linPath(fn)
+		if fnOut!=None:
+			fnOut=pyfrp_misc_module.win2linPath(fnOut)
 	
 	#Define which command to execute
 	gmshBin=getGmshBin()
