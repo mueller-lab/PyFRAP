@@ -49,6 +49,7 @@ from tempfile import mkstemp
 import subprocess
 import time
 import shlex
+import platform
 
 #PyFRAP
 import pyfrp_gmsh_IO_module
