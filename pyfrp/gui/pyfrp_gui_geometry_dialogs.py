@@ -157,7 +157,7 @@ class geometryDialog(pyfrp_gui_basics.basicCanvasDialog):
 		
 		self.drawGeometry()
 		
-		return fnGeo
+		return fn
 	
 	def getCenterFromROI(self):
 		

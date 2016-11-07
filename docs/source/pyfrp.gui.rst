@@ -92,6 +92,14 @@ pyfrp.gui.pyfrp_gui_pinning_dialogs module
     :undoc-members:
     :show-inheritance:
 
+pyfrp.gui.pyfrp_gui_settings_dialogs module
+-------------------------------------------
+
+.. automodule:: pyfrp.gui.pyfrp_gui_settings_dialogs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyfrp.gui.pyfrp_gui_simulation_dialogs module
 ---------------------------------------------
 

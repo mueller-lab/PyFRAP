@@ -344,6 +344,11 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 		
 	v=5*int(debug)
 	
+	#POpen needs to have paths with `/` as seperator, so we need to change in the case of 
+	#Windows the path
+	if platform.system() in ["Windows"]:
+		fn=pyfrp_misc_module.win2linPath(fn)
+	
 	#Define which command to execute
 	gmshBin=getGmshBin()
 	cmd = gmshBin + " -v " + str(v) +" -3 -optimize -algo del3d"
@@ -361,6 +366,8 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 		print cmd
 	
 	#Split command in list for subprocess
+		
+		
 	args = shlex.split(cmd)
 	
 	#redirect stdout and stderr if selected
@@ -377,7 +384,10 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 		p.wait()
 	except:
 		printError("Gmsh is not running properly, something is wrong.")
-
+	
+	#Fix path to make sure that it exists and is consistent with OS
+	fnOut=pyfrp_misc_module.fixPath(fnOut)
+	
 	return fnOut
 
 def getGmshBin(fnPath=None):

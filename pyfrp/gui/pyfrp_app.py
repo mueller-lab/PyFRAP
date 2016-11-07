@@ -282,6 +282,7 @@ class pyfrp(QtGui.QMainWindow):
 		self.initEmbryoMenubar()
 		self.initAnalysisMenubar()
 		self.initPinningMenubar()
+		self.initSimulationMenubar()
 		self.initFittingMenubar()
 		self.initStatsMenubar()
 		self.initSettingsMenubar()
@@ -700,13 +701,13 @@ class pyfrp(QtGui.QMainWindow):
 	def updateRecentMBs(self):
 		self.recentActions=[]
 		
-		for i in range(len(self.config.recentFiles)): 
+		for i in range(len(self.config.recentFiles)):
 			if i>5:
 				self.config.recentFiles.pop(i)
 			else:
 				self.recentActions.append(QtGui.QAction(self.config.recentFiles[i], self))
 				item=self.recentActions[i]
-				item.triggered.connect(functools.partial(self.openMolecule,self.config.recentFiles[i]))
+				item.triggered.connect(functools.partial(self.openMolecule,pyfrp_misc_module.fixPath(self.config.recentFiles[i])))
 				
 				self.recentMB.addAction(item)	
 				
