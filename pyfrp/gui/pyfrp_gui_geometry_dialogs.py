@@ -152,7 +152,7 @@ class geometryDialog(pyfrp_gui_basics.basicCanvasDialog):
 		if fn=='':
 			return
 				
-		self.geometry.fnGeo=fn
+		self.geometry.setFnGeo(fn)
 		self.updateFnGeoLbl()
 		
 		self.drawGeometry()

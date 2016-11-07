@@ -2388,6 +2388,29 @@ class embryo:
 		
 		return 1-px/radius
 	
+	def fixFilePaths(self):
+		
+		"""Fixes paths to geometry/meshfiles.
+		
+		Returns:
+			bool: True if success for all paths.
+			
+		
+		"""
+		
+		b=True
+		try:
+			self.geomtry.fnGeo=pyfrp_misc_module.fixPath(self.geomtry.fnGeo)	
+		except:
+			b=False
+		try:
+			self.simulation.mesh.fnMesh=pyfrp_misc_module.fixPath(self.geomtry.fnMesh)	
+		except:
+			b=False
+			
+		return b
+		
+		
 	
 	
 	#def grabDataDetails(self):

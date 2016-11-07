@@ -114,7 +114,7 @@ class mesh(object):
 		self.volSizePx=v
 		self.updateGeoFile()
 		if remesh:
-			self.genMesh(fnOut=fnOut)
+			self.fnMesh=self.genMesh(fnOut=fnOut)
 		return self.volSizePx
 	
 	def getVolSizePx(self):
@@ -182,7 +182,7 @@ class mesh(object):
 			fnOut=self.simulation.embryo.geometry.fnGeo.replace(".geo",".msh")
 			
 		if self.fromFile:
-			self.fnMesh=fnOut
+			self.fnMesh=pyfrp_misc_module.fixPath(fnOut)
 		
 			pyfrp_gmsh_module.runGmsh(self.simulation.embryo.geometry.fnGeo,fnOut=fnOut,debug=debug,volSizeMax=self.volSizePx)
 			
@@ -300,7 +300,7 @@ class mesh(object):
 		"""
 		
 		
-		self.fnMesh=fn
+		self.fnMesh=pyfrp_misc_module.fixPath(fn)
 		self.importMeshFromFile(self.fnMesh)
 		return self.fnMesh
 	

@@ -127,6 +127,21 @@ def win2linPath(p):
 	r=p.replace("\\","/")
 	return r
 
+def fixPath(path):
+	
+	"""Fixes path by expanding user and making sure 
+	that path is according to OS definitions.
+	
+	Args:
+		path (str): Path to fix.
+		
+	Return:
+		str: Fixed path.
+	
+	"""
+	
+	return os.path.abspath(os.path.expanduser(path))
+
 def leastCommonSubstring(S,T):
 	
 	"""Find longest common substring.

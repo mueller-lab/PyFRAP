@@ -91,7 +91,6 @@ def flipCoordinate(x,destAxis,origAxis='x',debug=False):
 	
 		
 	# Calculate differences between axis
-	
 	axisDiff=abs(string.lowercase.index(destAxis)-string.lowercase.index(origAxis))
 	
 	# Roll

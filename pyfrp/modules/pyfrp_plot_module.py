@@ -873,9 +873,9 @@ def getPubParms():
 		'font.family': 'sans-serif',
 		'font.sans-serif': 'Bitstream Vera Sans, Lucida Grande, Verdana, Geneva, Lucid, Arial, Helvetica, Avant Garde, sans-serif',
 		#'ytick.direction': 'out',
-		'text.latex.preamble': [r'\usepackage{helvet}', r'\usepackage{sansmath}'] , #r'\sansmath',    
+		'text.latex.preamble': [r'\usepackage{helvet}', r'\usepackage{sansmath}',r'\usepackage{siunitx}'] , #r'\sansmath',    
 		}
-	
+		
 	return params
 
 def turnAxesForPub(ax,adjustFigSize=True,figWidthPt=180.4,ptPerInches=72.27):

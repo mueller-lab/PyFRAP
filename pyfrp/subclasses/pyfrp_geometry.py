@@ -97,7 +97,7 @@ class geometry(object):
 		
 		self.typ=typ
 		self.embryo=embryo
-		self.fnGeo=fnGeo
+		self.fnGeo=pyfrp_misc_module.fixPath(fnGeo)
 		self.center=center
 		
 		self.geoFileParameters={}
@@ -131,7 +131,7 @@ class geometry(object):
 			str: Path to file.
 		"""
 		
-		self.fnGeo=fn
+		self.fnGeo=pyfrp_misc_module.fixPath(fn)
 		return self.fnGeo
 	
 	def getFnGeo(self):
@@ -670,7 +670,24 @@ class zebrafishDomeStage(geometry):
 		
 		return self.center[0]-self.outerRadius,self.center[0]+self.outerRadius,self.center[1]-self.outerRadius,self.center[1]+self.outerRadius
 	
-	
+	def getVolume(self):
+		
+		r"""Returns volume of geometry.
+		
+		Volume is computed by:
+		
+		.. math:: V_{dome}=\frac{\pi}{6}(4 r_{\mathrm{outer}}^3 -  (d_{\mathrm{center}}-r_{\mathrm{inner}})(3r_{\mathrm{outer}}^2+(d_{\mathrm{center}}-r_{\mathrm{inner}})^2))	
+		
+		Returns:
+			float: Volume of zebrafish dome.
+		
+		"""
+		
+		Vouter=4./6.*np.pi * self.outerRadius**2
+		Vinner=1/6.*np.pi * (self.centerDist-self.innerRadius)*(3*self.outerRadius+(self.centerDist -  self.innerRadius)**2)
+		
+		return Vouter-Vinner
+		
 class zebrafishDomeStageQuad(zebrafishDomeStage):
 	
 	"""Geometry describing a zebrafish embryo in dome stage, reduced to first quadrant.
