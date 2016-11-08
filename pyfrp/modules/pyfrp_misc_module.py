@@ -57,6 +57,7 @@ import os
 import inspect
 import platform
 import shutil
+import glob
 from tempfile import mkstemp
 
 #===========================================================================================================================================================================
@@ -1381,33 +1382,21 @@ def cleanUpImageFiles(fn,ftype,ident=None,debug=False,colorPrefix='_c00',nChanne
 	"""
 	
 	debugFlag=debug*' -v '
-	r=0
-	
+
 	if nChannel!=None:
 		colorFlag='*'+colorPrefix+str(nChannel)
 	else:
 		colorFlag=''
 		
+	rs=[1]	
 	if ident!=None:
-	
 		for ind in ident:
-			cmd='rm '+debugFlag+fn+'*'+ind+colorFlag+'*.'+ftype 
-			try:
-				os.system(cmd)
-				r=1
-			except:
-				printError("Something went wrong executing:" + cmd )
-				r=0
-	
+			removeListOfFiles(glob.glob(fn+'*'+ind+colorFlag+'*.'+ftype))
+					
 	else:
-		cmd='rm '+debugFlag+fn+'*'+colorFlag+'*.'+ftype 
-		try:
-			os.system(cmd)
-			r=1
-		except:
-			printError("Something went wrong executing:" + cmd )
-			r=0
-	return r
+		removeListOfFiles(glob.glob(fn+'*'+colorFlag+'*.'+ftype))
+		
+	return min(rs)
 	
 	
 def moveImageFiles(fn,fnTarget,ftype,ident,isMulti,fnDest=None,debug=False,colorPrefix='_c00',nChannel=1):
@@ -1436,21 +1425,90 @@ def moveImageFiles(fn,fnTarget,ftype,ident,isMulti,fnDest=None,debug=False,color
 		fnDest=fn
 	
 	debugFlag=debug*' -v '
-	r=0
+	rs=[1]
 	
 	for ind in ident:
 			
 		colorFlag=isMulti*('*'+colorPrefix+str(nChannel))
-		cmd='mv '+debugFlag+fn+'*'+ind+colorFlag+'*.'+ftype +' ' + fnDest + fnTarget+'/'
+		
+		#cmd='mv '+debugFlag+fn+'*'+ind+colorFlag+'*.'+ftype +' ' + fnDest + fnTarget+'/'
+		
+		moveListOfFiles(glob.glob(fn+'*'+ind+colorFlag+'*.'+ftype),slashToFn(fixPath(fnDest+fnTarget)))
+		
+		#try:
+			#os.system(cmd)
+			#r=1
+		#except:
+			#printError("Something went wrong executing: " + cmd)
+			#r=0
+	
+	return min(rs)
+
+def copyListOfFiles(l,dest):
+	
+	"""Copies list of files using shutil.copy.
+	
+	Args:
+		l (list): List of files.
+		dest (str): Destination of files.
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+	"""
+	
+	r=0
+	for f in l:
 		try:
-			os.system(cmd)
-			r=1
+			shutil.copy(f,dest)
 		except:
-			printError("Something went wrong executing: " + cmd)
-			r=0
+			printWarning("copyListOfFiles: Was not able to copy: " + f + " -> " + dest)
+			r=-1
+			
+	return r		
+
+def removeListOfFiles(l):
 	
-	return r
+	"""Removes list of files using os.remove.
 	
+	Args:
+		l (list): List of files.
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+	"""
+	
+	r=0
+	for f in l:
+		try:
+			os.remove(f)
+		except:
+			printWarning("removeListOfFiles: Was not able to remove: " + f )
+			r=-1
+			
+	return r		
+
+def moveListOfFiles(l,dest):
+	
+	"""Moves list of files using shutil.move.
+	
+	Args:
+		l (list): List of files.
+		dest (str): Destination of files.
+		
+	Returns:
+		int: Returns 0 if success, -1 if error
+	"""
+	
+	r=0
+	for f in l:
+		try:
+			shutil.move(f,dest)
+		except:
+			printWarning("moveListOfFiles: Was not able to move: " + f + " -> " + dest)
+			r=-1
+			
+	return r		
+			
 def checkDataMultiChannel(fn,recoverIdent=['recover','post'],bleachIdent=['bleach'],preIdent=['pre'],colorPrefix='_c00'):
 	
 	"""Checks if extracted bleach/pre/recover microscopy data are multichannel.
