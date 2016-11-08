@@ -1714,7 +1714,7 @@ def otsuImageJ(img,maxVal,minVal,debug=False):
 			
 	return kStar,binImg	
 
-def extractMicroscope(folder,ftype,fijiBin=None,macroPath=None):
+def extractMicroscope(folder,ftype,fijiBin=None,macroPath=None,debug=False):
 	
 	"""Converts all microscopy files of type ftype in folder to files using Fiji.
 
@@ -1725,6 +1725,7 @@ def extractMicroscope(folder,ftype,fijiBin=None,macroPath=None):
 	Keyword Args:
 		fijiBin (str): Path to fiji binary
 		macroPath (str): Path to fiji macro
+		debug (bool): Print out debugging messages
 		
 	Returns:
 		int: Returns 0 if success, -1 if error
@@ -1732,15 +1733,15 @@ def extractMicroscope(folder,ftype,fijiBin=None,macroPath=None):
 	"""
 	
 	if ftype=='lsm':
-		r=extractLSM(folder,fijiBin=fijiBin,macroPath=macroPath)
+		r=extractLSM(folder,fijiBin=fijiBin,macroPath=macroPath,debug=debug)
 	elif ftype=='czi':
-		r=extractCZI(folder,fijiBin=fijiBin,macroPath=macroPath)
+		r=extractCZI(folder,fijiBin=fijiBin,macroPath=macroPath,debug=debug)
 	else:
 		printError("Unknown filetype "+ftype)
 		return -1
 	return r
 
-def extractLSM(folder,fijiBin=None,macroPath=None):
+def extractLSM(folder,fijiBin=None,macroPath=None,debug=False):
 	
 	"""Converts all lsm files in folder to tif files using Fiji.
 
@@ -1750,6 +1751,7 @@ def extractLSM(folder,fijiBin=None,macroPath=None):
 	Keyword Args:
 		fijiBin (str): Path to fiji binary
 		macroPath (str): Path to fiji macro
+		debug (bool): Print out debugging messages
 		
 	Returns:
 		int: Returns 0 if success, -1 if error
@@ -1759,9 +1761,9 @@ def extractLSM(folder,fijiBin=None,macroPath=None):
 	if macroPath==None:
 		macroPath=pyfrp_misc_module.getMacroDir()+'lsm2tif.ijm'
 	
-	return runFijiMacro(macroPath,folder,fijiBin=fijiBin)
+	return runFijiMacro(macroPath,folder,fijiBin=fijiBin,debug=debug)
 	
-def extractCZI(folder,fijiBin=None,macroPath=None):
+def extractCZI(folder,fijiBin=None,macroPath=None,debug=False):
 	
 	"""Converts all czi files in folder to tif files using Fiji.
 
@@ -1771,19 +1773,20 @@ def extractCZI(folder,fijiBin=None,macroPath=None):
 	Keyword Args:	
 		fijiBin (str): Path to fiji binary
 		macroPath (str): Path to fiji macro
+		debug (bool): Print out debugging messages
 		
 	Returns:
 		int: Returns 0 if success, -1 if error
 
 	"""
-	
+		
 	if macroPath==None:
 		macroPath=pyfrp_misc_module.getMacroDir()+'czi2tif.ijm'
 	
-	return runFijiMacro(macroPath,folder,fijiBin=fijiBin)
+	return runFijiMacro(macroPath,folder,fijiBin=fijiBin,debug=debug)
 	
 	
-def runFijiMacro(macroPath,macroArgs,fijiBin=None):
+def runFijiMacro(macroPath,macroArgs,fijiBin=None,debug=False):
 	
 	"""Runs Fiji Macro.
 
@@ -1793,7 +1796,8 @@ def runFijiMacro(macroPath,macroArgs,fijiBin=None):
 		
 	Keyword Args:	
 		fijiBin (str): Path to fiji binary
-			
+		debug (bool): Print out debugging messages
+		
 	Returns:
 		int: Returns 0 if success, -1 if error
 
@@ -1804,6 +1808,10 @@ def runFijiMacro(macroPath,macroArgs,fijiBin=None):
 		
 	#Define Command to run
 	cmd=fijiBin+" -macro "+ macroPath + " '"+macroArgs +"'"+ " -batch " 
+	
+	if debug:
+		print "Executing command:"
+		print cmd
 	
 	#Run
 	try:

@@ -850,7 +850,7 @@ def compareVectors(x,y):
 	
 def slashToFn(fn):
 	
-	"""Append / or \\ to filepath if necessary
+	"""Append / or \\ to filepath if necessary.
 	
 	Args:
 		fn (str): Filepath 
