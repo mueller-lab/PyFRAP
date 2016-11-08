@@ -52,6 +52,7 @@ import matplotlib.patches as ptc
 import sys
 import time
 import os
+import platform
 
 #PyFRAP modules
 import pyfrp_misc_module
