@@ -1782,6 +1782,7 @@ def extractCZI(folder,fijiBin=None,macroPath=None,debug=False):
 		
 	if macroPath==None:
 		macroPath=pyfrp_misc_module.getMacroDir()+'czi2tif.ijm'
+		
 	
 	return runFijiMacro(macroPath,folder,fijiBin=fijiBin,debug=debug)
 	
@@ -1807,9 +1808,14 @@ def runFijiMacro(macroPath,macroArgs,fijiBin=None,debug=False):
 		fijiBin=pyfrp_misc_module.getFijiBin()
 		
 	#Define Command to run
-	cmd=fijiBin+" -macro "+ macroPath + " '"+macroArgs +"'"+ " -batch " 
+	if platform.system() in ["Windows"]:
+		cmd=fijiBin+" -macro "+ macroPath + " '"+macroArgs +"'"+ " -batch " 
+	else:
+		cmd=fijiBin+" -macro "+ macroPath +" " +macroArgs+ " -batch " 
+	
 	
 	if debug:
+		cmd=cmd + " -debug"
 		print "Executing command:"
 		print cmd
 	
