@@ -1079,31 +1079,23 @@ def simpleHist(x,y,bins):
 	return xBin,np.asarray(yBin)
 	
 def getMeshfilesDir():
-	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-	path=modulePath.replace("modules","meshfiles")+"/"
-	return path
+	return 	getModulesDir().replace("modules","meshfiles")
 
 def getSubclassesDir():
-	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-	path=modulePath.replace("modules","subclasses")+"/"
-	return path
-
+	return getModulesDir().replace("modules","subclasses")
+	
 def getGUIDir():
-	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-	path=modulePath.replace("modules","GUI")+"/"
-	return path
-
+	return getModulesDir().replace("modules","gui")
+	
 def getConfDir():
-	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-	path=modulePath.replace("modules","configurations")+"/"
-	return path
+	return getModulesDir().replace("modules","configurations")
 
 def getModulesDir():
 	modulePath=os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-	return modulePath+"/"
+	return slashToFn(modulePath)
 
 def getMacroDir():
-	return getConfDir()+'macros/'
+	return slashToFn(getConfDir()+'macros')
 
 def getPathFile():
 	return getConfDir()+'paths'
@@ -1293,7 +1285,7 @@ def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True,rec
 
 	"""
 	
-	fn=slashToFn(fn)
+	fn=slashToFn(fixPath(fn))
 	
 	if not os.path.isdir(fn):
 		printError(fn+ " does not exist.")
@@ -1312,7 +1304,7 @@ def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True,rec
 	if fnDest==None:
 		fnDest=fn
 	
-	fnDest=slashToFn(fnDest)
+	fnDest=slashToFn(fixPath(fnDest))
 	
 	makeEmbryoFolderStruct(fnDest)
 	sortImageFiles(fn,fnDest,ftype,nChannel=nChannel,recoverIdent=recoverIdent,bleachIdent=bleachIdent,preIdent=preIdent,colorPrefix=colorPrefix,cleanUp=cleanUp)
