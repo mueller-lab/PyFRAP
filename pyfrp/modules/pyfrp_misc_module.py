@@ -1104,6 +1104,9 @@ def getPathFile():
 def getFijiBin(fnPath=None):
 	return getPath('fijiBin',fnPath=fnPath)
 
+def getOpenscadBin(fnPath=None):
+	return getPath('openscadBin',fnPath=fnPath)
+
 def checkIfGmshBin(fn):
 	return not os.system(fn + '-1')
 	

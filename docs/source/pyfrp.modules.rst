@@ -84,6 +84,14 @@ pyfrp.modules.pyfrp_misc_module module
     :undoc-members:
     :show-inheritance:
 
+pyfrp.modules.pyfrp_openscad_module module
+------------------------------------------
+
+.. automodule:: pyfrp.modules.pyfrp_openscad_module
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyfrp.modules.pyfrp_optimization_module module
 ----------------------------------------------
 

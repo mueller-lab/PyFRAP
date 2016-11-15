@@ -67,6 +67,10 @@ from pyfrp.modules.pyfrp_term_module import *
 import os,os.path
 import shutil
 
+#Solid/Opescad
+import solid
+import solid.utils
+
 #===========================================================================================================================================================================
 #Class definitions
 #===========================================================================================================================================================================
@@ -375,6 +379,26 @@ class geometry(object):
 			y.append(v.x[1])	
 		
 		return min(x), max(x) , min(y), max(y)
+	
+	def getExtend(self):
+		
+		"""Returns extend in x/y/z-direction. 
+		
+		Will call :py:func:`getXYExtend` and :py:func:`getZExtend` for it.
+		
+		Returns:
+			tuple: Tuple containing:
+				
+				* xmin (float): Minimum x-coordinate.
+				* xmax (float): Maximum x-coordinate.
+				* ymin (float): Minimum y-coordinate.
+				* ymax (float): Maximum y-coordinate.
+				* zmin (float): Minimum z-coordinate.
+				* zmax (float): Maximum z-coordinate.
+		
+		"""
+		
+		return list(self.getXYExtend())+list(self.getZExtend())
 		
 	def printDetails(self):
 		
@@ -430,7 +454,46 @@ class geometry(object):
 		domain=self.readGeoFile()
 		
 		return domain.getAllMaxID()
+	
+	def render2Openscad(self,fn=None,segments=48):
 		
+		"""Generates .scad file for the geometry.
+		
+		.. note:: If ``fn=None``, then will use the same filename and path as .geo file.
+		
+		Keyword Args:
+			fn (str): Output filename.
+			segments (int): Number of segments used for convex hull of surface.
+		
+		"""
+		
+		if fn==None:
+			fn=self.fnGeo.replace(".geo",".scad")
+		
+		solid.scad_render_to_file(self.genAsOpenscad(), filepath=fn,file_header='$fn = %s;' % segments, include_orig_code=False)
+		
+	def render2Stl(self,fn=None,segments=48):
+		
+		"""Generates .stl file for the geometry.
+		
+		.. note:: If ``fn=None``, then will use the same filename and path as .geo file.
+		
+		Keyword Args:
+			fn (str): Output filename.
+			segments (int): Number of segments used for convex hull of surface.
+		
+		"""
+		
+		if fn==None:
+			fn=self.fnGeo.replace(".geo",".stl")
+		
+		fnStl=fn
+		fnScad=fnStl.replace(".stl",".scad")
+		
+		self.render2Openscad(fn=fnScad,segments=segments)
+		pyfrp_openscad_module.runOpenscad(fnScad,fnOut=fnStl)
+		
+		return fnStl
 	
 class zebrafishDomeStage(geometry):
 	
@@ -687,6 +750,22 @@ class zebrafishDomeStage(geometry):
 		Vinner=1/6.*np.pi * (self.centerDist-self.innerRadius)*(3*self.outerRadius+(self.centerDist -  self.innerRadius)**2)
 		
 		return Vouter-Vinner
+	
+	def genAsOpenscad(self):
+		
+		"""Generates zebrafish geometry as solid python object.
+		
+		Useful if geometry is used to be passed to openscad.
+		
+		Returns:
+			
+		
+		"""
+		
+		outerBall=solid.translate([self.center[0],self.center[1],-self.outerRadius])(solid.sphere(r=self.outerRadius))
+		innerBall=solid.translate([self.center[0],self.center[1],-self.outerRadius-self.centerDist])(solid.sphere(r=self.innerRadius))
+	
+		return outerBall-innerBall
 		
 class zebrafishDomeStageQuad(zebrafishDomeStage):
 	
@@ -834,6 +913,20 @@ class cylinder(geometry):
 		
 		return self.center[0]-self.radius,self.center[0]+self.radius,self.center[1]-self.radius,self.center[1]+self.radius
 	
+	def genAsOpenscad(self):
+		
+		"""Generates cylinder geometry as solid python object.
+		
+		Useful if geometry is used to be passed to openscad.
+		
+		Returns:
+			
+		
+		"""
+		
+		cylinder=solid.translate([self.center[0],self.center[1],-self.height])(solid.cylinder(r=self.radius,h=self.height))
+		
+		return cylinder
 	
 class cylinderQuad(cylinder):
 	
@@ -1227,6 +1320,22 @@ class cone(geometry):
 		maxRadius=max([self.upperRadius,self.lowerRadius])
 		
 		return self.center[0]-maxRadius,self.center[0]+maxRadius,self.center[1]-maxRadius,self.center[1]+maxRadius
+	
+	def genAsOpenscad(self):
+		
+		"""Generates cone geometry as solid python object.
+		
+		Useful if geometry is used to be passed to openscad.
+		
+		Returns:
+			
+		
+		"""
+		
+		cone=solid.translate([self.center[0],self.center[1],-self.height])(solid.cylinder(r1=self.lowerRadius,h=self.height,r2=self.upperRadius))
+		
+		return cone
+	
 	
 	
 class custom(geometry):

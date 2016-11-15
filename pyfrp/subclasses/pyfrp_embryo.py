@@ -601,7 +601,14 @@ class embryo:
 		
 	def updateBleachedRegion(self):
 		
-		"""Updates sidelength and offset of bleached square in px.
+		r"""Updates sidelength and offset of bleached square in px.
+		
+		Bleached region is defined around center of image. That is, the offset is set to
+		   
+		.. math:: x_{\mathrm{offset}} = \frac{1}{2}(r_{\mathrm{px}},r_{\mathrm{px}})^T - (s_{\mathrm{bleached,px}},s_{\mathrm{bleached,px}})^T  
+		   
+		where :math:`r_{\mathrm{px}}` is the resolution of the data in pixel, and :math:`s_{\mathrm{bleached,px}` is
+		the sidelength of the bleached square in pixel.
 		
 		.. warning:: Attributes ``sideLengthBleachedMu`` and ``offsetBleachedPx`` will 
 		   deprecated in further versions. Bleached region definition will then solely rely 

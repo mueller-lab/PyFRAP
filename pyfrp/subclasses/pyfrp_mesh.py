@@ -904,6 +904,104 @@ class mesh(object):
 		
 		return fnOut
 	
+	def addBoundaryLayerAroundROI(self,roi,fnOut=None,segments=48,simplify=True,iterations=3,triangIterations=2,
+			       fixSurfaces=True,debug=False,volSizePx=None,volSizeLayer=10,thickness=15.,cleanUp=True):
+		
+		"""Adds boundary layer around ROI to the mesh.
+		
+		Does this by:
+		
+			* Generating a stl file describing ROI, see also :py:func:`pyfrp.subclasses.pyfrp_ROI.ROI.render2StlInGeometry`.
+			* Read in stl file as new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.domain` via
+			  :py:func:`pyfrp.modules.pyfrp_gmsh_IO_module.readStlFile`.
+			* Simplify new geometry via :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.simplifySurfaces`.
+			* Reading in geometry's .geo file via :py:func:`pyfrp.sublcasses.pyfrp_geometry.geometry.readGeoFile`.
+			* Merging ROI geometry into main geometry via :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.merge`.
+			* Adding a boundary layer mesh via :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addBoundaryLayerField`.
+			* Adding all surfaces of ROI's domain to boundary layer, see 
+			  :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField.addFaceListByID`.
+			* Writing new .geo file.
+			* Setting new .geo file as ``fnGeo``.
+			* Running :py:func:`genMesh`.
+			* Clean up .stl and .scad files that are not needed anymore.
+		
+		.. note:: ``volSizeLayer`` only allows a single definition of mesh size in layer. Note that the 
+		   :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField` class allows different mesh sizes
+		   normal and along surfaces. For more information, see its documentation.
+		
+		.. note:: If no ``fnOut`` is given, will save a new .geo file in same folder as original ``fnGeo`` with subfix:
+		   ``fnGeo_roiName_BL.geo``.
+		
+		.. note:: :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.simplifySurfaces` is not a simple procedure, 
+		   we recommend reading its documentation.
+		
+		If ``volSizePx`` is given, will overwrite mesh's ``volSizePx`` and set it globally at all nodes.
+		
+		Args:
+			roi (pyfrp.subclasses.pyfrp_ROI.ROI): An ROI.
+		
+		Keyword Args:
+			fnOut (str): Path to new .geo file.
+			segments (int): Number of segments used for convex hull of surface.
+			simplify (bool): Simplify surfaces of stl file.
+			iterations (int): Number of iterations used for simplification.
+			triangIterations (int): Number of iterations used for subdivision of surfaces.
+			addPoints (bool): Allow adding points inside surface triangles.
+			fixSurfaces (bool): Allow fixing of surfaces, making sure they are coherent with Gmsh requirements.
+			debug (bool): Print debugging messages.
+			volSizePx (float): Global mesh density.
+			volSizeLayer (float): Boundary layer mesh size.
+			thickness (float): Thickness of boundary layer.
+			cleanUp (bool): Clean up temporary files when finished.
+		
+		Returns:
+			str: Path to new .geo file.
+		
+		"""
+		
+		if fnOut==None:
+			fnOut=self.simulation.embryo.geometry.fnGeo.replace(".geo","_"+roi.name+"_BL.geo")
+		
+		#Build stl file for ROI
+		fnStl=roi.render2StlInGeometry(segments=segments,fn=fnOut.replace(".geo",".stl"))
+		
+		#Read in stl file and simplify
+		dROI=pyfrp_gmsh_IO_module.readStlFile(fnStl)
+		if simplify: 
+			dROI.simplifySurfaces(iterations=iterations,triangIterations=triangIterations,fixSurfaces=fixSurfaces,debug=debug,addPoints=bool(triangIterations>0))
+		sfs=dROI.ruledSurfaces
+		
+		#Read in geometry and merge 
+		dGeo=self.simulation.embryo.geometry.readGeoFile()
+		dGeo.merge(dROI)
+		
+		#Create boundary layer
+		blf=dGeo.addBoundaryLayerField(hfar=volSizeLayer,hwall_n=volSizeLayer,hwall_t=volSizeLayer,thickness=thickness,Quads=0.)
+		
+		#Add surfaces to boundary layer mesh
+		blf.addFaceListByID(pyfrp_misc_module.objAttrToList(sfs,'Id'))
+		blf.setAsBkgdField()
+		
+		if volSizePx!=None:
+			dGeo.setGlobalVolSize(volSizePx)
+			self.volSizePx=volSizePx
+		else:
+			dGeo.setGlobalVolSize(self.getVolSizePx())
+		
+		#Write and set as new geometry
+		dGeo.writeToFile(fnOut)
+		self.simulation.embryo.geometry.setFnGeo(fnOut)
+		
+		#Generate mesh
+		self.genMesh()
+		
+		#Clean up temporary files
+		if cleanUp:
+			os.remove(fnStl)
+			os.remove(fnStl.replace(".stl",".scad"))
+		
+		return fnOut
+			
 	def getMaxNodeDistance(self):
 		
 		"""Returns maximum node distance in x/y/z direction.

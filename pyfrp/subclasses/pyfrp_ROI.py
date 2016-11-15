@@ -54,7 +54,7 @@ from pyfrp.modules import pyfrp_integration_module
 from pyfrp.modules import pyfrp_fit_module
 from pyfrp.modules import pyfrp_gmsh_geometry
 from pyfrp.modules import pyfrp_gmsh_module
-
+from pyfrp.modules import pyfrp_openscad_module
 
 from pyfrp.modules.pyfrp_term_module import *
 
@@ -71,6 +71,10 @@ import copy
 #OS
 import os
 import shutil
+
+#Solid/Opescad
+import solid
+import solid.utils
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Main ROI class
@@ -170,6 +174,56 @@ class ROI(object):
 		"""
 		
 		return [self.zmin,self.zmax]
+	
+	def getRealZExend(self):
+		
+		r"""Returns real extend in z-direction.
+	
+		Real extend returns
+		
+		.. math:: z_{\mathrm{min}}=\mathrm{max} (z_{\mathrm{min,ROI}},z_{\mathrm{min,geometry}})
+		
+		and 
+		
+		.. math:: z_{\mathrm{max}}=\mathrm{min} (z_{\mathrm{max,ROI}},z_{\mathrm{max,geometry}})
+		
+		Returns:
+			list: Z-extend given by ``[zmin,zmax]``.
+		
+		"""
+		
+		zminGeo,zmaxGeo=self.embryo.geometry.getZExtend()
+	
+		zmin=max([zminGeo,self.zmin])
+		zmax=min([zmaxGeo,self.zmax])
+		
+		return [zmin,zmax]
+	
+	def getOpenscadZExtend(self):
+		
+		"""Returns extend in z-direction suitable for rendering 
+		the ROI via openscad.
+		
+		If either ``zmin`` or ``zmax`` is infinity, then uses 
+		:py:func:getRealZExend to return more meaningful extend.
+		
+		Returns:
+			list: Z-extend given by ``[zmin,zmax]``.
+		
+		"""
+		
+		if np.inf==abs(self.zmin):
+			zminReal,zmaxReal=self.getRealZExend()
+			zmin=zminReal
+		else:
+			zmin=self.zmin
+		if np.inf==abs(self.zmax):
+			zminReal,zmaxReal=self.getRealZExend()
+			zmax=zmaxReal
+		else:
+			zmax=self.zmax
+		
+		return zmin,zmax
 	
 	def getId(self):
 		
@@ -1891,12 +1945,12 @@ class ROI(object):
 			fn=pyfrp_misc_module.slashToFn(folder)+self.embryo.name+"_"+self.name+".geo"
 			fn=fn.replace(" ","_")
 			
-			
 		printWarning("ROI of type "+str(self.getType)+" does not have writeToGeoFile right now. This might change in further versions.")
 		
-		return fn	
+		return fn
 	
 	def genMeshFile(self,fn=None,volSizePx=20.,debug=False,minID=None):
+		
 		"""Writes ROI to geo file.
 		
 		.. note:: If ``fn`` is not given, will save .msh file of ROI in same folder as the geometry file of the embryo with the following path:
@@ -1931,6 +1985,143 @@ class ROI(object):
 	
 		return fnMsh
 	
+	def genAsOpenscadInGeometry(self):
+		
+		"""Generates intersection between ROI and geometry as solid python object.
+		
+		See also :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.genAsOpenscad` and 
+		:py:func:`pyfrp.subclasses.pyfrp_ROI.ROI.genAsOpenscad`.
+		
+		Returns:
+			solid.solidpython.cylinder: Solid python object. 
+		
+		"""
+		
+		openScadGeo=self.embryo.geometry.genAsOpenscad()
+		openScadROI=self.genAsOpenscad()
+		
+		return openScadGeo*openScadROI
+	
+	def render2Openscad(self,fn=None,segments=48):
+		
+		"""Generates .scad file for the ROI.
+		
+		.. note:: If ``fn`` is not given, will save .scad file of ROI in same folder as the geometry file of the embryo with the following path:
+		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.scad``.
+		
+		Keyword Args:
+			fn (str): Output filename.
+			segments (int): Number of segments used for convex hull of surface.
+		
+		Returns:
+			str: Output filename.
+		
+		"""
+		
+		if fn==None:
+			folder=os.path.dirname(self.embryo.geometry.fnGeo)
+			fn=pyfrp_misc_module.slashToFn(folder)+self.embryo.name+"_"+self.name+".scad"
+			fn=fn.replace(" ","_")
+			
+		solid.scad_render_to_file(self.genAsOpenscad(), filepath=fn,file_header='$fn = %s;' % segments, include_orig_code=False)
+		
+		return fn
+		
+	def render2OpenscadInGeometry(self,fn=None,segments=48):
+		
+		"""Generates .scad file for the intersection between ROI and geometry.
+		
+		.. note:: If ``fn`` is not given, will save .scad file of ROI in same folder as the geometry file of the embryo with the following path:
+		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.scad``.
+		
+		Keyword Args:
+			fn (str): Output filename.
+			segments (int): Number of segments used for convex hull of surface.
+		
+		Returns:
+			str: Output filename.
+		
+		"""
+		
+		if fn==None:
+			folder=os.path.dirname(self.embryo.geometry.fnGeo)
+			fn=pyfrp_misc_module.slashToFn(folder)+self.embryo.name+"_"+self.name+".scad"
+			fn=fn.replace(" ","_")
+			
+		solid.scad_render_to_file(self.genAsOpenscadInGeometry(), filepath=fn,file_header='$fn = %s;' % segments, include_orig_code=False)
+		
+		return fn
+	
+	def render2Stl(self,fn=None,segments=48):
+		
+		"""Generates .stl file for the ROI.
+		
+		Will do this by:
+		
+			* Generating openscad object via :py:func:`genAsOpenscad`.
+			* Rendering this to scad file via :py:func:`render2Openscad`.
+			* Calling :py:func:`pyfrp.modules.pyfrp_openscad_module.runOpenscad`.
+		
+		.. note:: If ``fn`` is not given, will save .stl file of ROI in same folder as the geometry file of the embryo with the following path:
+		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.stl``.
+				
+		Keyword Args:
+			fn (str): Output filename.
+			segments (int): Number of segments used for convex hull of surface.
+		
+		Returns:
+			str: Output filename.
+		
+		"""
+		
+		if fn==None:
+			folder=os.path.dirname(self.embryo.geometry.fnGeo)
+			fn=pyfrp_misc_module.slashToFn(folder)+self.embryo.name+"_"+self.name+".scad"
+			fn=fn.replace(" ","_")
+		
+		fnStl=fn
+		fnScad=fnStl.replace(".stl",".scad")
+		
+		self.render2Openscad(fn=fnScad,segments=segments)
+		pyfrp_openscad_module.runOpenscad(fnScad,fnOut=fnStl)
+		
+		return fnStl
+	
+	def render2StlInGeometry(self,fn=None,segments=48):
+		
+		"""Generates .stl file for the intersection between ROI and geometry.
+		
+		Will do this by:
+		
+			* Generating openscad object via :py:func:`genAsOpenscadInGeometry`.
+			* Rendering this to scad file via :py:func:`render2OpenscadInGeometry`.
+			* Calling :py:func:`pyfrp.modules.pyfrp_openscad_module.runOpenscad`.
+		
+		.. note:: If ``fn`` is not given, will save .stl file of ROI in same folder as the geometry file of the embryo with the following path:
+		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.stl``.
+				
+		Keyword Args:
+			fn (str): Output filename.
+			segments (int): Number of segments used for convex hull of surface.
+		
+		Returns:
+			str: Output filename.
+		
+		"""
+		
+		if fn==None:
+			folder=os.path.dirname(self.embryo.geometry.fnGeo)
+			fn=pyfrp_misc_module.slashToFn(folder)+self.embryo.name+"_"+self.name+".scad"
+			fn=fn.replace(" ","_")
+		
+		fnStl=fn
+		fnScad=fnStl.replace(".stl",".scad")
+		
+		self.render2OpenscadInGeometry(fn=fnScad,segments=segments)
+		pyfrp_openscad_module.runOpenscad(fnScad,fnOut=fnStl)
+		
+		return fnStl
+		
 class radialROI(ROI):
 	
 	"""Radial ROI class.
@@ -2148,6 +2339,27 @@ class radialROI(ROI):
 		
 		return self.center
 	
+	def genAsOpenscad(self):
+		
+		"""Generates ROI as solid python object.
+		
+		Useful if ROI is used to be passed to openscad.
+		
+		.. note:: Will grab extent of geometry to find bounds in z-direction. 
+		
+		Returns:
+			solid.solidpython.cylinder: Solid python object. 
+		
+		"""
+		
+		try:
+			ext=self.embryo.geometry.getZExtend()
+		except AttributeError:
+			printError("genAsOpenscad: Cannot grab extend from geometry of type " + self.embryo.geometry.typ)
+			
+		openScadROI=solid.translate([self.center[0],self.center[1],ext[0]])(solid.cylinder(r=self.radius,h=ext[1]-ext[0]))
+		return openScadROI
+		
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #slice ROI class
 	
@@ -2270,6 +2482,29 @@ class sliceROI(ROI):
 		self.xExtend=[1,self.embryo.dataResPx]
 		self.yExtend=[1,self.embryo.dataResPx]
 		return self.xExtend, self.yExtend
+	
+	def genAsOpenscad(self):
+		
+		"""Generates ROI as solid python object.
+		
+		Useful if ROI is used to be passed to openscad.
+		
+		.. note:: Will grab extent of geometry to find bounds in x/y-direction. 
+		
+		Returns:
+			solid.solidpython.cube: Solid python object. 
+		
+		"""
+		
+		try:
+			ext=self.embryo.geometry.getXYExtend()
+		except AttributeError:
+			printError("genAsOpenscad: Cannot grab extend from geometry of type " + self.embryo.geometry.typ)
+		
+		zmin,zmax=self.getOpenscadZExtend()
+		
+		openScadROI=solid.translate([ext[0],ext[2],zmin])(solid.cube([ext[1]-ext[0],ext[3]-ext[2],zmax-zmin]))
+		return openScadROI
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Radial and slice ROI class
@@ -2418,10 +2653,27 @@ class radialSliceROI(sliceROI,radialROI):
 		
 		return fn	
 	
-	
-	
-	
-	
+	def genAsOpenscad(self,allowInf=False):
+		
+		"""Generates ROI  as solid python object.
+		
+		Useful if ROI is used to be passed to openscad.
+		
+		Keyword Args:
+			allowInf (bool): Allow infinity in bounds of z-direction.
+		
+		Returns:
+			solid.solidpython.cylinder: Solid python object. 
+		
+		"""
+		
+			
+		zmin,zmax=self.getOpenscadZExtend()
+		
+		openScadROI=solid.translate([self.center[0],self.center[1],zmin])(solid.cylinder(r=self.radius,h=zmax-zmin))
+		
+		return openScadROI
+		
 	#def plotIn3D(self,domain=None,ax=None):
 	
 	###NOTE need this function here!!!
@@ -2621,7 +2873,28 @@ class squareROI(ROI):
 		CoM=CoM/len(corners)
 		
 		return CoM
+	
+	def genAsOpenscad(self):
 		
+		"""Generates ROI as solid python object.
+		
+		Useful if ROI is used to be passed to openscad.
+		
+		.. note:: Will grab extent of geometry to find bounds in z-direction. 
+		
+		Returns:
+			solid.solidpython.cube: Solid python object. 
+		
+		"""
+		
+		try:
+			ext=self.embryo.geometry.getZExtend()
+		except AttributeError:
+			printError("genAsOpenscad: Cannot grab extend from geometry of type " + self.embryo.geometry.typ)
+			
+		openScadROI=solid.translate([self.offset[0],self.offset[1],ext[0]])(solid.cube([self.sidelength,self.sidelength,ext[1]-ext[0]]))
+		return openScadROI
+	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Square and slice ROI class
 
@@ -2764,10 +3037,24 @@ class squareSliceROI(squareROI,sliceROI):
 		
 		d=self.genGmshDomain(volSizePx=volSizePx,genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol,minID=minID)
 		d.writeToFile(fn)
-		
-		
-		
+			
 		return fn
+	
+	def genAsOpenscad(self):
+		
+		"""Generates ROI as solid python object.
+		
+		Useful if ROI is used to be passed to openscad.
+		
+		Returns:
+			solid.solidpython.cube: Solid python object. 
+		
+		"""
+		
+		zmin,zmax=self.getOpenscadZExtend()
+		
+		openScadROI=solid.translate([self.offset[0],self.offset[1],zmin])(solid.cube([self.sidelength,self.sidelength,zmax-zmin]))
+		return openScadROI
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Rectangle ROI class
@@ -2972,7 +3259,29 @@ class rectangleROI(ROI):
 		CoM=CoM/len(corners)
 		
 		return CoM
+	
+	def genAsOpenscad(self):
 		
+		"""Generates ROI as solid python object.
+		
+		Useful if ROI is used to be passed to openscad.
+		
+		.. note:: Will grab extent of geometry to find bounds in z-direction. 
+		
+		Returns:
+			solid.solidpython.cube: Solid python object. 
+		
+		"""
+		
+		try:
+			ext=self.embryo.geometry.getZExtend()
+		except AttributeError:
+			printError("genAsOpenscad: Cannot greab extend from geometry of type " + self.embryo.geometry.typ)
+			
+		openScadROI=solid.translate([self.offset[0],self.offset[1],ext[0]])(solid.cube([self.sidelengthX,self.sidelengthY,ext[1]-ext[0]]))
+		return openScadROI
+	
+	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Rectangle and slice ROI class
 
@@ -3117,6 +3426,23 @@ class rectangleSliceROI(rectangleROI,sliceROI):
 		d.writeToFile(fn)
 		
 		return fn	
+	
+	def genAsOpenscad(self):
+		
+		"""Generates ROI as solid python object.
+		
+		Useful if ROI is used to be passed to openscad.
+		
+		Returns:
+			solid.solidpython.cube: Solid python object. 
+		
+		"""
+		
+		
+		zmin,zmax=self.getOpenscadZExtend()
+		
+		openScadROI=solid.translate([self.offset[0],self.offset[1],zmin])(solid.cube([self.sidelengthX,self.sidelengthY,zmax-zmin]))
+		return openScadROI
 	
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3305,7 +3631,27 @@ class polyROI(ROI):
 				
 		return self.corners		
 	
-
+	def genAsOpenscad(self):
+		
+		"""Generates ROI as solid python object.
+		
+		Useful if ROI is used to be passed to openscad.
+		
+		Returns:
+			solid.solidpython.linear_extrude: Solid python object. 
+		
+		"""
+		
+		try:
+			ext=self.embryo.geometry.getZExtend()
+		except AttributeError:
+			printError("genAsOpenscad: Cannot greab extend from geometry of type " + self.embryo.geometry.typ)
+		
+		poly=solid.polygon(self.corners)
+		extruded=solid.linear_extrude(height = ext[1]-ext[0], center = False)(poly)
+		openScadROI=solid.translate([0,0,ext[0]])(extruded)
+		return openScadROI
+	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Polygon and slice ROI class
 			
@@ -3460,6 +3806,23 @@ class polySliceROI(polyROI,sliceROI):
 		
 		return fn	
 			
+	def genAsOpenscad(self):
+		
+		"""Generates ROI as solid python object.
+		
+		Useful if ROI is used to be passed to openscad.
+		
+		Returns:
+			solid.solidpython.linear_extrude: Solid python object. 
+		
+		"""
+		
+		zmin,zmax=self.getOpenscadZExtend()
+		
+		poly=solid.polygon(self.corners)
+		extruded=solid.linear_extrude(height = zmax-zmin, center = False)(poly)
+		openScadROI=solid.translate([0,0,zmin])(extruded)
+		return openScadROI
 		
 		
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3639,4 +4002,27 @@ class customROI(ROI):
 		
 		return r in self.ROIsIncluded
 	
-	
+	def genAsOpenscad(self):
+		
+		"""Generates ROI as solid python object.
+		
+		Useful if ROI is used to be passed to openscad.
+		
+		Returns:
+			solid.solidpython.openscad_object: Solid python object. 
+		
+		"""
+		
+		for i,r in enumerate(self.ROIsIncluded):
+			
+			if i==0:
+				openScadROI=r.genAsOpenscad()
+			else:
+				if self.procedures[i]==-1:
+					openScadROI=openScadROI-r.genAsOpenscad()
+				elif self.procedures[i]==1:
+					openScadROI=openScadROI+r.genAsOpenscad()
+				
+		return openScadROI
+		
+		

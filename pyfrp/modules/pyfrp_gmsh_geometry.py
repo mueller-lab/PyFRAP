@@ -517,7 +517,7 @@ class domain:
 		
 		"""Adds Cuboid to domain by given offset, sidelengths in x- and y-direction and height.
 		
-		Will define vertices and then call :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addPrismByParameters.
+		Will define vertices and then call :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addPrismByParameters`.
 		
 		.. note:: Plane can be given as ``"x","y","z"``. See also :py:func:`pyfrp.modules.pyfrp_geometry_module.flipCoordinate`.
 		
@@ -1510,88 +1510,134 @@ class domain:
 		
 		return filteredObjects
 	
-	def simplifySurfaces(self,iterations=3,triangIterations=2,addPoints=False,fixSurfaces=True):
+	def simplifySurfaces(self,iterations=3,triangIterations=2,addPoints=False,fixSurfaces=True,debug=False):
+		
+		"""Tries to simplify surfaces inside the domain.
+		
+		Does this by:
+			
+			* For ``iterations`` iterations, do: 
+				* Find all surfaces with the same normal vector.
+				* Try to fuse this surfaces, see also :py:func:`pyfrp.modules.pyfrp_geometry_module.ruledSurface.fuse`.
+				* Clean up edges via :py:func:`pyfrp.modules.pyfrp_geometry_module.domain.cleanUpUnusedEdges`.
+				
+			* Fixing loops via :py:func:`pyfrp.modules.pyfrp_geometry_module.domain.fixAllLoops`.
+			* Fixing surfaces via :py:func:`pyfrp.modules.pyfrp_geometry_module.domain.fixAllSurfaces`.
+		
+		Keyword Args:
+			iterations (int): Number of iterations used for simplification.
+			triangIterations (int): Number of iterations used for subdivision of surfaces.
+			addPoints (bool): Allow adding points inside surface triangles.
+			fixSurfaces (bool): Allow fixing of surfaces, making sure they are coherent with Gmsh requirements.
+			debug (bool): Print debugging messages.
+		
 		
 		"""
-		"""
 		
+		#Remember the stats from the start
+		x=len(self.ruledSurfaces)
+		y=len(self.lineLoops)
+		z=len(self.edges)
+		
+		#Loop through iterations
 		for k in range(iterations):
-		
-			x=len(self.ruledSurfaces)
-			y=len(self.lineLoops)
-			z=len(self.edges)
-			
-			
+				
 			#Loop through surfaces
 			for i,surface in enumerate(self.ruledSurfaces):
 				
 				#Get all surfaces with same normal vector
 				sameNormal=self.getAllObjectsWithProp("ruledSurfaces","normal",surface.normal)
 				
-				print "==============================="
-				print "Geometry currently has ", len(self.ruledSurfaces)
-				print "Currently picked surface" , surface.Id
-				print "Found ", len(sameNormal) , ""
-				print "Normal vector is", surface.normal
-				
-				#raw_input() 
-				
 				#Loop through all with same normal
 				for j,sN in enumerate(sameNormal):
 					if sN==surface:
 						continue
 					
-					#print i,j,surface.Id, sN.Id
-					
-					ax=None
-					
+					#Fuse
 					if surface.fuse(sN):
-						print "successfully fused ", surface.Id, sN.Id
-						
-						
-				#raw_input()
-						
-		
-		
+						if debug:
+							print "Successfully fused ", surface.Id, sN.Id
+			#Clean up edges
+			self.cleanUpUnusedEdges()
+			
+		#Print some final statistics
+		if debug:
 			print "Surfaces: Before =" , x , " After:" , len(self.ruledSurfaces) 
 			print "lineLoops: Before =" , y , " After:" , len(self.lineLoops) 
 			print "Edges: Before =" , z , " After:" , len(self.edges) 
-			zz=len(self.edges) 
-			self.cleanUpUnusedEdges()
-			
-			print "Edges CleanUp Before =", zz, " After:" , len(self.edges) 
-			#raw_input()
 		
+		#Fix loops and surfaces
 		self.fixAllLoops()
-		
 		if fixSurfaces:
 			self.fixAllSurfaces(iterations=triangIterations,addPoints=addPoints)
 			
 	def cleanUpUnusedEdges(self):
+		
+		"""Cleans up all unused edges in domain.
+		
+		See also: :py:func:`pyfrp.pyfrp_modules.pyfrp_gmsh_geometry.edge.delete`.
+		
+		"""
 		
 		for edge in self.edges:
 			edge.delete()
 	
 	def fixAllLoops(self):
 		
+		"""Tries to fix all loops in domain.
+		
+		See also: :py:func:`pyfrp.pyfrp_modules.pyfrp_gmsh_geometry.lineLoop.fix`.
+		
+		"""
+		
 		for loop in self.lineLoops:
 			loop.fix()
 	
 	def fixAllSurfaces(self,debug=False,iterations=2,addPoints=False):
 		
-		for surface in self.ruledSurfaces:
+		"""Tries to fix all surfaces in domain.
+
+		Does this by reiniating all ``lineLoop``. 
 		
+		See also: :py:func:`pyfrp.pyfrp_modules.pyfrp_gmsh_geometry.ruledSurface.initLineLoop`.
+		
+		Keyword Args:
+			iterations (int): Number of iterations used for subdivision of surfaces.
+			addPoints (bool): Allow adding points inside surface triangles.
+			debug (bool): Print debugging messages.
+				
+		"""
+		
+		
+		for surface in self.ruledSurfaces:
 			surface.initLineLoop(surface.lineLoop.Id,debug=debug,iterations=iterations,addPoints=addPoints)
 	
 	def save(self,fn):
 		
-		"""Saves domain to pickle file."""
+		"""Saves domain to pickle file.
+		
+		Args:
+			fn (str): Output filename.
+		"""
 		
 		pyfrp_IO_module.saveToPickle(self,fn=fn)
 	
 	def merge(self,d):
 		
-		"""Merges domain d into this domain."""
+		"""Merges domain d into this domain.
+		
+		Does this by:
+		
+			* Incrementing all IDs in ``d`` such that there is no overlap with ``self``.
+			* Merging all element lists.
+			* Making sure that all elements refer to ``self`` as domain.
+			
+		See also :py:func:`incrementAllIDs` and :py:func:`setDomainGlobally`.
+		
+		Args:
+			d (pyfrp.modules.pyfrp_geometry_module.domain): Domain to merge.
+		
+		"""
 		
 		d.incrementAllIDs(self.getAllMaxID()+1)
 		
@@ -2874,8 +2920,6 @@ class ruledSurface:
 		#Add 3D dimension to coordsTri	
 		coordsTri=np.concatenate((coordsTri,coords[0][2]*np.ones((coordsTri.shape[0],1))),axis=1)
 		
-		
-		
 		#Loop through each triangle 
 		surfacesCreated=[]
 		vertices=[]
@@ -3905,7 +3949,7 @@ class boundaryLayerField(field):
 	
 	Subclasses from :py:class:`field`.
 	
-	Adding a box surrounded with a boundary layer to a geometry:
+	Example: Adding a box surrounded with a boundary layer to a geometry:
 	
 	>>> vertices,lines,loops,surfaces,sloops,vols=d.addCuboidByParameters([256-50,256-50,-160],100,100,120,10,genVol=False)
 
@@ -4088,6 +4132,7 @@ class boundaryLayerField(field):
 		elements={}
 		for elmnt in ["EdgesList","FacesList","NodesList"]:
 			if len(getattr(self,elmnt))>0:
+				print elmnt
 				elements[elmnt]=pyfrp_misc_module.objAttrToList(getattr(self,elmnt),'Id')
 		
 		return elements

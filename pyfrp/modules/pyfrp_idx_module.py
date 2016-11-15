@@ -1224,8 +1224,11 @@ def triangulatePoly(coords,addPoints=False,iterations=2,debug=False):
 	if debug:
 		print "Found ", len(tri.simplices.copy()), "triangles in initial call."
 	
+	print "iterations in triangulatePoly", iterations
+	
 	#Incrementally refine triangulation
 	if addPoints:
+		print "addpoints on"
 		for i in range(iterations):
 			
 			mids=[]
@@ -1257,8 +1260,7 @@ def triangulatePoly(coords,addPoints=False,iterations=2,debug=False):
 		if checkInsidePolyVec(mid[0],mid[1],coordsOrg):
 			triFinal.append(tri.simplices.copy()[i])
 			midsIn.append(mid)
-			triInIdx.append(i)
-			
+			triInIdx.append(i)		
 		else:
 			triOutIdx.append(i)
 			midsOut.append(mid)
