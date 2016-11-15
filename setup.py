@@ -118,15 +118,7 @@ class OverrideInstall(install):
 		Also makes sure that gmsh/Fiji bin ins properly linked.
 		"""
 		
-		if platform.system() not in ["Windows"]:
-			import pwd
-			
-			#Grab user ID and group ID of actual user
-			uid=pwd.getpwnam(os.getlogin())[2]
-			gid=pwd.getpwnam(os.getlogin())[3]
-			
-			#Mode for files (everyone can read/write/execute. This is somewhat an overkill, but 0666 seems somehow not to work.)
-			mode=0777
+		uid,gid,mode=self.getPermDetails()
 		
 		#Overwrite file permissions
 		for filepath in self.get_outputs():
@@ -162,7 +154,26 @@ class OverrideInstall(install):
 					self.changePermissions(folderpath,uid,gid,mode)
 					self.changePermissions(filepath,uid,gid,mode)
 
-				
+	
+	def getPermDetails(self):
+		
+		"""Returns the permission details used to change permissions.
+		"""
+		
+		if platform.system() not in ["Windows"]:
+			import pwd
+			
+			#Grab user ID and group ID of actual user
+			uid=pwd.getpwnam(os.getlogin())[2]
+			gid=pwd.getpwnam(os.getlogin())[3]
+			
+			#Mode for files (everyone can read/write/execute. This is somewhat an overkill, but 0666 seems somehow not to work.)
+			mode=0777
+			
+			return uid,gid,mode
+			
+		return	0,0,0
+	
 	def cleanUpExe(self,fnDL,folderFn,filesBefore,exePath):		
 		
 		"""Moves it to executables directory and cleans up afterwards. 
@@ -217,7 +228,7 @@ class OverrideInstall(install):
 		"""
 		
 		#Define gmshVersion (might need to update this line once in a while)
-		gmshVersion='2.12.0'
+		gmshVersion='2.14.0'
 		
 		#Flag to see if gmsh DL went through
 		self.gmshDownloaded=False
@@ -245,6 +256,12 @@ class OverrideInstall(install):
 			
 			#Remove files
 			self.cleanUpExe(fnDL,folderFn,filesBefore,'pyfrp/executables/gmsh/')
+			
+			uid,gid,mode=self.getPermDetails()
+			if platform.system() not in ["Windows"]:
+				self.changePermissions(self.gmshPath,uid,gid,mode)
+			
+			self.addPathToWinPATHs(self.gmshPath)
 			
 			log.info("Installed gmsh to "+ self.gmshPath)
 			
@@ -408,6 +425,37 @@ class OverrideInstall(install):
 		except OSError:
 			log.info('Was not able to create directory pyfrp/executables')
 	
+	def addPathToWinPATHs(path):
+	
+		"""Adds a path to Windows' PATH list. 
+		
+		.. note:: Only adds path if file exits.
+		
+		.. note:: You will need to restart the terminal to 
+		be sure that the change has any effect.
+		
+		Args:
+			path (str): Path to be added.
+			
+		Returns:
+			bool: True if successful.
+		"""
+		
+		if platform.system() not in ["Windows"]:
+			print "OS is not Windows, won't set path"
+			return False
+		
+		if path in os.environ['PATH']:
+			print "Path is already in PATH, won't set path"
+			return False
+		
+		if os.path.exists(path):
+			os.system("set PATH=%PATH%;"+path)
+			return True
+		else:
+			print path + " does not exist, won't set path"
+			return False
+	
 	def downloadFiji(self):
 		
 		"""Downloads Gmsh, moves it to executables directory and cleans up afterwards. 
@@ -441,6 +489,12 @@ class OverrideInstall(install):
 			
 			#Remove files
 			self.cleanUpExe(fnDL,folderFn,filesBefore,'pyfrp/executables/Fiji.app/')
+			
+			uid,gid,mode=self.getPermDetails()
+			if platform.system() not in ["Windows"]:
+				self.changePermissions(self.fijiPath,uid,gid,mode)
+			
+			self.addPathToWinPATHs(self.fijiPath)
 			
 			log.info("Installed Fiji to "+ self.fijiPath)
 			

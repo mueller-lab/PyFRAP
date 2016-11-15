@@ -1109,6 +1109,37 @@ def getOpenscadBin(fnPath=None):
 
 def checkIfGmshBin(fn):
 	return not os.system(fn + '-1')
+
+def addPathToWinPATHs(path):
+	
+	"""Adds a path to Windows' PATH list. 
+	
+	.. note:: Only adds path if file exits.
+	
+	.. note:: You will need to restart the terminal to 
+	   be sure that the change has any effect.
+	
+	Args:
+		path (str): Path to be added.
+		
+	Returns:
+		bool: True if successful.
+	"""
+	
+	if platform.system() not in ["Windows"]:
+		printError("OS is not Windows")
+		return False
+	
+	if path in os.environ['PATH']:
+		printError("Path is already in PATH.")
+		return False
+	
+	if os.path.exists(path):
+		os.system("set PATH=%PATH%;"+path)
+		return True
+	else:
+		printError(path + " does not exist.")
+		return False
 	
 def getPath(identifier,fnPath=None,defaultOutput=""):
 	
