@@ -53,6 +53,7 @@ import pyfrp_gmsh_IO_module
 import pyfrp_idx_module
 import pyfrp_geometry_module
 import pyfrp_IO_module
+import pyfrp_vtk_module
 
 #Matplotlib
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -930,47 +931,51 @@ class domain:
 				return v,i
 		return False,False
 		
-	def draw(self,ax=None,color=None,ann=None,drawSurfaces=False,surfaceColor='b',alpha=0.2):
+	def draw(self,ax=None,color='k',ann=None,drawSurfaces=False,surfaceColor='b',alpha=0.2,backend='mpl',asSphere=True,size=5):
 		
 		"""Draws complete domain.
 		
-		.. note:: If ``ann=None``, will set ``ann=False``.
+		There are two different backends for drawing, namely 
+			
+			* Matplotlib (``backend='mpl'``)
+			* VTK (``backend='vtk'``)
 		
-		.. note:: If no axes is given, will create new one.
+		Matplotlib is easier to handle, but slower. VTK is faster for complex
+		geometries.
 		
+		.. note:: If ``backend=mpl``, ``ax`` should be a ``matplotlib.axes``, if ``backend='vtk'``,
+		   ``ax`` should be a ``vtk.vtkRenderer`` object.
+		
+		.. note:: If no axes is given, will create new one,
+		   see also :py:func:`pyfrp.modules.pyfrp_plot_module.makeGeometryPlot` 
+		   or :py:func:`pyfrp.modules.pyfrp_vtk_module.makeVTKCanvas`.
+		
+		.. warning:: Annotations are not properly working with ``backend='vtk'``.
+	
 		Keyword Args:
 			ax (matplotlib.axes): Matplotlib axes to be plotted in.
 			color (str): Color of domain.
 			ann (bool): Show annotations.
-			drawSurfaces (bool): Also draw surfaces.
-			surfaceColor (str): Color of surface.
-			alpha (float): Transparency of surfaces.
-			
-		Returns:
-			matplotlib.axes: Axes.
+			asSphere (bool): Draws vertex as sphere (only in vtk mode).
+			size (float): Size of vertex (only in vtk mode).
 		
+		Returns:
+			matplotlib.axes: Updated axes.
+			
 		"""
 		
 		if ann==None:
 			ann=False
 		
-		if color==None:
-			color='k'
-		
-		if ax==None:
-			fig,axes = pyfrp_plot_module.makeGeometryPlot()
-			
-			ax=axes[0]
-		
 		for v in self.vertices:
-			v.draw(ax=ax,color=color,ann=ann)
+			ax=v.draw(ax=ax,color=color,ann=ann,backend=backend,size=size,asSphere=asSphere,render=False)
 		for e in self.edges:
-			e.draw(ax=ax,color=color,ann=ann)	
-		for a in self.arcs:
-			a.draw(ax=ax,color=color,ann=ann)	
+			ax=e.draw(ax=ax,color=color,ann=ann,backend=backend,render=False)
 		if drawSurfaces:
 			for s in self.ruledSurfaces:
-				s.draw(ax=ax,color=surfaceColor,alpha=alpha)
+				ax=s.draw(ax=ax,color=surfaceColor,alpha=alpha,backend=backend)
+	
+		ax=pyfrp_vtk_module.renderVTK(ax)
 		
 		return ax
 		
@@ -1678,13 +1683,55 @@ class vertex:
 		self.Id=Id
 		self.volSize=volSize
 			
-	def draw(self,ax=None,color=None,ann=None):
+	def draw(self,ax=None,color=None,ann=None,backend="mpl",asSphere=True,size=10,render=False):
 		
-		"""Draws vertrex into axes.
+		"""Draws vertex.
+		
+		There are two different backends for drawing, namely 
+			
+			* Matplotlib (``backend='mpl'``)
+			* VTK (``backend='vtk'``)
+		
+		Matplotlib is easier to handle, but slower. VTK is faster for complex
+		geometries.
+		
+		.. note:: If ``backend=mpl``, ``ax`` should be a ``matplotlib.axes``, if ``backend='vtk'``,
+		   ``ax`` should be a ``vtk.vtkRenderer`` object.
+		
+		.. note:: If no axes is given, will create new one,
+		   see also :py:func:`pyfrp.modules.pyfrp_plot_module.makeGeometryPlot` 
+		   or :py:func:`pyfrp.modules.pyfrp_vtk_module.makeVTKCanvas`.
+		
+		.. warning:: Annotations are not properly working with ``backend='vtk'``.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes to be plotted in.
+			color (str): Color of vertex.
+			ann (bool): Show annotations.
+			asSphere (bool): Draws vertex as sphere (only in vtk mode).
+			size (float): Size of vertex (only in vtk mode).
+			render (bool): Render in the end (only in vtk mode).
+		
+		Returns:
+			matplotlib.axes: Updated axes.
+			
+		"""
+		
+		if backend=="mpl":
+			ax=self.drawMPL(ax=ax,color=color,ann=ann)
+		if backend=="vtk":
+			ax=self.drawVTK(color=color,ann=ann,ax=ax,asSphere=asSphere,size=size,render=render)
+		
+		return ax
+	
+	def drawMPL(self,ax=None,color=None,ann=None):
+		
+		"""Draws vertrex into matplotlib axes.
 		
 		.. note:: If ``ann=None``, will set ``ann=False``.
 		
-		.. note:: If no axes is given, will create new one.
+		.. note:: If no axes is given, will create new one,
+		   see also :py:func:`pyfrp.modules.pyfrp_plot_module.makeGeometryPlot`.
 		
 		Keyword Args:
 			ax (matplotlib.axes): Matplotlib axes to be plotted in.
@@ -1710,7 +1757,46 @@ class vertex:
 		pyfrp_plot_module.redraw(ax)
 		
 		return ax
-	
+			
+	def drawVTK(self,size=10,asSphere=True,ax=None,ann=None,color=[0,0,0],render=False):
+		
+		"""Draws vertrex into VTK renderer.
+		
+		.. note:: If ``ann=None``, will set ``ann=False``.
+		
+		.. note:: If no axes is given, will create new ``vtkRenderer``, 
+		   see also :py:func:`pyfrp.modules.pyfrp_vtk_module.makeVTKCanvas`.
+		
+		Keyword Args:
+			ax (vtk.vtkRenderer): Renderer to draw in.
+			color (str): Color of vertex.
+			ann (bool): Show annotations.
+			asSphere (bool): Draws vertex as sphere.
+			size (float): Size of vertex.
+			render (bool): Render in the end.
+				
+		Returns:
+			vtk.vtkRenderer: Updated renderer.
+		
+		"""
+		
+		if ann==None:
+			ann=False
+		
+		if ax==None:
+			ax,renderWindow,renderWindowInteractor=pyfrp_vtk_module.makeVTKCanvas()	
+
+		pyfrp_vtk_module.drawVTKPoint(self.x,asSphere=asSphere,color=color,size=size,renderer=ax)
+		
+		if ann:
+			printWarning("Annotations don't properly work with backend=vtk .")
+			pyfrp_vtk_module.drawVTKText("p"+str(self.Id),[self.x[0]+self.domain.annXOffset, self.x[1]+self.domain.annYOffset, self.x[2]+self.domain.annZOffset],renderer=ax)
+		
+		if render:
+			ax=pyfrp_vtk_module.renderVTK(ax)
+		
+		return ax
+		
 	def setX(self,x):
 		
 		"""Sets coordinate if vertex to ``x``.
@@ -1989,17 +2075,57 @@ class line(edge):
 		
 		return (self.v1.x+self.v2.x)/2.
 	
-	def draw(self,ax=None,color=None,ann=None):
+	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False):
 			
-		"""Draws line into axes.
+		"""Draws line.
 		
-		.. note:: If ``ann=None``, will set ``ann=False``.
+		There are two different backends for drawing, namely 
+			
+			* Matplotlib (``backend='mpl'``)
+			* VTK (``backend='vtk'``)
 		
-		.. note:: If no axes is given, will create new one.
+		Matplotlib is easier to handle, but slower. VTK is faster for complex
+		geometries.
+		
+		.. note:: If ``backend=mpl``, ``ax`` should be a ``matplotlib.axes``, if ``backend='vtk'``,
+		   ``ax`` should be a ``vtk.vtkRenderer`` object.
+		
+		.. note:: If no axes is given, will create new one,
+		   see also :py:func:`pyfrp.modules.pyfrp_plot_module.makeGeometryPlot` 
+		   or :py:func:`pyfrp.modules.pyfrp_vtk_module.makeVTKCanvas`.
+		
+		.. warning:: Annotations are not properly working with ``backend='vtk'``.
 		
 		Keyword Args:
 			ax (matplotlib.axes): Matplotlib axes to be plotted in.
-			color (str): Color of domain.
+			color (str): Color of line.
+			ann (bool): Show annotations.
+			render (bool): Render in the end (only in vtk mode).
+		
+		Returns:
+			matplotlib.axes: Updated axes.
+			
+		"""
+		
+		if backend=="mpl":
+			ax=self.drawMPL(ax=ax,color=color,ann=ann)
+		if backend=="vtk":
+			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render)
+		
+		return ax
+			
+	def drawMPL(self,ax=None,color=None,ann=None):
+		
+		"""Draws line into matplotlib axes.
+		
+		.. note:: If ``ann=None``, will set ``ann=False``.
+		
+		.. note:: If no axes is given, will create new one,
+		   see also :py:func:`pyfrp.modules.pyfrp_plot_module.makeGeometryPlot`.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes to be plotted in.
+			color (str): Color of line.
 			ann (bool): Show annotations.
 				
 		Returns:
@@ -2019,6 +2145,51 @@ class line(edge):
 			ax.text(m[0]+self.domain.annXOffset, m[1]+self.domain.annYOffset, m[2]+self.domain.annZOffset, "l"+str(self.Id), None)
 		
 		pyfrp_plot_module.redraw(ax)
+		
+		return ax
+	
+	def drawVTK(self,ax=None,color=None,ann=None,render=False):
+		
+		"""Draws line into VTK renderer.
+		
+		.. note:: If ``ann=None``, will set ``ann=False``.
+		
+		.. note:: If no axes is given, will create new ``vtkRenderer``, 
+		   see also :py:func:`pyfrp.modules.pyfrp_vtk_module.makeVTKCanvas`.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_vtk_module.drawVTKLine`.
+		
+		Keyword Args:
+			ax (vtk.vtkRenderer): Renderer to draw in.
+			color (str): Color of line.
+			ann (bool): Show annotations.
+			render (bool): Render in the end.
+				
+		Returns:
+			vtk.vtkRenderer: Updated renderer.
+		
+		"""
+		
+		if ann==None:
+			ann=False
+		
+		if ax==None:
+			
+			#print "blub"
+			
+			ax,renderWindow,renderWindowInteractor=pyfrp_vtk_module.makeVTKCanvas()
+			#print ax
+			#raw_input()
+			
+		pyfrp_vtk_module.drawVTKLine(self.v1.x,self.v2.x,color=color,renderer=ax)
+		
+		if ann:
+			printWarning("Annotations don't properly work with backend=vtk .")
+			m=self.getMiddle()
+			pyfrp_vtk_module.drawVTKText("p"+str(self.Id),[m[0]+self.domain.annXOffset, m[1]+self.domain.annYOffset, m[2]+self.domain.annZOffset],renderer=ax)
+		
+		if render:
+			ax=pyfrp_vtk_module.renderVTK(ax)
 		
 		return ax
 		
@@ -2291,17 +2462,57 @@ class arc(edge):
 		
 		return self.vcenter.x
 	
-	def draw(self,ax=None,color=None,ann=None):
+	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False):
 		
-		"""Draws arc into axes.
+		"""Draws arc.
 		
-		.. note:: If ``ann=None``, will set ``ann=False``.
+		There are two different backends for drawing, namely 
+			
+			* Matplotlib (``backend='mpl'``)
+			* VTK (``backend='vtk'``)
 		
-		.. note:: If no axes is given, will create new one.
+		Matplotlib is easier to handle, but slower. VTK is faster for complex
+		geometries.
+		
+		.. note:: If ``backend=mpl``, ``ax`` should be a ``matplotlib.axes``, if ``backend='vtk'``,
+		   ``ax`` should be a ``vtk.vtkRenderer`` object.
+		
+		.. note:: If no axes is given, will create new one,
+		   see also :py:func:`pyfrp.modules.pyfrp_plot_module.makeGeometryPlot` 
+		   or :py:func:`pyfrp.modules.pyfrp_vtk_module.makeVTKCanvas`.
+		
+		.. warning:: Annotations are not properly working with ``backend='vtk'``.
 		
 		Keyword Args:
 			ax (matplotlib.axes): Matplotlib axes to be plotted in.
-			color (str): Color of domain.
+			color (str): Color of line.
+			ann (bool): Show annotations.
+			render (bool): Render in the end (only in vtk mode).
+		
+		Returns:
+			matplotlib.axes: Updated axes.
+			
+		"""
+		
+		if backend=="mpl":
+			ax=self.drawMPL(ax=ax,color=color,ann=ann)
+		if backend=="vtk":
+			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render)
+		
+		return ax
+		
+	def drawMPL(self,ax=None,color=None,ann=None,render=False):
+		
+		"""Draws arc into matplotlib axes.
+		
+		.. note:: If ``ann=None``, will set ``ann=False``.
+		
+		.. note:: If no axes is given, will create new one,
+		   see also :py:func:`pyfrp.modules.pyfrp_plot_module.makeGeometryPlot`.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes to be plotted in.
+			color (str): Color of line.
 			ann (bool): Show annotations.
 				
 		Returns:
@@ -2323,10 +2534,50 @@ class arc(edge):
 		if ann:
 			x,y,z=self.getPointOnArc(self.angle/2.)
 			ax.text(x+self.domain.annXOffset, y+self.domain.annYOffset, z+self.domain.annZOffset, "c"+str(self.Id), None)
-			
-			
-			
+				
 		pyfrp_plot_module.redraw(ax)
+		
+		return ax
+	
+	def drawVTK(self,ax=None,color=None,ann=None,render=False):
+		
+		"""Draws arc into VTK renderer.
+		
+		.. note:: If ``ann=None``, will set ``ann=False``.
+		
+		.. note:: If no axes is given, will create new ``vtkRenderer``, 
+		   see also :py:func:`pyfrp.modules.pyfrp_vtk_module.makeVTKCanvas`.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_vtk_module.drawVTKArc`.
+		
+		Keyword Args:
+			ax (vtk.vtkRenderer): Renderer to draw in.
+			color (str): Color of line.
+			ann (bool): Show annotations.
+			render (bool): Render in the end.
+				
+		Returns:
+			vtk.vtkRenderer: Updated renderer.
+		
+		"""
+		
+		if ann==None:
+			ann=False
+		
+		if ax==None:
+			ax,renderWindow,renderWindowInteractor=pyfrp_vtk_module.makeVTKCanvas()	
+		
+		pyfrp_vtk_module.drawVTKArc(self.vstart.x,self.vcenter.x,self.vend.x,color=color,renderer=ax)
+		
+		if ann:
+			printWarning("Annotations don't properly work with backend=vtk .")
+			m=self.getMiddle()
+			pyfrp_vtk_module.drawVTKText("p"+str(self.Id),[m[0]+self.domain.annXOffset, m[1]+self.domain.annYOffset, m[2]+self.domain.annZOffset],renderer=ax)
+		
+		if render:
+			ax=pyfrp_vtk_module.renderVTK(ax)
+		
+		return ax
 	
 	def getLastVertex(self,orientation):
 		
@@ -2506,47 +2757,51 @@ class lineLoop:
 		
 		return self.orientations
 	
-	def draw(self,ax=None,color=None,ann=None):
+	def draw(self,ax=None,color='k',ann=None,backend='mpl'):
 		
-		"""Draws complete lineLoop.
+		"""Draws complete line loop.
 		
-		.. note:: If ``ann=None``, will set ``ann=False``.
+		There are two different backends for drawing, namely 
+			
+			* Matplotlib (``backend='mpl'``)
+			* VTK (``backend='vtk'``)
 		
-		.. note:: If no axes is given, will create new one.
+		Matplotlib is easier to handle, but slower. VTK is faster for complex
+		geometries.
+		
+		.. note:: If ``backend=mpl``, ``ax`` should be a ``matplotlib.axes``, if ``backend='vtk'``,
+		   ``ax`` should be a ``vtk.vtkRenderer`` object.
+		
+		.. note:: If no axes is given, will create new one,
+		   see also :py:func:`pyfrp.modules.pyfrp_plot_module.makeGeometryPlot` 
+		   or :py:func:`pyfrp.modules.pyfrp_vtk_module.makeVTKCanvas`.
+		
+		.. warning:: Annotations are not properly working with ``backend='vtk'``.
 		
 		Keyword Args:
 			ax (matplotlib.axes): Matplotlib axes to be plotted in.
-			color (str): Color of lineLoop.
+			color (str): Color of line loop.
 			ann (bool): Show annotations.
-				
-		Returns:
-			matplotlib.axes: Axes.
 		
+		Returns:
+			matplotlib.axes: Updated axes.
+			
 		"""
 		
-		if ann==None:
-			ann=False
-		
-		if color==None:
-			color='k'
-		
-		if ax==None:
-			fig,axes = pyfrp_plot_module.makeGeometryPlot()
-			ax=axes[0]
-		
 		for e in self.edges:
-			e.draw(ax=ax,color=color,ann=ann)
+			ax=e.draw(ax=ax,color=color,ann=ann,backend=backend)
 		
 		return ax
 	
 	def printLoop(self):
 		
+		"""Prints loop.
+		"""
+		
 		ids=np.array(pyfrp_misc_module.objAttrToList(self.edges,"Id"))
 		orients=np.array(self.orientations)
 		
 		print "Line Loop with ID = "+ str(self.Id)+": "+str(ids*orients)
-	
-		
 	
 	def fix(self):
 		
@@ -3218,7 +3473,7 @@ class ruledSurface:
 		
 		return True
 	
-	def draw(self,ax=None,color='b',edgeColor='k',drawLoop=True,ann=None,alpha=0.2):
+	def draw(self,ax=None,color='b',edgeColor='k',drawLoop=True,ann=None,alpha=0.2,backend='mpl'):
 		
 		"""Draws surface and fills it with color.
 		
@@ -3239,6 +3494,10 @@ class ruledSurface:
 			matplotlib.axes: Axes.
 		
 		"""
+		
+		if backend!='mpl':
+			printError("Cannot draw surface with backend="+backend+". Currently not supported")
+			return ax
 		
 		if ann==None:
 			ann=False

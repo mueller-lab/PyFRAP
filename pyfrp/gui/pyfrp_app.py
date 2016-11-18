@@ -580,6 +580,9 @@ class pyfrp(QtGui.QMainWindow):
 		setFijiButton = QtGui.QAction('Set Fiji Path', self)
 		self.connect(setFijiButton, QtCore.SIGNAL('triggered()'), self.setFijiPath)
 		
+		setOpenscadButton = QtGui.QAction('Set Openscad Path', self)
+		self.connect(setOpenscadButton, QtCore.SIGNAL('triggered()'), self.setOpenscadPath)
+		
 		printPathsButton = QtGui.QAction('Print Paths', self)
 		self.connect(printPathsButton, QtCore.SIGNAL('triggered()'), self.printPaths)
 		
@@ -592,6 +595,7 @@ class pyfrp(QtGui.QMainWindow):
 		self.mbSettings.addAction(setPathFileButton)
 		self.mbSettings.addAction(setGmshButton)
 		self.mbSettings.addAction(setFijiButton)
+		self.mbSettings.addAction(setOpenscadButton)
 		self.mbSettings.addAction(printPathsButton)
 		self.mbSettings.addAction(printPathFileButton)
 		self.mbSettings.addAction(checkPathsButton)
@@ -2464,6 +2468,14 @@ class pyfrp(QtGui.QMainWindow):
 		path=pyfrp_misc_module.getPath('fijiBin')
 		self.setPath(identifier='fijiBin',path=path)
 		
+	def setOpenscadPath(self):
+		
+		"""Opens path setting dialog and lets user set path to gmsh binary.
+		"""
+		
+		path=pyfrp_misc_module.getPath('openscadBin')
+		self.setPath(identifier='openscadBin',path=path)
+			
 	def printPathFile(self):
 		
 		"""Prints out path file."""

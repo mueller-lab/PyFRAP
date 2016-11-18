@@ -132,6 +132,14 @@ pyfrp.modules.pyfrp_term_module module
     :undoc-members:
     :show-inheritance:
 
+pyfrp.modules.pyfrp_vtk_module module
+-------------------------------------
+
+.. automodule:: pyfrp.modules.pyfrp_vtk_module
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyfrp.modules.pyfrp_zstack_module module
 ----------------------------------------
 

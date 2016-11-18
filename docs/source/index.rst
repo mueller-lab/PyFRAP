@@ -19,7 +19,7 @@ analyzing FRAP datasets, such as
 * Hierarchical data structure making data exchange/sharing easy
 * Comprehensive GUI, making almost all PyFRAP tools available
 
-I have tried to keep the API short but clear. If it unclear, don't hesitate to mail.
+I have tried to keep the API short but clear. If it is unclear, don't hesitate to mail.
 
 
 Installation (setup.py)
