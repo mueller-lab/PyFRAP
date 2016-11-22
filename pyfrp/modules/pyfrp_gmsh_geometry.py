@@ -3903,7 +3903,7 @@ class ruledSurface(gmshElement):
 	
 	def __init__(self,domain,loopID,ID):
 		
-		gmshElement.__init__(self,domain,Id)
+		gmshElement.__init__(self,domain,ID)
 		self.initLineLoop(loopID)
 	
 	def initLineLoop(self,loopID,debug=False,addPoints=False,iterations=2):
