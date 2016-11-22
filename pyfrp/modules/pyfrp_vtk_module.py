@@ -140,7 +140,7 @@ def drawVTKPoint(p,asSphere=True,color=[0,0,0],size=10,renderer=None):
 	if asSphere:
 		return drawVTKSphere(p,size,color=color,renderer=renderer)
 	else:
-		return drawVTKVertex(p,size,color=color,renderer=renderer)
+		return drawVTKVertex(p,size=size,color=color,renderer=renderer)
 	
 def drawVTKVertex(p,color=[0,0,0],size=20,renderer=None):	
 	
@@ -316,6 +316,70 @@ def getVTKArc(pStart,pCenter,pEnd,res=32):
 	arc.SetResolution( res )
 	
 	return arc
+
+def drawVTKPolyLine(pts,closed=False,color=[0,0,0],renderer=None):
+	
+	"""Draws VTK polyLine object defined through points into renderer.
+	
+	If ``renderer=None``, will create actor but not add it to renderer.
+	
+	Args:
+		pts (list): Coordinates of points.
+	
+	Keyword Args:
+		color (list): Color of sphere in normed RGB values.
+		renderer (vtk.vtkRenderer): Renderer to draw in.
+		closed (bool): Close line.
+		
+	Returns:
+		vtk.vtkActor: VTK actor.
+	
+	"""
+	
+	poly=getVTKPolyLine(pts,closed=closed)
+	
+	actor=getVTKActor(color)
+	actor.SetMapper(getVTKPolyDataMapper(poly))
+	
+	if renderer!=None:
+		renderer.AddActor(actor)
+	
+	return actor
+
+def getVTKPolyLine(pts,closed=False):
+	
+	"""Returns VTK polyLine object defined through points.
+	
+	Args:
+		pts (list): Coordinates of points.
+		
+	Keyword Args:
+		closed (bool): Close line.
+		
+	Returns:
+		vtk.vtkPolyData: VTK polyData.
+	
+	"""
+	
+	# Genereate points
+	points = vtk.vtkPoints()
+	points.SetNumberOfPoints(len(pts))
+	for i,p in enumerate(pts):
+		points.SetPoint(i,p[0], p[1], p[2])
+	
+	# Generate lines in between
+	lines = vtk.vtkCellArray()
+	lines.InsertNextCell(len(pts)+int(closed))
+	for i,p in enumerate(pts):
+		lines.InsertCellPoint(i)
+	if closed:
+		lines.InsertCellPoint(0)
+	
+	polygon = vtk.vtkPolyData()
+	polygon.SetPoints(points)
+	polygon.SetLines(lines)
+	
+	return polygon
 	
 def getVTKActor(color):
 	

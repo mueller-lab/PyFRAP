@@ -886,9 +886,20 @@ def popRange(l,idxStart,idxEnd):
 	
 	"""
 	
-	popped=l[idxStart:idxEnd]
-	l[idxStart:idxEnd]=[]
+	l=list(l)
 	
+	if idxStart>idxEnd:
+		popped=l[0:idxEnd]
+		l[0:idxEnd]=[]
+		
+		#print popped,l
+		
+		popped=popped+l[idxStart-idxEnd:]
+		l[idxStart-idxEnd:]=[]
+	else:
+		popped=l[idxStart:idxEnd]
+		l[idxStart:idxEnd]=[]
+		
 	return popped,l
 	
 def sortListsWithKey(l,keyList):

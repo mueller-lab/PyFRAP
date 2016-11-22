@@ -313,7 +313,6 @@ def readGeoLine(line,parmDic,domain):
 		if typ=="Point":
 			domain.addVertex([vals[0],vals[1],vals[2]],Id=Id,volSize=vals[3])
 		elif typ=="Line":
-			
 			v1,idx=domain.getVertexById(vals[0])
 			v2,idx=domain.getVertexById(vals[1])
 			domain.addLine(v1,v2,Id=Id)
@@ -322,6 +321,11 @@ def readGeoLine(line,parmDic,domain):
 			vcenter,idx=domain.getVertexById(vals[1])
 			vend,idx=domain.getVertexById(vals[2])
 			domain.addArc(vstart,vcenter,vend,Id=Id)
+		elif typ=="BSpline":
+			vstart,idx=domain.getVertexById(vals[0])		
+			vcenter,idx=domain.getVertexById(vals[1])
+			vend,idx=domain.getVertexById(vals[2])
+			domain.addBSpline(vals,Id=Id)
 		elif typ=="Line Loop":
 			domain.addLineLoop(Id=Id,edgeIDs=vals)
 		elif typ=="Ruled Surface":

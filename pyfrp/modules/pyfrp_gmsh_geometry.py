@@ -31,6 +31,16 @@
 	* A ``edge`` class, parenting all different kind of edges.
 	* A ``line`` class, substituting gmsh's *Line*.
 	* A ``arc`` class, substituting gmsh's *Circle*.
+	* A ``bSpline`` class, substituting gmsh's *bSpline*.
+	* A ``lineLoop`` class, substituting gmsh's *Line Loop*.
+	* A ``ruledSurface`` class, substituting gmsh's *Ruled Surface*.
+	* A ``surfaceLoop`` class, substituting gmsh's *Surface Loop*.
+	* A ``volume`` class, substituting gmsh's *Volume*.
+	* A ``field`` class, parenting all different kind of fields.
+	* A ``attractorField`` class, substituting gmsh's *Attractor* field.
+	* A ``boundaryLayerField`` class, substituting gmsh's *Boundary Layer* field.
+	* A ``thresholdField`` class, substituting gmsh's *Threshold* field.
+	* A ``minField`` class, substituting gmsh's *Min* field.
 	
 This module together with pyfrp.pyfrp_gmsh_IO_module and pyfrp.pyfrp_gmsh_module works partially as a python gmsh wrapper, however is incomplete.
 If you want to know more about gmsh, go to http://gmsh.info/doc/texinfo/gmsh.html .
@@ -58,6 +68,8 @@ import pyfrp_vtk_module
 #Matplotlib
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
+import copy as cpy
+
 		
 #===========================================================================================================================================================================
 #Class definitions
@@ -72,6 +84,7 @@ class domain:
 		vertices (list): List of vertices.
 		arcs (list): List of arcs.
 		lines (list): List of lines.
+		bSplines (list): List of bSplines.
 		lineLoops (list): List of lineLoops.
 		surfaceLoops (list): List of surfaceLoops.
 		ruledSurfaces (list): List of ruledSurfaces.
@@ -91,6 +104,7 @@ class domain:
 		self.vertices=[]
 		self.arcs=[]
 		self.lines=[]
+		self.bSplines=[]
 		self.lineLoops=[]
 		self.ruledSurfaces=[]
 		self.surfaceLoops=[]
@@ -181,6 +195,30 @@ class domain:
 		self.edges.append(a)
 		
 		return a
+	
+	def addBSpline(self,vertices,Id=None):
+		
+		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.line` instance
+		at point ``x`` and appends it to ``edges`` and ``lines`` list.
+		
+		Args:
+			vertices (list): List of vertex objects.
+			
+		Keyword Args:
+			Id (int): ID of spline.
+			
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.bSpline: New spline instance.
+		
+		"""
+		
+		newId=self.getNewId(self.edges,Id)
+		
+		e=bSpline(self,vertices,newId)
+		self.bSplines.append(e)
+		self.edges.append(e)
+		
+		return e
 	
 	def addCircleByParameters(self,center,radius,z,volSize,plane="z"):
 		
@@ -663,7 +701,212 @@ class domain:
 			vol=None
 		
 		return [vertices1,vertices2],[arcs1,arcs2],lines,loops,surfaces,surfaceLoop,vol
+	
+	def insertVertex(self,obj,copy=False,strict=True):
+		
+		"""Inserts vertex into domain.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.insertElement`.
+		
+		Args:
+			obj (pyfrp.modules.pyfrp_gmsh_geometry.vertex): A vertex.
+		
+		Keyword Args:
+			copy (bool): Inserts copy of object.
+			strict (bool): Don't allow IDs to be assigned to multiple elements.
 			
+		Returns:
+			list: Updated edges list.
+		
+		"""
+		
+		if self.getVertexByX(obj.x)[0]!=False:
+			printWarning("Vertex with x=" +str(obj.x) + " already exists.")
+		
+		return self.insertElement("vertices",obj,copy=copy,strict=strict)
+		
+	def insertEdge(self,obj,copy=False,strict=True):
+		
+		"""Inserts edge into domain.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.insertElement`.
+		
+		Args:
+			obj (pyfrp.modules.pyfrp_gmsh_geometry.edge): A edge.
+		
+		Keyword Args:
+			copy (bool): Inserts copy of object.
+			strict (bool): Don't allow IDs to be assigned to multiple elements.
+			
+		Returns:
+			list: Updated edges list.
+		
+		"""
+		
+		l=self.insertElement("edges",obj,copy=copy,strict=strict)
+		
+		if obj.typ==0:
+			self.lines.append(obj)
+		if obj.typ==1:
+			self.arcs.append(obj)
+		if obj.typ==2:
+			self.bSpline.append(obj)
+			
+		return l
+	
+	def insertLineLoop(self,obj,copy=False,strict=True):
+		
+		"""Inserts line loop into domain.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.insertElement`.
+		
+		Args:
+			obj (pyfrp.modules.pyfrp_gmsh_geometry.lineLoop): A line loop.
+		
+		Keyword Args:
+			copy (bool): Inserts copy of object.
+			strict (bool): Don't allow IDs to be assigned to multiple elements.
+		
+		Returns:
+			list: Updated lineLoops list.
+		
+		"""
+		
+		return self.insertElement("lineLoops",obj,copy=copy,strict=strict)
+	
+	def insertRuledSurface(self,obj,copy=False,strict=True):
+		
+		"""Inserts ruled surface into domain.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.insertElement`.
+		
+		Args:
+			obj (pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface): A ruled surface.
+		
+		Keyword Args:
+			copy (bool): Inserts copy of object.
+			strict (bool): Don't allow IDs to be assigned to multiple elements.
+		
+		Returns:
+			list: Updated ruledSurfaces list.
+		
+		"""
+		
+		return self.insertElement("ruledSurfaces",obj,copy=copy,strict=strict)
+	
+	def insertSurfaceLoop(self,obj,copy=False,strict=True):
+		
+		"""Inserts surface loop into domain.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.insertElement`.
+		
+		Args:
+			obj (pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop): A surface loop.
+		
+		Keyword Args:
+			copy (bool): Inserts copy of object.
+			strict (bool): Don't allow IDs to be assigned to multiple elements.
+		
+		Returns:
+			list: Updated surfaceLoops list.
+		
+		"""
+		
+		return self.insertElement("ruledSurfaces",obj,copy=copy,strict=strict)
+	
+	def insertVolume(self,obj,copy=False,strict=True):
+		
+		"""Inserts volume into domain.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.insertElement`.
+		
+		Args:
+			obj (pyfrp.modules.pyfrp_gmsh_geometry.volume): A volume.
+		
+		Keyword Args:
+			copy (bool): Inserts copy of object.
+			strict (bool): Don't allow IDs to be assigned to multiple elements.
+		
+		Returns:
+			list: Updates volumes list.
+		
+		"""
+		
+		return self.insertElement("volumes",obj,copy=copy,strict=strict)
+	
+	def insertField(self,obj,copy=False,strict=True):
+		
+		"""Inserts field into domain.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.insertElement`.
+		
+		Args:
+			obj (pyfrp.modules.pyfrp_gmsh_geometry.field): A field.
+		
+		Keyword Args:
+			copy (bool): Inserts copy of object.
+			strict (bool): Don't allow IDs to be assigned to multiple elements.
+		
+		Returns:
+			list: Updates fields list.
+		
+		"""
+		
+		return self.insertElement("fields",obj,copy=copy,strict=strict)
+	
+	def insertElement(self,element,obj,copy=False,strict=True):
+		
+		"""Inserts gmshElement into domain.
+		
+		Checks if there is already a element with ID.
+		
+		.. note:: If ``copy=True``, will generate copy of element. This might mess
+		   with some connection between elements. Thus ``copy=False`` as default.
+		
+		Possible values for ``element`` are:
+			
+			* vertices
+			* lines
+			* arcs
+			* lineLoops
+			* bSplines
+			* ruledSurfaces
+			* surfaceLoops
+			* volumes
+			* fields
+		
+		Will automatically set ``self`` as element's domain.
+		
+		.. note:: If ``strict=True``, will not allow double IDs.
+		
+		Args:
+			element (str): Name of element list where object belongs.
+			obj (pyfrp.modules.pyfrp_gmsh_geometry.gmshElement): Element to insert.
+		
+		Keyword Args:
+			copy (bool): Inserts copy of object.
+			strict (bool): Don't allow IDs to be assigned to multiple elements.
+		
+		Returns:
+			list: Updated respective element list.
+			
+		"""
+		
+		if self.checkIdExists(obj.Id,getattr(self,element)):
+			printWarning(obj.getType() + " with Id=" +str(obj.getID()) + " already exits.")
+			if strict:
+				getattr(self,element)
+				
+		if copy:
+			e=obj.getCopy()
+		else:
+			e=obj
+			
+		e.domain=self
+		getattr(self,element).append(e)
+		
+		return getattr(self,element)
+	
 	def checkIdExists(self,Id,objList):
 		
 		"""Checks if any object in ``objList`` already has ID ``Id``.
@@ -931,7 +1174,7 @@ class domain:
 				return v,i
 		return False,False
 		
-	def draw(self,ax=None,color='k',ann=None,drawSurfaces=False,surfaceColor='b',alpha=0.2,backend='mpl',asSphere=True,size=5):
+	def draw(self,ax=None,color='k',ann=None,drawSurfaces=False,surfaceColor='b',alpha=0.2,backend='mpl',asSphere=True,size=5,annElements=[True,True,True]):
 		
 		"""Draws complete domain.
 		
@@ -951,14 +1194,18 @@ class domain:
 		   or :py:func:`pyfrp.modules.pyfrp_vtk_module.makeVTKCanvas`.
 		
 		.. warning:: Annotations are not properly working with ``backend='vtk'``.
-	
+		
+		With ``annElements`` the user has the possibility to only annotate given elements. For example
+		``annElements=[False,True,False]`` only annotates edges. 
+		
 		Keyword Args:
 			ax (matplotlib.axes): Matplotlib axes to be plotted in.
 			color (str): Color of domain.
 			ann (bool): Show annotations.
 			asSphere (bool): Draws vertex as sphere (only in vtk mode).
 			size (float): Size of vertex (only in vtk mode).
-		
+			annElements (list): Only annotate some element types.
+			
 		Returns:
 			matplotlib.axes: Updated axes.
 			
@@ -968,14 +1215,15 @@ class domain:
 			ann=False
 		
 		for v in self.vertices:
-			ax=v.draw(ax=ax,color=color,ann=ann,backend=backend,size=size,asSphere=asSphere,render=False)
+			ax=v.draw(ax=ax,color=color,ann=ann*annElements[0],backend=backend,size=size,asSphere=asSphere,render=False)
 		for e in self.edges:
-			ax=e.draw(ax=ax,color=color,ann=ann,backend=backend,render=False)
+			ax=e.draw(ax=ax,color=color,ann=ann*annElements[1],backend=backend,render=False)
 		if drawSurfaces:
 			for s in self.ruledSurfaces:
-				ax=s.draw(ax=ax,color=surfaceColor,alpha=alpha,backend=backend)
-	
-		ax=pyfrp_vtk_module.renderVTK(ax)
+				ax=s.draw(ax=ax,color=surfaceColor,alpha=alpha,backend=backend,ann=ann*annElements[2])
+		
+		if backend=="vtk":
+			ax=pyfrp_vtk_module.renderVTK(ax)
 		
 		return ax
 		
@@ -1223,9 +1471,23 @@ class domain:
 	
 	def addBoundaryLayerField(self,Id=None,AnisoMax=10000000000,hwall_n=1.,hwall_t=1,ratio=1.1,thickness=10.,hfar=1.,IntersectMetrics=1,Quads=0.):
 		
-		""" NOTE: Description here
+		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField` instance. 
 		
-		
+		Keyword Args:
+			Id (int): ID of field.
+			AnisoMax (float): Threshold angle for creating a mesh fan in the boundary layer.
+			IntersectMetrics (int): Intersect metrics of all faces.
+			Quad (int): Generate recombined elements in the boundary layer.
+			har (float): Element size far from the wall.
+			hwall_n (float): Mesh Size Normal to the The Wall.
+			hwall_t (float): Mesh Size Tangent to the Wall.
+			ratio (float): Size Ratio Between Two Successive Layers.
+			thickness (float): Maximal thickness of the boundary layer.
+			List (list): List of field IDs.
+				
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.attractorField: New boundaryLayerField instance.
+			
 		"""
 		
 		newId=self.getNewId(self.fields,Id)
@@ -1233,6 +1495,20 @@ class domain:
 		self.fields.append(l)
 		
 		return l
+	
+	def setAnnOffset(self,offset):
+		
+		"""Sets annotation offset for plotting.
+		
+		Args:
+			offset (numpy.ndarray): New offset.
+		
+		"""
+		
+		self.annXOffset=offset[0]
+		self.annYOffset=offset[1]
+		self.annZOffset=offset[2]
+		
 	
 	def writeToFile(self,fn):
 		
@@ -1248,6 +1524,7 @@ class domain:
 			self.writeElements("vertices",f)
 			self.writeElements("lines",f)
 			self.writeElements("arcs",f)
+			self.writeElements("bSplines",f)
 			self.writeElements("lineLoops",f)
 			self.writeElements("ruledSurfaces",f)
 			self.writeElements("surfaceLoops",f)
@@ -1264,9 +1541,11 @@ class domain:
 			* lines
 			* arcs
 			* lineLoops
+			* bSplines
 			* ruledSurfaces
 			* surfaceLoops
 			* volumes
+			* fields
 		
 		Args:
 			element (str): Element type to write.
@@ -1291,6 +1570,7 @@ class domain:
 		self.incrementIDs(offset,"vertices")
 		self.incrementIDs(offset,"lines")
 		self.incrementIDs(offset,"arcs")
+		self.incrementIDs(offset,"bSplines")
 		self.incrementIDs(offset,"lineLoops")
 		self.incrementIDs(offset,"ruledSurfaces")
 		self.incrementIDs(offset,"surfaceLoops")
@@ -1330,6 +1610,7 @@ class domain:
 		self.setDomainForElementType("vertices")
 		self.setDomainForElementType("lines")
 		self.setDomainForElementType("arcs")
+		self.setDomainForElementType("bSplines")
 		self.setDomainForElementType("lineLoops")
 		self.setDomainForElementType("ruledSurfaces")
 		self.setDomainForElementType("surfaceLoops")
@@ -1649,6 +1930,7 @@ class domain:
 		self.edges=self.edges+d.edges
 		self.vertices=self.vertices+d.vertices
 		self.arcs=self.arcs+d.arcs
+		self.bSplines=self.bSplines+d.bSplines
 		self.lines=self.lines+d.lines
 		self.lineLoops=self.lineLoops+d.lineLoops
 		self.ruledSurfaces=self.ruledSurfaces+d.ruledSurfaces
@@ -1657,9 +1939,92 @@ class domain:
 		self.fields=self.fields+d.fields
 		
 		self.setDomainGlobally()
+
+class gmshElement:
+	
+	def __init__(self,domain,Id):
 		
+		self.domain=domain
+		self.Id=Id
 		
-class vertex:
+	def getID(self):
+		
+		"""Returns ID of element.
+		
+		Returns:
+			int: ID of element.
+		
+		"""
+		
+		return self.Id
+		
+	def setID(self,Id):
+		
+		"""Sets ID of element.
+		
+		Args:
+			Id (int): New ID of element.
+			
+		Returns:
+			int: New ID of element.
+		
+		"""
+		
+		self.Id=Id
+		return self.Id
+		
+	def getCopy(self):
+		
+		"""Returns copy of element.
+		
+		Uses `copy.copy` to generate copy.
+		
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.gmshElement: Copy of element.
+		
+		"""
+		
+		return cpy.copy(self)
+		
+	def getType(self):
+		
+		"""Returns type of element.
+		
+		Returns:
+			str: Type of element.
+		
+		"""
+		
+		return str(type(self))
+		
+	def getDomain(self):
+		
+		"""Returns element's domain.
+		
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.domain: Element's domain.
+		
+		"""
+		
+		return self.domain
+		
+	def setDomain(self,d):	
+		
+		"""Sets element's domain.
+		
+		Args:
+			d (pyfrp.modules.pyfrp_gmsh_geometry.domain): New domain
+		
+		Returns:
+			pyfrp.modules.pyfrp_gmsh_geometry.domain: New domain.
+		
+		"""
+		
+		self.domain=d
+		
+		return self.domain
+		
+class vertex(gmshElement):
 	
 	"""Vertex class storing information from gmsh .geo Points.
 	
@@ -1677,10 +2042,10 @@ class vertex:
 	"""
 	
 	def __init__(self,domain,x,Id,volSize=None):
-		self.domain=domain
+		
+		gmshElement.__init__(self,domain,Id)
 		
 		self.x=np.array(x)
-		self.Id=Id
 		self.volSize=volSize
 			
 	def draw(self,ax=None,color=None,ann=None,backend="mpl",asSphere=True,size=10,render=False):
@@ -1896,7 +2261,7 @@ class vertex:
 			
 		return boundField	
 	
-class edge:
+class edge(gmshElement):
 	
 	"""Edge class storing information from gmsh .geo circles and lines.
 	
@@ -1908,8 +2273,8 @@ class edge:
 	"""
 	
 	def __init__(self,domain,Id,typ):
-		self.domain=domain
-		self.Id=Id
+		
+		gmshElement.__init__(self,domain,Id)
 		self.typ=typ
 		
 	def getDomain(self):
@@ -1917,12 +2282,6 @@ class edge:
 		"""Returns domain edge belongs to."""
 		
 		return self.domain
-	
-	def getId(self):
-		
-		"""Returns edges ID."""
-		
-		return self.Id
 	
 	def getTyp(self):
 		
@@ -1938,6 +2297,8 @@ class edge:
 			return "arc"
 		elif typ==0:
 			return "line"
+		elif typ==2:
+			return "bSpline"
 	
 	def addToBoundaryLayer(self,boundField=None,**fieldOpts):
 		
@@ -2033,11 +2394,19 @@ class edge:
 				printWarning("Was not able to delete edge with ID " + str(self.Id) +". Still part of field with ID " + str(len(fields)))
 			return False
 		
-		if self.typ==0:
-			self.domain.lines.remove(self)
-		if self.typ==1:
-			self.domain.arcs.remove(self)
-		self.domain.edges.remove(self)
+		try:
+			if self.typ==0:
+				self.domain.lines.remove(self)
+			if self.typ==1:
+				self.domain.arcs.remove(self)
+			if self.typ==2:
+				self.domain.bSplines.remove(self)
+				
+			self.domain.edges.remove(self)
+		except ValueError:
+			if debug:
+				printWarning("Could not remove edge " + str(self.Id)+" from elements list. Already seems to be removed.")
+			return False
 		
 		return True
 		
@@ -2174,12 +2543,7 @@ class line(edge):
 			ann=False
 		
 		if ax==None:
-			
-			#print "blub"
-			
 			ax,renderWindow,renderWindowInteractor=pyfrp_vtk_module.makeVTKCanvas()
-			#print ax
-			#raw_input()
 			
 		pyfrp_vtk_module.drawVTKLine(self.v1.x,self.v2.x,color=color,renderer=ax)
 		
@@ -2195,12 +2559,12 @@ class line(edge):
 		
 	def getLastVertex(self,orientation):
 		
-		"""Returns last vertex of arc given a orientation.
+		"""Returns last vertex of line given a orientation.
 		
 		Orientation can be either forward (1), or reverse (-1).
 		
 		Args:
-			orientation (int): Orientation of arc.
+			orientation (int): Orientation of line.
 			
 		Returns:
 			pyfrp.pyfrp_gmsh_geometry.vertex: Vertex.
@@ -2217,12 +2581,12 @@ class line(edge):
 	
 	def getFirstVertex(self,orientation):
 		
-		"""Returns first vertex of arc given a orientation.
+		"""Returns first vertex of line given a orientation.
 		
 		Orientation can be either forward (1), or reverse (-1).
 		
 		Args:
-			orientation (int): Orientation of arc.
+			orientation (int): Orientation of line.
 			
 		Returns:
 			pyfrp.pyfrp_gmsh_geometry.vertex: Vertex.
@@ -2253,6 +2617,22 @@ class line(edge):
 		
 		return f
 	
+	def getDirection(self,orientation):
+		
+		"""Returns direction of line.
+		
+		Orientation can be either forward (1), or reverse (-1).
+		
+		Args:
+			orientation (int): Orientation of line.
+			
+		Returns:
+			numpy.ndarray: Direction of line.
+		
+		"""
+			
+		return self.getLastVertex(orientation).x-self.getFirstVertex(orientation).x
+			
 class arc(edge):
 	
 	"""Arc class storing information from gmsh .geo cicle.
@@ -2638,8 +3018,248 @@ class arc(edge):
 		f.write("Circle("+str(self.Id)+")= {" + str(self.vstart.Id) + ","+ str(self.vcenter.Id)+ "," + str(self.vend.Id) + "};\n" )
 		
 		return f
+
+class bSpline(edge):
 	
-class lineLoop:
+	"""Bspline class storing information from gmsh .geo BSpline.
+	
+	Args:
+		domain (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain arc belongs to.
+		vertices (list): List of vertex objects.
+		Id (int): ID of spline.
+		
+	"""		
+	
+	def __init__(self,domain,vertices,Id):
+		
+		edge.__init__(self,domain,Id,2)
+		
+		self.initVertices(vertices)
+	
+	def initVertices(self,vertices):
+		
+		"""Initiates list of vertices.
+		
+		If vertex is given by Id, will use :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.getVertexById`
+		to identify vertex. 
+		
+		Args:
+			vertices (list): List of vertex objects.
+			
+		Returns:
+			list: List of vertex objects.
+		
+		"""
+		
+		self.vertices=[]
+		for v in vertices:
+			if isinstance(v,int):
+				self.vertices.append(self.domain.getVertexById(v)[0])
+			else:
+				self.vertices.append(v)
+				
+		return self.vertices		
+	
+	def writeToFile(self,f):
+		
+		"""Writes bSpline to file.
+		
+		Args:
+			f (file): File to write to.
+			
+		Returns:
+			file: File.
+		
+		"""
+		
+		f.write("BSpline("+str(self.Id)+")= {" )
+			
+		for i,v in enumerate(self.vertices):
+			f.write(str(v.Id))
+			if i!=len(self.vertices)-1:
+				f.write(",")
+			else:
+				f.write("};\n")
+	
+		return f
+	
+	def getMiddle(self):
+		
+		r"""Returns midpoint of bSpline.
+		
+		Midpoint in this case is defined as the coordinate of the mid vertex.
+		
+		Returns:
+			numpy.ndarray: Midpoint.
+			
+		"""
+	
+		return self.vertices[int(np.floor(len(self.vertices)/2.))].x
+	
+	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False):
+			
+		"""Draws spline.
+		
+		There are two different backends for drawing, namely 
+			
+			* Matplotlib (``backend='mpl'``)
+			* VTK (``backend='vtk'``)
+		
+		Matplotlib is easier to handle, but slower. VTK is faster for complex
+		geometries.
+		
+		.. note:: If ``backend=mpl``, ``ax`` should be a ``matplotlib.axes``, if ``backend='vtk'``,
+		   ``ax`` should be a ``vtk.vtkRenderer`` object.
+		
+		.. note:: If no axes is given, will create new one,
+		   see also :py:func:`pyfrp.modules.pyfrp_plot_module.makeGeometryPlot` 
+		   or :py:func:`pyfrp.modules.pyfrp_vtk_module.makeVTKCanvas`.
+		
+		.. warning:: Annotations are not properly working with ``backend='vtk'``.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes to be plotted in.
+			color (str): Color of line.
+			ann (bool): Show annotations.
+			render (bool): Render in the end (only in vtk mode).
+		
+		Returns:
+			matplotlib.axes: Updated axes.
+			
+		"""
+		
+		printWarning("Spline drawing currently just draws lines inbetween interpolation points.")
+		
+		if backend=="mpl":
+			ax=self.drawMPL(ax=ax,color=color,ann=ann)
+		if backend=="vtk":
+			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render)
+		
+		return ax
+			
+	def drawMPL(self,ax=None,color=None,ann=None):
+		
+		"""Draws spline into matplotlib axes.
+		
+		.. note:: If ``ann=None``, will set ``ann=False``.
+		
+		.. note:: If no axes is given, will create new one,
+		   see also :py:func:`pyfrp.modules.pyfrp_plot_module.makeGeometryPlot`.
+		
+		Keyword Args:
+			ax (matplotlib.axes): Matplotlib axes to be plotted in.
+			color (str): Color of line.
+			ann (bool): Show annotations.
+				
+		Returns:
+			matplotlib.axes: Axes.
+		
+		"""
+		
+		if ann==None:
+			ann=False
+		
+		if ax==None:
+			fig,axes = pyfrp_plot_module.makeGeometryPlot()
+			ax=axes[0]
+		
+		for i in range(len(self.vertices)-1):
+			ax.plot([self.vertices[i].x[0],self.vertices[i+1].x[0]],[self.vertices[i].x[1],self.vertices[i+1].x[1]],zs=[self.vertices[i].x[2],self.vertices[i+1].x[2]],color=color,linestyle='-')
+		
+		if ann:
+			m=self.getMiddle()
+			ax.text(m[0]+self.domain.annXOffset, m[1]+self.domain.annYOffset, m[2]+self.domain.annZOffset, "l"+str(self.Id), None)
+		
+		pyfrp_plot_module.redraw(ax)
+		
+		return ax
+	
+	def drawVTK(self,ax=None,color=None,ann=None,render=False):
+		
+		"""Draws spline into VTK renderer.
+		
+		.. note:: If ``ann=None``, will set ``ann=False``.
+		
+		.. note:: If no axes is given, will create new ``vtkRenderer``, 
+		   see also :py:func:`pyfrp.modules.pyfrp_vtk_module.makeVTKCanvas`.
+		
+		See also :py:func:`pyfrp.modules.pyfrp_vtk_module.drawVTKLine`.
+		
+		Keyword Args:
+			ax (vtk.vtkRenderer): Renderer to draw in.
+			color (str): Color of line.
+			ann (bool): Show annotations.
+			render (bool): Render in the end.
+				
+		Returns:
+			vtk.vtkRenderer: Updated renderer.
+		
+		"""
+		
+		if ann==None:
+			ann=False
+		
+		if ax==None:
+				
+			ax,renderWindow,renderWindowInteractor=pyfrp_vtk_module.makeVTKCanvas()
+		
+		pyfrp_vtk_module.drawVTKPolyLine(pyfrp_misc_module.objAttrToList(self.vertices,'x'),color=color,renderer=ax)
+		
+		if ann:
+			printWarning("Annotations don't properly work with backend=vtk .")
+			m=self.getMiddle()
+			pyfrp_vtk_module.drawVTKText("p"+str(self.Id),[m[0]+self.domain.annXOffset, m[1]+self.domain.annYOffset, m[2]+self.domain.annZOffset],renderer=ax)
+		
+		if render:
+			ax=pyfrp_vtk_module.renderVTK(ax)
+		
+		return ax
+		
+	def getLastVertex(self,orientation):
+		
+		"""Returns last vertex of arc given a orientation.
+		
+		Orientation can be either forward (1), or reverse (-1).
+		
+		Args:
+			orientation (int): Orientation of arc.
+			
+		Returns:
+			pyfrp.pyfrp_gmsh_geometry.vertex: Vertex.
+		
+		"""
+		
+		if orientation==1:
+			return self.vertices[-1]
+		elif orientation==-1:
+			return self.vertices[0]
+		else:
+			printError("Cannot return last vertex. Orientation " + str(orientation) + " unknown.")
+			return None
+	
+	def getFirstVertex(self,orientation):
+		
+		"""Returns first vertex of arc given a orientation.
+		
+		Orientation can be either forward (1), or reverse (-1).
+		
+		Args:
+			orientation (int): Orientation of arc.
+			
+		Returns:
+			pyfrp.pyfrp_gmsh_geometry.vertex: Vertex.
+		
+		"""
+		
+		if orientation==1:
+			return self.vertices[0]
+		elif orientation==-1:
+			return self.vertices[-1]
+		else:
+			printError("Cannot return first vertex. Orientation " + str(orientation) + " unknown.")
+			return None
+	
+class lineLoop(gmshElement):
 	
 	"""Lineloop class storing information from gmsh .geo.
 
@@ -2657,8 +3277,7 @@ class lineLoop:
 	
 	def __init__(self,domain,edgeIDs,ID):
 		
-		self.domain=domain
-		self.Id=ID
+		gmshElement.__init__(self,domain,ID)
 		
 		self.edges,self.orientations=self.initEdges(edgeIDs)
 		
@@ -2844,9 +3463,6 @@ class lineLoop:
 		
 		return True
 		
-				
-			
-	
 	def checkClosed(self,fix=False,debug=False):
 		
 		"""Checks if lineLoop is closed.
@@ -2960,13 +3576,7 @@ class lineLoop:
 		if not b:
 			printWarning("Cannot fuse lineLoop with ID " + str(self.Id) + " and lineLoop with ID "+ str(loop.Id) +" . Loops do not have common edge.")
 			return False
-		
-		global ax
-		try:
-			ax
-		except NameError:
-			ax=None
-		
+
 		#Sort edges of loop and pop edges that are in common
 		idx=loop.edges.index(commonEdges[0])
 		idxLast=loop.edges.index(commonEdges[-1])+1
@@ -3012,6 +3622,165 @@ class lineLoop:
 		
 		return True
 	
+	def approxBySpline(self,angleThresh=0.1*np.pi,debug=False):
+		
+		"""Approximates parts of line loop by spline.
+		
+		Summarizes all consecutive lines in loop that have a small angle inbetween to 
+		a spline. 
+		
+		.. note:: The choice of ``angleThresh`` is crucial for this function to work. It should be chosen 
+		   on a by-case basis if necessary.
+		
+		Example: 
+		
+		Load test file:
+		
+		>>> d,dd = pyfrp_gmsh_IO_module.readGeoFile("pyfrp/meshfiles/examples/splineTest.geo")
+		
+		Draw:
+		
+		>>> d.setAnnOffset([0.1,0.1,0.00])
+		>>> ax=d.draw(backend='mpl',asSphere=False,ann=True,annElements=[False,True,False])
+		
+		returns the following 
+		
+		.. image:: ../imgs/pyfrp_gmsh_geometry/approxBySpline1.png
+		
+		Approximate by spline and draw again
+		
+		>>> d.lineLoops[0].approxBySpline(angleThresh=0.1*np.pi)
+		>>> ax=d.draw(backend='mpl',asSphere=False,ann=True,annElements=[False,True,False])
+		
+		returns
+		
+		.. image:: ../imgs/pyfrp_gmsh_geometry/approxBySpline2.png
+		
+		And write to file
+		
+		>>> d.writeToFile("pyfrp/meshfiles/examples/approximated.geo")
+		
+		Keyword Args:
+			angleThresh (float): Angular threshold in radians.
+			debug (bool): Print debugging messages.
+			
+		Returns:
+			bool: True if approximated.
+		
+		"""
+		
+		if len(self.edges)<=4:
+			return False
+		
+		nEdges=len(self.edges)
+		
+		# Bookkeeping lists
+		subst=[]
+		edgesSubst=[]
+		vertices=[]
+		appending=False
+		for i in range(len(self.edges)):
+			
+			# Get indices of edges
+			idx1=pyfrp_misc_module.modIdx(i,self.edges)
+			idx2=pyfrp_misc_module.modIdx(i+1,self.edges)
+			
+			# Get edges
+			e1=self.edges[idx1]
+			e2=self.edges[idx2]
+
+			# If either e1 or e2 is not a line, skip right away.
+			if e1.typ>0 or e2.typ>0:
+				continue
+		
+			# Compute angle
+			angle=pyfrp_geometry_module.getAngle(e1.getDirection(self.orientations[idx1]),e2.getDirection(self.orientations[idx2]))
+	
+			# If angle satisfies threshold criteria, append edge
+			if angle<=angleThresh:
+				
+				vertices=vertices+[e1.getFirstVertex(self.orientations[idx1]),e1.getLastVertex(self.orientations[idx1])]	
+				edgesSubst.append(e1)
+				appending=True
+			
+			# If angle is too large or its the end of the loop, close spline
+			if angle>angleThresh or i==len(self.edges)-1:
+				if appending==True:
+					
+					if e1 not in edgesSubst:
+						edgesSubst.append(e1)
+					
+					"""IDEA: Check that includedInLoop gives same return for all edges in edgesSubst. Then finally add 
+					spline.
+					"""
+					noSpline=False
+					for j,e in enumerate(edgesSubst):
+						inLoop,loops=e.includedInLoop()
+							
+						if j>0:
+							if loops.sort()!=oldLoops.sort():
+								noSpline=True
+								print "cannot turn into spline because ", edgesSubst[j-1].Id , " and ",edgesSubst[j].Id 
+							
+						oldLoops=list(loops)
+						
+					if not noSpline:
+						
+						
+						""" Check if e2 is already about to be substituted by a spline. Then we can simply add edges together to one spline.
+						Otherwise, just create new spline.
+						"""
+						if len(subst)>0:
+							if e2 in subst[0][0]:
+								subst[0][0]=edgesSubst+subst[0][0]
+								subst[0][2]=list(set(loops+subst[0][2]))
+								subst[0][1].vertices=vertices+subst[0][1].vertices		
+							else:	
+								spline=self.domain.addBSpline(vertices+[e1.getLastVertex(self.orientations[i])])
+								subst.append([edgesSubst,spline,loops])
+						else:
+							spline=self.domain.addBSpline(vertices+[e1.getLastVertex(self.orientations[i])])
+							subst.append([edgesSubst,spline,loops])
+				
+				# Set back Bookkeeping variables
+				appending=False
+				edgesSubst=[]
+				vertices=[]
+				
+		# Replace edges from loops with spline.
+		for sub in subst:
+			for loop in sub[2]:
+				
+				try:
+					idx1=loop.edges.index(sub[0][0])
+					idx2=loop.edges.index(sub[0][-1])
+				except IndexError:
+					printWarning("approxBySpline: Cannot find index of either first or last edge.")
+				
+				if idx1>idx2:
+					idxInsert=idx2
+				else:
+					idxInsert=idx1
+				
+				for e in sub[0]:
+					try:
+						loop.edges.remove(e)
+					except ValueError:
+						printWarning("approxBySpline: Cannot remove edge "+str(e.Id)+" from loop"+loop.Id +".")
+				
+				loop.edges.insert(idxInsert,sub[1])
+				
+				if debug:
+					print "Substituted edges ", sub[0][0].Id , "-", sub[0][-1].Id, " with spline ", sub[1].Id
+				
+				
+		# Remove edges from domain.
+		for sub in subst:
+			for e in sub[0]:
+				e.delete(debug=debug)
+		
+		return nEdges>len(self.edges)
+			
 	def includedInSurface(self):
 		
 		"""Checks if loop is included in a surface.
@@ -3121,7 +3890,7 @@ class lineLoop:
 		
 		return self.edges
 	
-class ruledSurface:
+class ruledSurface(gmshElement):
 	
 	"""ruledSurface class storing information from gmsh .geo.
 
@@ -3134,10 +3903,7 @@ class ruledSurface:
 	
 	def __init__(self,domain,loopID,ID):
 		
-		self.domain=domain
-		self.Id=ID
-		
-		
+		gmshElement.__init__(self,domain,Id)
 		self.initLineLoop(loopID)
 	
 	def initLineLoop(self,loopID,debug=False,addPoints=False,iterations=2):
@@ -3634,7 +4400,7 @@ class ruledSurface:
 		
 		return self.rotateToNormal(normal)
 	
-class surfaceLoop:
+class surfaceLoop(gmshElement):
 	
 	"""surfaceLoop class storing information from gmsh .geo.
 
@@ -3647,8 +4413,7 @@ class surfaceLoop:
 	
 	def __init__(self,domain,surfaceIDs,ID):
 		
-		self.domain=domain
-		self.Id=ID
+		gmshElement.__init__(self,domain,ID)
 		
 		self.surfaces=self.initSurfaces(surfaceIDs)	
 		
@@ -3744,7 +4509,7 @@ class surfaceLoop:
 	
 		return f
 	
-class volume:
+class volume(gmshElement):
 
 	"""Volume class storing information from gmsh .geo.
 
@@ -3757,9 +4522,7 @@ class volume:
 	
 	def __init__(self,domain,surfaceLoopID,ID):
 		
-		self.domain=domain
-		self.Id=ID
-		
+		gmshElement.__init__(self,domain,ID)
 		self.surfaceLoop=self.domain.getSurfaceLoopById(surfaceLoopID)[0]
 	
 	def writeToFile(self,f):
@@ -3778,7 +4541,7 @@ class volume:
 	
 		return f
 				
-class field:
+class field(gmshElement):
 
 	"""Field class storing information from gmsh .geo.
 
@@ -3791,11 +4554,8 @@ class field:
 	
 	def __init__(self,domain,typ,Id):
 		
-		self.domain=domain
-		self.Id=Id
-		
+		gmshElement.__init__(self,domain,Id)
 		self.typ=typ
-	
 	
 	def setAsBkgdField(self):
 		
@@ -4037,8 +4797,7 @@ class attractorField(field):
 				included.append(tField)
 		
 		return included
-		
-		
+				
 class thresholdField(field):		
 	
 	"""Threshold field class storing information from gmsh .geo.

@@ -50,7 +50,13 @@ import pyfrp_misc_module
 
 def getAngle(vec1,vec2):
 	
-	"""Returns angle between two vectors in radians.
+	r"""Returns angle between two vectors in radians.
+	
+	Angle is calculated via
+	
+	.. math:: \phi = \frac{v_1 \dot v_2}{|v_1| |v_2|}
+	
+	.. note:: Checks for numerical errors and corrects them if necessary.
 	
 	Args:
 		vec1 (numpy.ndarray): Vector 1.
@@ -60,11 +66,24 @@ def getAngle(vec1,vec2):
 		float: Angle.
 	
 	"""
+
+	x=np.dot(vec1,vec2)/(np.linalg.norm(vec1)*np.linalg.norm(vec2))
 	
-	a=np.arccos(np.dot(vec1,vec2)/(np.linalg.norm(vec1)*np.linalg.norm(vec2)))
+	if x>1.0:
+		if x>1.+1E-4:
+			printError("getAngle: x out of bounds.")
+		x=1.0
+	
+	if x==1.0:
+		return 0.0
+	if x==-1.0:
+		return np.pi
+	
+	a=np.arccos(x)
 	
 	if a<0:
 		return getAngle(vec2,vec1)
+
 	return a
 
 def flipCoordinate(x,destAxis,origAxis='x',debug=False):
