@@ -65,7 +65,9 @@ if os.environ.get('READTHEDOCS', None) == 'True':
 			#PyQT
 			'PyQt4','PyQt4.QtGui','PyQt4.QtCore',
 			#MeshIO
-			'meshio']
+			'meshio',
+			#VTK
+			'vtk']
 
 	#sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
