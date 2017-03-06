@@ -220,6 +220,7 @@ def normalByCross(vec1,vec2):
 	"""
 	
 	if checkColinear(vec1,vec2):
+		
 		printWarning("Can't compute normal of vectors, they seem to be colinear. Returning zero.")
 		return np.zeros(np.shape(vec1))
 		
@@ -274,6 +275,33 @@ def getRotMatrix(n1,n2):
 	
 	return rmat.T
 
+def decodeEuclideanBase(d):
 	
+	"""Decodes a euclidean base vector given as a literal.
+	
+	Example:
+	
+	>>> decodeEuclideanBase('z')
+	>>> array([ 0.,  0.,  1.])
+	
+	Args:
+		d (str): Direction ("x"/"y"/"z")
+		
+	Returns:
+		numpy.ndarray: Base vector.
+	
+	"""
+	
+	if d=='x':
+		return np.array([1.,0.,0.])
+	elif d=='y':
+		return np.array([0.,1.,0.])
+	elif d=='z':
+		return np.array([0.,0.,1.])
+	else:
+		printError("Unknown direction "+d)
+		raise ValueError
+		
+
 
 	

@@ -515,12 +515,10 @@ def readStlFile(fn,domain=None,volSizePx=20.):
 			v,ind=domain.getVertexByX(x)
 			if v==False:
 				v=domain.addVertex(x,volSize=volSizePx)
-			
 			vertices.append(v)
 			
 			#Create edge if non-existent
-			if i>0:
-				
+			if i>0:	
 				edge,ind=domain.getEdgeByVertices(vertices[i-1],vertices[i])
 				if edge==False:
 					edges.append(domain.addLine(vertices[i-1],vertices[i]))
@@ -534,10 +532,10 @@ def readStlFile(fn,domain=None,volSizePx=20.):
 				else:
 					edges.append(edge)
 			
-			
 		#Add line loop	
 		loop=domain.addLineLoop(edgeIDs=pyfrp_misc_module.objAttrToList(edges,"Id"))
-	
+		loop.fix()
+		
 		#Add surface
 		surface=domain.addRuledSurface(lineLoopID=loop.Id)
 		surface.normal=triang[0]/np.linalg.norm(triang[0])

@@ -905,7 +905,8 @@ class mesh(object):
 		return fnOut
 	
 	def addBoundaryLayerAroundROI(self,roi,fnOut=None,segments=48,simplify=True,iterations=3,triangIterations=2,
-			       fixSurfaces=True,debug=False,volSizePx=None,volSizeLayer=10,thickness=15.,cleanUp=True):
+			       fixSurfaces=True,debug=False,volSizePx=None,volSizeLayer=10,thickness=15.,cleanUp=True,
+			       approxBySpline=True,angleThresh=0.3*np.pi,faces='all',onlyAbs=True):
 		
 		"""Adds boundary layer around ROI to the mesh.
 		
@@ -968,8 +969,14 @@ class mesh(object):
 		#Read in stl file and simplify
 		dROI=pyfrp_gmsh_IO_module.readStlFile(fnStl)
 		if simplify: 
-			dROI.simplifySurfaces(iterations=iterations,triangIterations=triangIterations,fixSurfaces=fixSurfaces,debug=debug,addPoints=bool(triangIterations>0))
-		sfs=dROI.ruledSurfaces
+			dROI.simplifySurfaces(iterations=iterations,triangIterations=triangIterations,fixSurfaces=fixSurfaces,debug=debug,addPoints=bool(triangIterations>0))		
+		sfs=dROI.getRuledSurfacesByNormal(faces,onlyAbs=onlyAbs)
+	
+		#Approximate complicated curves by splines
+		if approxBySpline:
+			for sf in sfs:
+				sf.lineLoop.approxBySpline(angleThresh=angleThresh)	
+		dROI.fixAllLoops()
 		
 		#Read in geometry and merge 
 		dGeo=self.simulation.embryo.geometry.readGeoFile()
@@ -982,6 +989,7 @@ class mesh(object):
 		blf.addFaceListByID(pyfrp_misc_module.objAttrToList(sfs,'Id'))
 		blf.setAsBkgdField()
 		
+		#Set global volSize
 		if volSizePx!=None:
 			dGeo.setGlobalVolSize(volSizePx)
 			self.volSizePx=volSizePx

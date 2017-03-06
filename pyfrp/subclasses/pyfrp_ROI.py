@@ -991,7 +991,7 @@ class ROI(object):
 		self.setSimVec([])
 		return self
 	
-	def plotData(self,ax=None,color=None,linewidth=1,legend=True,linestyle='-',label=None):
+	def plotData(self,ax=None,color=None,linewidth=1,legend=True,linestyle='-',label=None,legLoc=-1):
 		
 		"""Plot data vector of ROI.
 		
@@ -1003,6 +1003,7 @@ class ROI(object):
 			linestyle (str): Linestyle of plot.
 			linewidth (float): Linewidth of plot.
 			legend (bool): Show legend.
+			legLoc (int): Location of legend.
 			
 		Returns:
 			matplotlib.axes: Axes used for plotting.	
@@ -1016,11 +1017,11 @@ class ROI(object):
 			label=self.name + ' simulated'
 		
 		ax = pyfrp_plot_module.plotTS(self.embryo.tvecData,self.dataVec,ax=ax,linewidth=linewidth,color=color,label=self.name + ' data',
-		title="Data",sup=self.name+" data",linestyle=linestyle,legend=legend)
+		title="Data",sup=self.name+" data",linestyle=linestyle,legend=legend,legLoc=legLoc)
 		
 		return ax
 	
-	def plotDataPinned(self,ax=None,color=None,linewidth=1,legend=True,linestyle='-',label=None):
+	def plotDataPinned(self,ax=None,color=None,linewidth=1,legend=True,linestyle='-',label=None,legLoc=-1):
 		
 		"""Plot pinned data vector of ROI.
 		
@@ -1032,6 +1033,7 @@ class ROI(object):
 			linestyle (str): Linestyle of plot.
 			linewidth (float): Linewidth of plot.
 			legend (bool): Show legend.
+			legLoc (int): Location of legend.
 			
 		Returns:
 			matplotlib.axes: Axes used for plotting.	
@@ -1045,11 +1047,11 @@ class ROI(object):
 			label=self.name + ' simulated'
 		
 		ax = pyfrp_plot_module.plotTS(self.embryo.tvecData,self.dataVecPinned,ax=ax,linewidth=linewidth,color=color,label=self.name + ' data',
-		title="Data Pinned",sup=self.name+" data",linestyle=linestyle,legend=legend)
+		title="Data Pinned",sup=self.name+" data",linestyle=linestyle,legend=legend,legLoc=legLoc)
 		
 		return ax
 	
-	def plotSim(self,ax=None,color=None,linewidth=1,legend=True,linestyle='--',label=None):
+	def plotSim(self,ax=None,color=None,linewidth=1,legend=True,linestyle='--',label=None,legLoc=-1):
 		
 		"""Plot simulation vector of ROI.
 		
@@ -1061,6 +1063,7 @@ class ROI(object):
 			linestyle (str): Linestyle of plot.
 			linewidth (float): Linewidth of plot.
 			legend (bool): Show legend.
+			legLoc (int): Location of legend.
 			
 		Returns:
 			matplotlib.axes: Axes used for plotting.	
@@ -1074,11 +1077,11 @@ class ROI(object):
 			label=self.name + ' simulated'
 		
 		ax = pyfrp_plot_module.plotTS(self.embryo.simulation.tvecSim,self.simVec,ax=ax,linewidth=linewidth,color=color,
-		label=label,title="Simulation",sup=self.name+" simulation",linestyle=linestyle,legend=legend)
+		label=label,title="Simulation",sup=self.name+" simulation",linestyle=linestyle,legend=legend,legLoc=legLoc)
 			
 		return ax
 	
-	def plotSimPinned(self,ax=None,color=None,linewidth=1,legend=True,linestyle='--',label=None):
+	def plotSimPinned(self,ax=None,color=None,linewidth=1,legend=True,linestyle='--',label=None,legLoc=-1):
 		
 		"""Plot pinned simulation vector of ROI.
 		
@@ -1090,6 +1093,7 @@ class ROI(object):
 			linestyle (str): Linestyle of plot.
 			linewidth (float): Linewidth of plot.
 			legend (bool): Show legend.
+			legLoc (int): Location of legend.
 			
 		Returns:
 			matplotlib.axes: Axes used for plotting.	
@@ -1103,7 +1107,7 @@ class ROI(object):
 			label=self.name + ' simulated'
 		
 		ax = pyfrp_plot_module.plotTS(self.embryo.simulation.tvecSim,self.simVecPinned,ax=ax,linewidth=linewidth,color=color,
-		label=self.name + ' ' + ' simulated',title="Simulation Pinned",sup=self.name+" simulation",linestyle=linestyle,legend=legend)
+		label=self.name + ' ' + ' simulated',title="Simulation Pinned",sup=self.name+" simulation",linestyle=linestyle,legend=legend,legLoc=legLoc)
 			
 		return ax
 
@@ -2121,7 +2125,35 @@ class ROI(object):
 		pyfrp_openscad_module.runOpenscad(fnScad,fnOut=fnStl)
 		
 		return fnStl
+	
+	def addBoundaryLayerAtSurfaces(self,fn=None,segments=48):
 		
+		"""Adds a boundary layer field at the surfaces of intersection between ROI and geometry.
+		
+		Will do this by:
+		
+			* Generating openscad object via :py:func:`genAsOpenscadInGeometry`.
+			* Rendering this to scad file via :py:func:`render2OpenscadInGeometry`.
+			* Calling :py:func:`pyfrp.modules.pyfrp_openscad_module.runOpenscad`.
+		
+		.. note:: If ``fn`` is not given, will save .stl file of ROI in same folder as the geometry file of the embryo with the following path:
+		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.stl``.
+				
+		Keyword Args:
+			fn (str): Output filename.
+			segments (int): Number of segments used for convex hull of surface.
+		
+		Returns:
+			str: Output filename.
+		
+		"""
+		
+		fnStl=self.render2StlInGeometry(fn=fn,segments=segments)
+		
+		
+		
+		
+	
 class radialROI(ROI):
 	
 	"""Radial ROI class.

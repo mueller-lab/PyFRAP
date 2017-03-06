@@ -31,7 +31,7 @@ Contains functions and classes that are often used by PyFRAP toolbox and simplif
 """
 
 #===========================================================================================================================================================================
-#Improting necessary modules
+#Importing necessary modules
 #===========================================================================================================================================================================
 
 #numpy
@@ -620,10 +620,10 @@ def redraw(ax):
 	
 	return ax
 
-def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,legend=True,linestyle='-',show=True):
+def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,legend=True,linestyle='-',show=True,alpha=1.,legLoc=-1):
 	
 	"""Plot timeseries all-in-one function.
-	
+		
 	Args:
 		xvec (numpy.ndarray): x-data to be plotted.
 		yvec (numpy.ndarray): y-data to be plotted.
@@ -638,6 +638,8 @@ def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,leg
 		title (str): Axes title.
 		label (str): Label for legend.
 		show (bool): Show figure.
+		alpha (float): Transparency of line.
+		legLoc (int): Location of legend.
 	
 	Returns:
 		matplotlib.axes: Axes used for plotting.
@@ -654,12 +656,15 @@ def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,leg
 	else:
 		ax.set_title(title)
 		
-	ax.plot(xvec,yvec,color=color,label=label,linestyle=linestyle)
+	ax.plot(xvec,yvec,color=color,label=label,linestyle=linestyle,alpha=alpha)
 	
 	if legend:
-		ax.get_figure().subplots_adjust(right=0.7)
-		ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-	
+		if legLoc==-1:
+			ax.get_figure().subplots_adjust(right=0.7)
+			ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+		else:
+			ax.legend(loc=legLoc)
+		
 	redraw(ax)
 	
 	return ax
@@ -878,7 +883,7 @@ def getPubParms():
 		
 	return params
 
-def turnAxesForPub(ax,adjustFigSize=True,figWidthPt=180.4,ptPerInches=72.27):
+def turnAxesForPub(ax,adjustFigSize=True,figWidthPt=180.4,figHeightPt=None,ptPerInches=72.27):
 	
 	"""Turns axes nice for publication.
 	
@@ -890,9 +895,9 @@ def turnAxesForPub(ax,adjustFigSize=True,figWidthPt=180.4,ptPerInches=72.27):
 	Keyword Args:
 		adjustFigSize (bool): Adjust the size of the figure.
 		figWidthPt (float): Width of the figure in pt.
+		figHeightPt (float): Height of the figure in pt.
 		ptPerInches (float): Resolution in pt/inches.
-		
-		
+			
 	Returns:
 		matplotlib.axes: Modified matplotlib axes.
 		
@@ -903,7 +908,7 @@ def turnAxesForPub(ax,adjustFigSize=True,figWidthPt=180.4,ptPerInches=72.27):
 	
 	ax=setPubAxis(ax)
 	
-	setPubFigSize(ax.get_figure())
+	setPubFigSize(ax.get_figure(),figWidthPt=figWidthPt,figHeightPt=figHeightPt,ptPerInches=ptPerInches)
 	
 	ax=closerLabels(ax,padx=3,pady=1)
 	
@@ -928,20 +933,30 @@ def setPubAxis(ax):
 	
 	return ax
 		
-def setPubFigSize(fig,figWidthPt=180.4,ptPerInches=72.27):
+def setPubFigSize(fig,figWidthPt=180.4,figHeightPt=None,ptPerInches=72.27):
 	
-	"""Adjusts figure size/aspect into golden ratio.
+	"""Adjusts figure size/aspect.
+	
+	If ``figHeightPt`` is not given, will use golden ratio to
+	compute it.
 	
 	Keyword Args:
 		figWidthPt (float): Width of the figure in pt.
+		figHeightPt (float): Height of the figure in pt.
 		ptPerInches (float): Resolution in pt/inches.
+	
+	Returns:
+		matplotlib.figure: Adjust figure.
 	
 	"""
 	
 	inchesPerPt = 1.0/ptPerInches
 	goldenMean = (np.sqrt(5)-1.0)/2.0         # Aesthetic ratio
 	figWidth = figWidthPt*inchesPerPt  # width in inches
-	figHeight = figWidth*goldenMean      # height in inches
+	if figHeightPt==None:
+		figHeight = figWidth*goldenMean      # height in inches
+	else:
+		figHeight = figHeightPt*inchesPerPt
 	figSize =  [figWidth,figHeight]
 	
 	fig.set_size_inches(figSize[0],figSize[1])

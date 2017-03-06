@@ -743,15 +743,18 @@ class domain:
 		
 		"""
 		
+		LOld=len(self.edges)
 		l=self.insertElement("edges",obj,copy=copy,strict=strict)
+		b=(LOld<len(self.edges))
 		
-		if obj.typ==0:
-			self.lines.append(obj)
-		if obj.typ==1:
-			self.arcs.append(obj)
-		if obj.typ==2:
-			self.bSpline.append(obj)
-			
+		if b:
+			if obj.typ==0:
+				self.lines.append(obj)
+			if obj.typ==1:
+				self.arcs.append(obj)
+			if obj.typ==2:
+				self.bSpline.append(obj)
+				
 		return l
 	
 	def insertLineLoop(self,obj,copy=False,strict=True):
@@ -895,7 +898,7 @@ class domain:
 		if self.checkIdExists(obj.Id,getattr(self,element)):
 			printWarning(obj.getType() + " with Id=" +str(obj.getID()) + " already exits.")
 			if strict:
-				getattr(self,element)
+				return getattr(self,element)
 				
 		if copy:
 			e=obj.getCopy()
@@ -907,6 +910,67 @@ class domain:
 		
 		return getattr(self,element)
 	
+	def getRuledSurfacesByNormal(self,direction,onlyAbs=True):
+		
+		"""Returns all surfaces in domain that have given normal vector.
+		
+		The direction can be given in multiple ways:
+		
+			* A ``numpy.ndarray``: The method will look for all surfaces with same normal vector than array.
+			* A ``str``: The method will first check if ``direction='all'`` is given. If so, return all surfaces.
+			  Otherwise the method will decode the string ("x"/"y","z") using 
+			  :py:func:`pyfrp.modules.pyfrp_geometry_module.decodeEuclideanBase`, then proceed the same way as 
+			  with the ``numpy.ndarray``.
+			* A ``list`` of the previous options: Will find all surface matching each of them.
+			
+		.. note:: If ``onlyAbs=True``, will only look for matches in terms of absolute value. If a list of directions is 
+		   given, then one can also specifiy a list of ``onlyAbs`` values.
+			
+		Args:
+			direction (numpy.ndarray): Direction to be matched.
+			
+		Keyword Args:
+			onlyAbs (bool): Only try to match in terms of absolute value.
+			
+		Returns:
+			list: List of matching surfaces.
+		
+		"""
+		
+		# Check if we need to return all of them
+		if direction=='all':
+			return list(self.ruledSurfaces)
+		
+		# Result list
+		sfs=[]
+		
+		# If list, call recursively
+		if isinstance(direction,list):
+			
+			if not isinstance(onlyAbs,list):
+				onlyAbs=len(direction)*[onlyAbs]
+		
+			for i,d in enumerate(direction):
+				sfs=sfs+self.getRuledSurfacesByNormal(d,onlyAbs=onlyAbs[i])
+			return sfs	
+		
+		# If given as string, decode
+		if isinstance(direction,str):
+			d=pyfrp_geometry_module.decodeEuclideanBase(direction)
+		else:
+			d=direction
+		
+		# Look for matching surfaces
+		for sf in self.ruledSurfaces:
+			if onlyAbs:
+				if pyfrp_misc_module.compareVectors(abs(sf.getNormal().astype('float')),d.astype('float')):
+					sfs.append(sf)
+			else:
+				if pyfrp_misc_module.compareVectors(sf.getNormal().astype('float'),d.astype('float')):	
+					sfs.append(sf)
+					
+		return sfs			
+					
 	def checkIdExists(self,Id,objList):
 		
 		"""Checks if any object in ``objList`` already has ID ``Id``.
@@ -1825,6 +1889,10 @@ class domain:
 		y=len(self.lineLoops)
 		z=len(self.edges)
 		
+		#Compute the normal of all surfaces
+		for surface in self.ruledSurfaces:		
+			surface.getNormal()
+				
 		#Loop through iterations
 		for k in range(iterations):
 				
@@ -1833,6 +1901,7 @@ class domain:
 				
 				#Get all surfaces with same normal vector
 				sameNormal=self.getAllObjectsWithProp("ruledSurfaces","normal",surface.normal)
+				sameNormal=sameNormal+self.getAllObjectsWithProp("ruledSurfaces","normal",-surface.normal)
 				
 				#Loop through all with same normal
 				for j,sN in enumerate(sameNormal):
@@ -1840,11 +1909,12 @@ class domain:
 						continue
 					
 					#Fuse
-					if surface.fuse(sN):
+					if surface.fuse(sN,debug=debug):
 						if debug:
 							print "Successfully fused ", surface.Id, sN.Id
+							
 			#Clean up edges
-			self.cleanUpUnusedEdges()
+			self.cleanUpUnusedEdges(debug=debug)
 			
 		#Print some final statistics
 		if debug:
@@ -1852,27 +1922,35 @@ class domain:
 			print "lineLoops: Before =" , y , " After:" , len(self.lineLoops) 
 			print "Edges: Before =" , z , " After:" , len(self.edges) 
 		
+		#raw_input()
+		
 		#Fix loops and surfaces
-		self.fixAllLoops()
+		self.fixAllLoops(debug=debug)
 		if fixSurfaces:
 			self.fixAllSurfaces(iterations=triangIterations,addPoints=addPoints)
 			
-	def cleanUpUnusedEdges(self):
+	def cleanUpUnusedEdges(self,debug=False):
 		
 		"""Cleans up all unused edges in domain.
 		
 		See also: :py:func:`pyfrp.pyfrp_modules.pyfrp_gmsh_geometry.edge.delete`.
 		
+		Keyword Args:
+			debug (bool): Print debugging output.
+		
 		"""
 		
 		for edge in self.edges:
-			edge.delete()
+			edge.delete(debug=debug)
 	
-	def fixAllLoops(self):
+	def fixAllLoops(self,debug=False):
 		
 		"""Tries to fix all loops in domain.
 		
 		See also: :py:func:`pyfrp.pyfrp_modules.pyfrp_gmsh_geometry.lineLoop.fix`.
+		
+		Keyword Args:
+			debug (bool): Print debugging output.
 		
 		"""
 		
@@ -1893,7 +1971,6 @@ class domain:
 			debug (bool): Print debugging messages.
 				
 		"""
-		
 		
 		for surface in self.ruledSurfaces:
 			surface.initLineLoop(surface.lineLoop.Id,debug=debug,iterations=iterations,addPoints=addPoints)
@@ -1939,8 +2016,74 @@ class domain:
 		self.fields=self.fields+d.fields
 		
 		self.setDomainGlobally()
-
-class gmshElement:
+	
+	def removeDuplicates(self,debug=False):
+		
+		self.removeDuplicateEdgeIDs(debug=debug)
+		self.removeDuplicateVerticesIDs()
+		
+	def removeDuplicateVerticesIDs(self):
+		
+		"""Checks if multiple vertices have the same ID and tries to remove one of them.
+		
+		Checks if vertices with same ID have the same coordinate. If so, remove all but one. Otherwise fixes
+		index.
+		
+		Returns:
+			list: Updated vertices list.
+			
+		"""
+		
+		# Loop through edges
+		for i,v in enumerate(self.vertices):
+			for j in range(i+1,len(self.vertices)):
+				
+				# Check if same ID
+				if self.vertices[j].Id==self.vertices[i].Id:
+					
+					# Check if same start/end vertex
+					if pyfrp_misc_module.compareVectors(self.vertices[j].x,self.vertices[i].x):			
+						self.vertices.remove(self.vertices[j])
+					else:
+						newId=self.getNewId(self.vertices,None)
+						self.vertices[j].setID(newId)
+		
+		return self.vertices
+		
+		
+	def removeDuplicateEdgeIDs(self,debug=False):
+		
+		"""Checks if multiple edges have the same ID and tries to remove one of them.
+		
+		Checkss if edges with same ID have the same start and end vertex. If so, removes it all but one. Otherwise fixes
+		index.
+		
+		Returns:
+			list: Updated edges list.
+			
+		"""
+		
+		edgeIDs=pyfrp_misc_module.objAttrToList(self.edges,'Id')
+		print edgeIDs
+		# Loop through edges
+		for i,e in enumerate(self.edges):
+			for j in range(i+1,len(self.edges)):
+				print i,j,self.edges[i].Id,self.edges[j].Id
+				# Check if same ID
+				if self.edges[j].Id==self.edges[i].Id:
+					
+					print "same id",self.edges[j].Id 
+					
+					# Check if same start/end vertex
+					if (self.edges[j].getFirstVertex()==self.edges[i].getFirstVertex()) and (self.edges[j].getLastVertex()==self.edges[i].getLastVertex()):			
+						self.edges[j].delete(debug=debug)
+					else:
+						newId=self.getNewId(self.edges,None)
+						self.edges[j].setID(newId)
+		
+		return self.edges
+		
+class gmshElement(object):
 	
 	def __init__(self,domain,Id):
 		
@@ -1995,7 +2138,11 @@ class gmshElement:
 		
 		"""
 		
-		return str(type(self))
+		t=str(type(self))
+		t=t.split("'")[1]
+		t=t.replace("pyfrp.modules.pyfrp_gmsh_geometry.","")
+		
+		return t
 		
 	def getDomain(self):
 		
@@ -2385,13 +2532,13 @@ class edge(gmshElement):
 		incl,loops=self.includedInLoop()
 		if incl:
 			if debug:
-				printWarning("Was not able to delete edge with ID " + str(self.Id) +". Still part of " + str(len(loops)) + " loops.")
+				printWarning("Was not able to delete edge with ID " + str(self.Id) +". Still part of loops" + str(pyfrp_misc_module.objAttrToList(loops,'Id')) + " .")
 			return False
 		
 		incl,fields=self.includedInField()
 		if incl:
 			if debug:
-				printWarning("Was not able to delete edge with ID " + str(self.Id) +". Still part of field with ID " + str(len(fields)))
+				printWarning("Was not able to delete edge with ID " + str(self.Id) +". Still part of field with ID " + str(pyfrp_misc_module.objAttrToList(fields,'Id')) )
 			return False
 		
 		try:
@@ -2444,7 +2591,7 @@ class line(edge):
 		
 		return (self.v1.x+self.v2.x)/2.
 	
-	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False):
+	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False,drawVertices=False):
 			
 		"""Draws line.
 		
@@ -2470,7 +2617,8 @@ class line(edge):
 			color (str): Color of line.
 			ann (bool): Show annotations.
 			render (bool): Render in the end (only in vtk mode).
-		
+			drawVertices (bool): Also draw vertices.
+			
 		Returns:
 			matplotlib.axes: Updated axes.
 			
@@ -2481,6 +2629,10 @@ class line(edge):
 		if backend=="vtk":
 			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render)
 		
+		if drawVertices:
+			ax=self.v1.draw(ax=ax,color=color,ann=ann,backend=backend,render=render,asSphere=False)
+			ax=self.v2.draw(ax=ax,color=color,ann=ann,backend=backend,render=render,asSphere=False)
+			
 		return ax
 			
 	def drawMPL(self,ax=None,color=None,ann=None):
@@ -2842,7 +2994,7 @@ class arc(edge):
 		
 		return self.vcenter.x
 	
-	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False):
+	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False,drawVertices=True):
 		
 		"""Draws arc.
 		
@@ -2868,7 +3020,8 @@ class arc(edge):
 			color (str): Color of line.
 			ann (bool): Show annotations.
 			render (bool): Render in the end (only in vtk mode).
-		
+			drawVertices (bool): Also draw vertices.
+			
 		Returns:
 			matplotlib.axes: Updated axes.
 			
@@ -2879,6 +3032,11 @@ class arc(edge):
 		if backend=="vtk":
 			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render)
 		
+		if drawVertices:
+			ax=self.vcenter.draw(ax=ax,color=color,ann=ann,backend=backend,render=render,asSphere=False)
+			ax=self.vstart.draw(ax=ax,color=color,ann=ann,backend=backend,render=render,asSphere=False)
+			ax=self.vend.draw(ax=ax,color=color,ann=ann,backend=backend,render=render,asSphere=False)
+			
 		return ax
 		
 	def drawMPL(self,ax=None,color=None,ann=None,render=False):
@@ -2935,7 +3093,7 @@ class arc(edge):
 			color (str): Color of line.
 			ann (bool): Show annotations.
 			render (bool): Render in the end.
-				
+			
 		Returns:
 			vtk.vtkRenderer: Updated renderer.
 		
@@ -3096,7 +3254,7 @@ class bSpline(edge):
 	
 		return self.vertices[int(np.floor(len(self.vertices)/2.))].x
 	
-	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False):
+	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False,drawVertices=False):
 			
 		"""Draws spline.
 		
@@ -3122,7 +3280,8 @@ class bSpline(edge):
 			color (str): Color of line.
 			ann (bool): Show annotations.
 			render (bool): Render in the end (only in vtk mode).
-		
+			drawVertices (bool): Also draw vertices.
+			
 		Returns:
 			matplotlib.axes: Updated axes.
 			
@@ -3135,6 +3294,10 @@ class bSpline(edge):
 		if backend=="vtk":
 			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render)
 		
+		if drawVertices:
+			for v in self.vertices:
+				ax=v.draw(ax=ax,color=color,ann=ann,backend=backend,render=render,asSphere=False)
+				
 		return ax
 			
 	def drawMPL(self,ax=None,color=None,ann=None):
@@ -3376,7 +3539,7 @@ class lineLoop(gmshElement):
 		
 		return self.orientations
 	
-	def draw(self,ax=None,color='k',ann=None,backend='mpl'):
+	def draw(self,ax=None,color='k',ann=None,backend='mpl',drawVertices=False):
 		
 		"""Draws complete line loop.
 		
@@ -3401,6 +3564,7 @@ class lineLoop(gmshElement):
 			ax (matplotlib.axes): Matplotlib axes to be plotted in.
 			color (str): Color of line loop.
 			ann (bool): Show annotations.
+			drawVertices (bool): Also draw vertices.
 		
 		Returns:
 			matplotlib.axes: Updated axes.
@@ -3408,7 +3572,7 @@ class lineLoop(gmshElement):
 		"""
 		
 		for e in self.edges:
-			ax=e.draw(ax=ax,color=color,ann=ann,backend=backend)
+			ax=e.draw(ax=ax,color=color,ann=ann,backend=backend,drawVertices=drawVertices)
 		
 		return ax
 	
@@ -3573,6 +3737,8 @@ class lineLoop(gmshElement):
 		#Find common edge
 		b,commonEdges=self.hasCommonEdge(loop)
 		
+		#print "commonEdges", pyfrp_misc_module.objAttrToList(commonEdges,'Id')
+		
 		if not b:
 			printWarning("Cannot fuse lineLoop with ID " + str(self.Id) + " and lineLoop with ID "+ str(loop.Id) +" . Loops do not have common edge.")
 			return False
@@ -3581,8 +3747,11 @@ class lineLoop(gmshElement):
 		idx=loop.edges.index(commonEdges[0])
 		idxLast=loop.edges.index(commonEdges[-1])+1
 		
-		edgeTemp1,edges=pyfrp_misc_module.popRange(loop.edges,idx,idxLast)
-		orientTemp1,orientations=pyfrp_misc_module.popRange(loop.orientations,idx,idxLast)
+		edgeTemp1,loop.edges=pyfrp_misc_module.popRange(loop.edges,idx,idxLast)
+		orientTemp1,loop.orientations=pyfrp_misc_module.popRange(loop.orientations,idx,idxLast)
+		
+		#print "popped ",pyfrp_misc_module.objAttrToList(edgeTemp1,'Id')
+		#print "remain ",pyfrp_misc_module.objAttrToList(loop.edges,'Id')
 		
 		edges=list(np.roll(loop.edges,len(loop.edges)-idx))
 		orientations=list(np.roll(loop.orientations,len(loop.edges)-idx))
@@ -3592,6 +3761,9 @@ class lineLoop(gmshElement):
 		idxLast=self.edges.index(commonEdges[-1])+1
 		edgeTemp2,self.edges=pyfrp_misc_module.popRange(self.edges,idx,idxLast)
 		orientTemp2,self.orientations=pyfrp_misc_module.popRange(self.orientations,idx,idxLast)
+		
+		#print "popped 2 ",pyfrp_misc_module.objAttrToList(edgeTemp2,'Id')
+		#print "remain ",pyfrp_misc_module.objAttrToList(self.edges,'Id')
 		
 		#Figure out if edges of other loop are in right order or need to be reversed
 		if orientTemp1[0]==orientTemp2[0]:
@@ -3603,22 +3775,25 @@ class lineLoop(gmshElement):
 				printWarning("Cannot fuse lineLoop with ID " + str(self.Id) + " and lineLoop with ID "+ str(loop.Id) +" . Resulting loop exceeds maxL.")
 			return False
 		
+		#print "inserting ",pyfrp_misc_module.objAttrToList(edges,'Id')
+		
 		#Insert edges of second loop into loop
 		self.edges[idx:idx]=edges
 		self.orientations[idx:idx]=orientations
 		
 		#Check if closed in the end
-		self.checkClosed(fix=True,debug=debug)
+		#self.checkClosed(fix=True,debug=False)
+		self.fix()
 		
 		#Delete second lineLoop
 		if surface!=None:
 			loop.removeFromSurface(surface)
-		b=loop.delete()
+		b=loop.delete(debug=debug)
 		
 		bs=[]
 		#Delete common edge
 		for edge in edgeTemp1:
-			bs.append(edge.delete())
+			bs.append(edge.delete(debug=debug))
 		
 		return True
 	
@@ -4067,10 +4242,18 @@ class ruledSurface(gmshElement):
 				break
 		if idx==None:
 			printError("All points in surface "+str(self.Id) + " seem to be colinear. Will not be able to compute normal.")
+			print self.Id
+			self.draw(ann=True)
+			
+			print pyfrp_misc_module.objAttrToList(self.lineLoop.getVertices(),'Id')
+			
+			raw_input()
+			
 			return np.zeros((3,))
 		
 		#Compute normal
-		coords=[vertices[0].x,vertices[1].x,vertices[i].x]
+		coords=[vertices[0].x,vertices[1].x,vertices[idx].x]
+		
 		self.normal=pyfrp_geometry_module.computeNormal(coords,method=method)
 		
 		return self.normal
@@ -4193,6 +4376,10 @@ class ruledSurface(gmshElement):
 			bool: True if same normal vector.
 			
 		"""
+		
+		# Compute Normals
+		self.getNormal()
+		surface.getNormal()
 		
 		if sameOrientation:
 			if pyfrp_misc_module.compareVectors(self.normal,surface.normal):
