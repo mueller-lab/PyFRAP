@@ -69,7 +69,7 @@ if os.environ.get('READTHEDOCS', None) == 'True':
 			#VTK
 			'vtk',
 			#Solid
-			'solid']
+			'solid','solid.utils']
 
 	#sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
