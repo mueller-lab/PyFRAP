@@ -59,7 +59,7 @@ if os.environ.get('READTHEDOCS', None) == 'True':
 			'matplotlib', 'matplotlib.pyplot','matplotlib.axes','mpl_toolkits','mpl_toolkits.mplot3d','matplotlib.collections',
 			'matplotlib.patches','matplotlib.tri','matplotlib.backends','matplotlib.backends.backend_qt4agg',
 			'matplotlib.bakends.backend_qt4agg.FigureCanvasQTAgg','matplotlib.backends.backend_qt4agg.FigureCanvas',
-			'matplotlib.figure',
+			'matplotlib.figure','mpl_toolkits.mplot3d.art3d',
 			#Skimage 
 			'skimage','skimage.io','skimage.morphology','scipy.signal','skimage.measure','skimage.filters',
 			#PyQT
