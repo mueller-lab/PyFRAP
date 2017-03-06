@@ -3797,7 +3797,7 @@ class lineLoop(gmshElement):
 		
 		return True
 	
-	def approxBySpline(self,angleThresh=0.1*np.pi,debug=False):
+	def approxBySpline(self,angleThresh=0.314,debug=False):
 		
 		"""Approximates parts of line loop by spline.
 		
