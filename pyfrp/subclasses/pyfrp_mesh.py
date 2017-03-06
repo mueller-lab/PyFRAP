@@ -906,7 +906,7 @@ class mesh(object):
 	
 	def addBoundaryLayerAroundROI(self,roi,fnOut=None,segments=48,simplify=True,iterations=3,triangIterations=2,
 			       fixSurfaces=True,debug=False,volSizePx=None,volSizeLayer=10,thickness=15.,cleanUp=True,
-			       approxBySpline=True,angleThresh=0.3*np.pi,faces='all',onlyAbs=True):
+			       approxBySpline=True,angleThresh=0.95,faces='all',onlyAbs=True):
 		
 		"""Adds boundary layer around ROI to the mesh.
 		
