@@ -67,7 +67,9 @@ if os.environ.get('READTHEDOCS', None) == 'True':
 			#MeshIO
 			'meshio',
 			#VTK
-			'vtk']
+			'vtk',
+			#Solid
+			'solid']
 
 	#sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
