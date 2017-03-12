@@ -877,6 +877,10 @@ class domain:
 			* surfaceLoops
 			* volumes
 			* fields
+			* auto
+			
+		.. note:: ``element='auto'`` will automatically detect the type of element and insert it at the right 
+		   point.
 		
 		Will automatically set ``self`` as element's domain.
 		
@@ -894,6 +898,15 @@ class domain:
 			list: Updated respective element list.
 			
 		"""
+		
+		if element=='auto':
+			element = obj.getTypeListName()
+			if element in ['edges','bSplines','arcs','lines']:
+				return self.insertEdge(obj,strict=strict,copy=copy)
+			if element=='vertices':
+				return self.insertVertex(obj,strict=strict,copy=copy)
+			
+		print element,obj
 		
 		if self.checkIdExists(obj.Id,getattr(self,element)):
 			printWarning(obj.getType() + " with Id=" +str(obj.getID()) + " already exits.")
@@ -2082,7 +2095,8 @@ class domain:
 						self.edges[j].setID(newId)
 		
 		return self.edges
-		
+	
+
 class gmshElement(object):
 	
 	def __init__(self,domain,Id):
@@ -2143,7 +2157,46 @@ class gmshElement(object):
 		t=t.replace("pyfrp.modules.pyfrp_gmsh_geometry.","")
 		
 		return t
+	
+	def getTypeListName(self):
 		
+		"""Returns the element lists name.
+		
+		Returns:
+			str: Name of element list.
+		
+		"""
+		
+		if self.getType()=="vertex":
+			return "vertices"
+		if self.getType()=="line":
+			return "lines"
+		if self.getType()=="arc":
+			return "arcs"
+		if self.getType()=="edge":
+			return "edges"
+		if self.getType()=="lineLoop":
+			return "lineLoops"
+		if self.getType()=="ruledSurface":
+			return "ruledSurfaces"
+		if self.getType()=="surfaceLoop":
+			return "surfaceLoops"
+		if self.getType()=="volume":
+			return "volumes"
+		if self.getType()=="field":
+			return "fields"
+		
+	def getTypeList(self):
+		
+		"""Returns the element list of domain for this element.
+		
+		Returns:
+			list: Element list.
+		"""
+		
+		return self.getDomain().getattr(self.getTypeListName)
+		
+	
 	def getDomain(self):
 		
 		"""Returns element's domain.
@@ -2170,6 +2223,61 @@ class gmshElement(object):
 		self.domain=d
 		
 		return self.domain
+	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return []
+	
+	def getAllSubElements(self,elements=[]):
+		
+		"""Finds all elements that are necessary to define this element recursively.
+		
+		Returns:
+			list: List of elements.
+		
+		"""
+		
+		elements=list(elements)
+		
+		if len(self.getSubElements())==0:
+			return elements
+		else:	
+			
+			for el in self.getSubElements():
+				elements.append(el)
+				elements=el.getAllSubElements(elements=elements)
+				
+			return elements	
+		
+	def extract(self,d=None,strict=True,copy=False):
+		
+		"""Extracts element and all elements necessary to define it.
+		
+		.. note:: If ``d`` is specified, then all extracted elements are inserted into ``d`` using
+		   :py:func:`insertElement`.
+		
+		Keyword Args:
+			d (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain to insert element
+			copy (bool): Inserts copy of object.
+			strict (bool): Don't allow IDs to be assigned to multiple elements.
+			
+		Returns:
+			list: List of elements.
+		"""
+		
+		elmts=[self]+self.getAllSubElements()
+		
+		if d!=None:
+			for el in elmts:
+				d.insertElement('auto',el,strict=strict,copy=copy)
+		
+		return elmts
 		
 class vertex(gmshElement):
 	
@@ -2556,7 +2664,7 @@ class edge(gmshElement):
 			return False
 		
 		return True
-		
+	
 class line(edge):
 	
 		
@@ -2784,7 +2892,17 @@ class line(edge):
 		"""
 			
 		return self.getLastVertex(orientation).x-self.getFirstVertex(orientation).x
-			
+	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return [self.getFirstVertex(1),self.getLastVertex(1)]
+	
 class arc(edge):
 	
 	"""Arc class storing information from gmsh .geo cicle.
@@ -3176,7 +3294,17 @@ class arc(edge):
 		f.write("Circle("+str(self.Id)+")= {" + str(self.vstart.Id) + ","+ str(self.vcenter.Id)+ "," + str(self.vend.Id) + "};\n" )
 		
 		return f
-
+	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return [self.vcenter,self.vstart,self.vend]
+	
 class bSpline(edge):
 	
 	"""Bspline class storing information from gmsh .geo BSpline.
@@ -3421,6 +3549,16 @@ class bSpline(edge):
 		else:
 			printError("Cannot return first vertex. Orientation " + str(orientation) + " unknown.")
 			return None
+	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return self.vertices
 	
 class lineLoop(gmshElement):
 	
@@ -4065,6 +4203,16 @@ class lineLoop(gmshElement):
 		
 		return self.edges
 	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return self.getEdges()
+	
 class ruledSurface(gmshElement):
 	
 	"""ruledSurface class storing information from gmsh .geo.
@@ -4587,6 +4735,16 @@ class ruledSurface(gmshElement):
 		
 		return self.rotateToNormal(normal)
 	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return [self.lineLoop]
+	
 class surfaceLoop(gmshElement):
 	
 	"""surfaceLoop class storing information from gmsh .geo.
@@ -4696,6 +4854,16 @@ class surfaceLoop(gmshElement):
 	
 		return f
 	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return self.surfaces
+	
 class volume(gmshElement):
 
 	"""Volume class storing information from gmsh .geo.
@@ -4727,7 +4895,17 @@ class volume(gmshElement):
 		f.write("Volume("+str(self.Id)+")= {"+str(self.surfaceLoop.Id)+ "};\n" )
 	
 		return f
-				
+	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return [self.surfaceLoop]
+	
 class field(gmshElement):
 
 	"""Field class storing information from gmsh .geo.
@@ -4782,9 +4960,17 @@ class field(gmshElement):
 		
 		for key, value in kwargs.iteritems():
 			self.setFieldAttributes(key,value)
-			
-			
-			
+	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return []
+	
 class boxField(field):
 	
 	"""Box field class storing information from gmsh .geo.
@@ -4866,6 +5052,17 @@ class boxField(field):
 			f=pyfrp_gmsh_IO_module.writeBackgroundField(f,self.Id)
 			
 		return f	
+	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return []
+	
 	
 class attractorField(field):
 	
@@ -4984,7 +5181,17 @@ class attractorField(field):
 				included.append(tField)
 		
 		return included
-				
+	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return self.NodesList	
+	
 class thresholdField(field):		
 	
 	"""Threshold field class storing information from gmsh .geo.
@@ -5036,7 +5243,17 @@ class thresholdField(field):
 			f=pyfrp_gmsh_IO_module.writeBackgroundField(f,self.Id)
 			
 		return f	
+	
+	def getSubElements(self):
 		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return [self.getDomain().getVertexById(self.IField)]
+	
 class minField(field):
 	
 	"""Minimum field class storing information from gmsh .geo.
@@ -5142,6 +5359,15 @@ class minField(field):
 				
 		return self.FieldsList
 	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return self.FieldsList
 		
 class boundaryLayerField(field):
 	
@@ -5368,4 +5594,13 @@ class boundaryLayerField(field):
 			
 		return f	
 	
+	def getSubElements(self):
+		
+		"""Returns all elements that define this element.
+		
+		Returns:
+			list: List of elements.
+		"""
+		
+		return [self.FacesList,self.EdgesList,self.NodesList]
 	

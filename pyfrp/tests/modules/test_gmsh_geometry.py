@@ -41,3 +41,19 @@ def test_domainSimplifySurfaces():
 	sameNormal=d.getAllObjectsWithProp("ruledSurfaces","normal",np.array([0,-1.,0]))
 	
 	assert len(sameNormal) == 1
+	
+def test_getAllSubElements():	
+	
+	"""Test gmshElement's getAllSubElements.
+	
+	Creates cuboid domain and checks that sub-elements of first surface
+	have the right number.
+	"""
+	
+	# Create domain
+	d=pyfrp_gmsh_geometry.domain()
+
+	# Add Cuboid
+	d.addCuboidByParameters([0,0,0],100,150,50,30.,plane="z",genLoops=True,genSurfaces=True,genVol=True)
+
+	assert len(d.ruledSurfaces[0].getAllSubElements())==13

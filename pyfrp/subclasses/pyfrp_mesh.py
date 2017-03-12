@@ -38,6 +38,7 @@ from pyfrp.modules import pyfrp_gmsh_IO_module
 from pyfrp.modules import pyfrp_integration_module
 from pyfrp.modules import pyfrp_plot_module
 from pyfrp.modules import pyfrp_misc_module
+from pyfrp.modules import pyfrp_gmsh_geometry
 from pyfrp.modules.pyfrp_term_module import *
 
 #FiPy
@@ -966,28 +967,58 @@ class mesh(object):
 		#Build stl file for ROI
 		fnStl=roi.render2StlInGeometry(segments=segments,fn=fnOut.replace(".geo",".stl"))
 		
+		print "before readstl"
 		#Read in stl file and simplify
 		dROI=pyfrp_gmsh_IO_module.readStlFile(fnStl)
+		print "after readstl"
 		if simplify: 
 			dROI.simplifySurfaces(iterations=iterations,triangIterations=triangIterations,fixSurfaces=fixSurfaces,debug=debug,addPoints=bool(triangIterations>0))		
-		sfs=dROI.getRuledSurfacesByNormal(faces,onlyAbs=onlyAbs)
-	
+		
+		# If we extract faces, we have to put them in new ROI
+		if faces!='all' and len(faces)>0:
+			
+			# Grab surfaces
+			sfs=dROI.getRuledSurfacesByNormal(faces,onlyAbs=onlyAbs)
+			
+			# Insert in new domain
+			d2=pyfrp_gmsh_geometry.domain()
+			for sf in sfs:
+				sf.extract(d=d2)
+			
+			# Overwrite sfs and dROI
+			sfs=d2.ruledSurfaces
+			dROI=d2
+			
+		print "after getRuledSurfacesByNormal"
+		
 		#Approximate complicated curves by splines
 		if approxBySpline:
 			for sf in sfs:
 				sf.lineLoop.approxBySpline(angleThresh=angleThresh)	
 		dROI.fixAllLoops()
 		
+		dROI.draw(backend='vtk')
+		
+		raw_input()
+		
+		print "before merge"
+		
 		#Read in geometry and merge 
 		dGeo=self.simulation.embryo.geometry.readGeoFile()
 		dGeo.merge(dROI)
 		
+		print "after merge"
+		
 		#Create boundary layer
 		blf=dGeo.addBoundaryLayerField(hfar=volSizeLayer,hwall_n=volSizeLayer,hwall_t=volSizeLayer,thickness=thickness,Quads=0.)
+		
+		print "after BLF"
 		
 		#Add surfaces to boundary layer mesh
 		blf.addFaceListByID(pyfrp_misc_module.objAttrToList(sfs,'Id'))
 		blf.setAsBkgdField()
+		
+		print "after setAsBkgdField"
 		
 		#Set global volSize
 		if volSizePx!=None:

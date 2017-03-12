@@ -1187,7 +1187,7 @@ def getPath(identifier,fnPath=None,defaultOutput=""):
 				break
 		
 	if path==None:
-		printWarning("There is no line starting with ", identifier+"= in ", fnPath, ".")
+		printWarning("There is no line starting with "+ identifier+"= in "+ fnPath+ ".")
 		fnPath=getPathFile()+'.default'
 		path=getPath(identifier,fnPath=fnPath)
 		

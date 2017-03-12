@@ -1,3 +1,4 @@
-gmshBin=gmsh
-fijiBin=Fiji
+gmshBin=/opt/gmsh-2.14.0-Linux/bin/./gmsh
+fijiBin=/opt/Fiji.app/./ImageJ-linux64
 openscadBin=openscad
+

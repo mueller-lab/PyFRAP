@@ -4,7 +4,6 @@ include pyfrp/meshfiles/field/*
 include pyfrp/meshfiles/backup/*
 include pyfrp/meshfiles/tests/*
 include pyfrp/meshfiles/examples/*
-
 include pyfrp/configurations/*
 include pyfrp/configurations/macros/*
 
