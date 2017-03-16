@@ -57,6 +57,8 @@ import shutil
 from tempfile import mkstemp
 import os
 
+from stl import mesh as meshstl
+
                    
 #===========================================================================================================================================================================
 #Module Functions
@@ -493,11 +495,8 @@ def readStlFile(fn,domain=None,volSizePx=20.):
 	
 	"""
 	
-	
-	from stl import mesh
-	
 	#Load file
-	mesh=mesh.Mesh.from_file(fn)
+	mesh=meshstl.Mesh.from_file(fn)
 	
 	#New domain
 	if domain==None:

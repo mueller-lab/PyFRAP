@@ -158,8 +158,6 @@ def analyzeDataset(analysis,signal=None,embCount=None,debug=False,debugAll=False
 		#Process Image
 		img = processImg(img,analysis.process,flatteningMask,bkgdMask,preMask,analysis.dataOffset,debug=debugAll)
 		
-		
-		
 		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		#Compute concentrations
 		#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

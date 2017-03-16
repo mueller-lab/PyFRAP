@@ -1581,7 +1581,7 @@ class ROI(object):
 		zExtend=self.getZExtend()
 		return xExtend,yExtend,zExtend
 		
-	def refineInMeshByField(self,factor=3.,addZ=15.,findIdxs=True,debug=False,run=True):
+	def refineInMeshByField(self,factor=3.,addZ=15.,findIdxs=True,debug=False,run=True,fnOut=None):
 		
 		"""Refines mesh inside ROI by adding box field to mesh file.
 		
@@ -1597,6 +1597,7 @@ class ROI(object):
 			findIdxs (bool): Find mesh indices of ROI after refinement.
 			run (bool): Run Gmsh to generate new mesh after refinement.
 			debug (bool): Print debugging messages.
+			fnOut (str): Path to output geo file.
 			
 		Returns:
 			str: Path to new .geo file.
@@ -1610,7 +1611,7 @@ class ROI(object):
 			print "Adding Box Field for ROI " + self.name
 			print "Mesh Nodes in ROI before: ", len(self.meshIdx)
 			
-		fnOut=self.embryo.simulation.mesh.addBoxField(self.embryo.simulation.mesh.volSizePx/factor,xExtend,yExtend,zExtend,comment=self.name+" field",run=run)
+		fnOut=self.embryo.simulation.mesh.addBoxField(self.embryo.simulation.mesh.volSizePx/factor,xExtend,yExtend,zExtend,comment=self.name+" field",run=run,fnOut=fnOut)
 	
 		if findIdxs:
 			self.computeMeshIdx(self.embryo.simulation.mesh.mesh)
@@ -1620,7 +1621,7 @@ class ROI(object):
 			
 		return fnOut
 	
-	def adaptRefineInMeshByField(self,nNodesReq,factor=3.,addZ=15.,zIncrement=1.,fIncrement=1.,nNodesMax='inf',debug=False,ROIReq=None):
+	def adaptRefineInMeshByField(self,nNodesReq,factor=3.,addZ=15.,zIncrement=1.,fIncrement=1.,nNodesMax='inf',debug=False,ROIReq=None,fnOut=None):
 		
 		"""Refines mesh inside ROI adaptively until a given number of nodes inside ROI 
 		is reached.
@@ -1649,6 +1650,7 @@ class ROI(object):
 			nNodesMax (float): Maximum number of nodes allowed in ROI.
 			debug (bool): Print debugging messages.
 			ROIReq (pyfrp.subclasses.pyfrp_ROI.ROI): The ROI object that is referred to with nNodesReq.
+			fnOut (str): Path to output geo file.
 			
 		Returns:
 			int: Final number of nodes in ROI.
@@ -1677,7 +1679,7 @@ class ROI(object):
 		#As long as requirement isn't met, refine
 		while nNodes<nNodesReq:
 			
-			self.refineInMeshByField(factor=factor,addZ=addZ,findIdxs=True,debug=False,run=True)
+			self.refineInMeshByField(factor=factor,addZ=addZ,findIdxs=True,debug=False,run=True,fnOut=fnOut)
 			
 			#Compute updated idxs
 			nNodesAllNew=self.embryo.simulation.mesh.getNNodes()

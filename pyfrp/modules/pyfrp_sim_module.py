@@ -455,9 +455,6 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False,fixNeg=
 		xInt = np.arange(1, res+1, 1)
 		yInt = np.arange(1, res+1, 1)
 	
-	#Generate interpolation function
-	f=interp.RectBivariateSpline(xInt, yInt, simulation.ICimg, bbox=[None, None, None, None], kx=3, ky=3, s=0)
-	
 	#Getting cell centers
 	x,y,z=simulation.mesh.mesh.getCellCenters()
 	
@@ -487,7 +484,9 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False,fixNeg=
 	else:	
 		concRim=simulation.embryo.analysis.concRim
 	
-
+	#Generate interpolation function
+	f=interp.RectBivariateSpline(xInt, yInt, simulation.ICimg.T, bbox=[None, None, None, None], kx=1, ky=1, s=0)
+	
 	#Set all values of solution variable to concRim
 	phi.setValue(concRim)
 	
@@ -519,7 +518,7 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False,fixNeg=
 		ind=np.asarray(ind)
 		ind=ind[np.where(ins)[0]]
 		ind=list(ind)
-		
+	
 	#Apply interpolation
 	phi.value[ind]=f.ev(x[ind],y[ind])
 	

@@ -982,3 +982,19 @@ def getRandomColor():
 	
 	return np.random.rand(3,1)
 
+def is3DAxes(ax):
+	
+	"""Returns if an axes is a 3D axis.
+	
+	Args:
+		ax (matplotlib.axes): A matplotlib axes.
+		
+	Returns:
+		bool: True if 3d axis.
+	"""
+	
+	if hasattr(ax, 'get_zlim'): 
+		return True
+	else:
+		return False
+

@@ -857,6 +857,65 @@ class mesh(object):
 		
 		return axes
 	
+	def plotCellCenters(self,ax=None,proj=None,color='k',indicateHeight=False,s=5.):
+		
+		"""Plots location of cell centers of mesh.
+		
+		.. note:: If no ``ax`` are given will create new ones.
+		
+		If ``proj=[3d]``, will create 3D scatter plot, otherwise project cell centers in 
+		2D.
+		
+		Example:
+		
+		Create figure
+		
+		>>> fig,axes = pyfrp_plot_module.makeSubplot([2,2],titles=['2D','2D indicate','3D','3D indicate'],proj=[None,None,'3d','3d'])
+
+		Plot in 4 different ways
+		
+		>>> mesh.plotCellCenters(ax=axes[0],s=1.)
+		>>> mesh.plotCellCenters(ax=axes[1],indicateHeight=True,s=5.)
+		>>> mesh.plotCellCenters(ax=axes[2],s=3.)
+		>>> mesh.plotCellCenters(ax=axes[3],indicateHeight=True,s=3.)
+		
+		.. image:: ../imgs/pyfrp_mesh/plotCellCenters.png
+		
+		Keyword Args:
+			ax (matplotlib.axes): Axes to plot in.
+			proj (list): List of projections.
+			color (str): Color of mesh nodes.
+			indicateHeight (bool): Indicate height by color.
+			s (float): Size of marker.
+		
+		Returns:
+			matplotlib.axes: Matplotlib axes.
+		
+		
+		"""
+		
+		if ax==None:
+			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Cell Centers"],proj=proj)
+			ax=axes[0]
+		
+		
+		x,y,z = self.mesh.getCellCenters()
+		if pyfrp_plot_module.is3DAxes(ax):
+			if indicateHeight:
+				#color=cm.jet()
+				ax.scatter(x,y,z,c=z,s=s)
+			else:	
+				ax.scatter(x,y,z,c=color,s=s)
+		else:
+			if indicateHeight:
+				ax.scatter(x,y,c=z,s=s)
+			else:
+				ax.scatter(x,y,c=color,s=s)
+		
+		pyfrp_plot_module.redraw(ax)
+		
+		return ax
+		
 	def printAllAttr(self):
 		
 		"""Prints out all attributes of mesh object.""" 
@@ -864,7 +923,7 @@ class mesh(object):
 		print "Mesh of embryo ", self.simulation.embryo.name, " Details."
 		printAllObjAttr(self)
 	
-	def addBoxField(self,volSizeIn,rangeX,rangeY,rangeZ,newFile=True,fnAppendix="_box",comment="newField",run=False):
+	def addBoxField(self,volSizeIn,rangeX,rangeY,rangeZ,newFile=True,fnAppendix="_box",comment="newField",run=False,fnOut=None):
 		
 		"""Adds box field to mesh.
 		
@@ -872,6 +931,11 @@ class mesh(object):
 		http://gmsh.info/doc/texinfo/gmsh.html#Specifying-mesh-element-sizes .
 		
 		.. note:: Will keep ``volSizePx`` as volSize outside of the box.
+		
+		.. note:: If ``fnOut`` is not specified, will do the following: 
+		   
+		   - If ``newFile=True``, will create new file with path ``fnGeo+/field/custom/fnGeo+fnAppendix.geo``
+		   - Else writes into ``fnGeo``.
 		
 		Args:
 			volSizeIn (float): volSize in px inside the box.
@@ -882,20 +946,24 @@ class mesh(object):
 			fnAppendix (str): Append this to new file name.
 			comment (str): Comment in .geo file before definition of box field.
 			run (bool): Run Gmsh on new .geo file afterwards.
+			fnOut (str): Path to output geo file.
 			
 		Returns:
 			str: Path to new .geo file.
 			
 		"""
 		
-		if newFile:
-			if "_box" not in self.simulation.embryo.geometry.fnGeo:	
-				fnOut=os.path.dirname(self.simulation.embryo.geometry.fnGeo)+"/field/custom/"+os.path.basename(self.simulation.embryo.geometry.fnGeo).replace(".geo",fnAppendix+"_"+self.simulation.embryo.geometry.embryo.name+".geo")
+		if fnOut==None:
+			if newFile:
+				if "_box" not in self.simulation.embryo.geometry.fnGeo:	
+					pyfrp_misc_module.mkdir(self.simulation.embryo.geometry.fnGeo+"/field/")
+					pyfrp_misc_module.mkdir(self.simulation.embryo.geometry.fnGeo+"/field/custom/")
+					fnOut=os.path.dirname(self.simulation.embryo.geometry.fnGeo)+"/field/custom/"+os.path.basename(self.simulation.embryo.geometry.fnGeo).replace(".geo",fnAppendix+"_"+self.simulation.embryo.geometry.embryo.name+".geo")
+				else:
+					fnOut=fnOut=self.simulation.embryo.geometry.fnGeo
 			else:
-				fnOut=fnOut=self.simulation.embryo.geometry.fnGeo
-		else:
-			fnOut=self.simulation.embryo.geometry.fnGeo
-		
+				fnOut=self.simulation.embryo.geometry.fnGeo
+			
 		pyfrp_gmsh_IO_module.addBoxField(self.simulation.embryo.geometry.fnGeo,volSizeIn,self.volSizePx,rangeX,rangeY,rangeZ,comment=comment,fnOut=fnOut)
 		self.simulation.embryo.geometry.setFnGeo(fnOut)
 		
@@ -967,10 +1035,8 @@ class mesh(object):
 		#Build stl file for ROI
 		fnStl=roi.render2StlInGeometry(segments=segments,fn=fnOut.replace(".geo",".stl"))
 		
-		print "before readstl"
 		#Read in stl file and simplify
 		dROI=pyfrp_gmsh_IO_module.readStlFile(fnStl)
-		print "after readstl"
 		if simplify: 
 			dROI.simplifySurfaces(iterations=iterations,triangIterations=triangIterations,fixSurfaces=fixSurfaces,debug=debug,addPoints=bool(triangIterations>0))		
 		
@@ -989,7 +1055,6 @@ class mesh(object):
 			sfs=d2.ruledSurfaces
 			dROI=d2
 			
-		print "after getRuledSurfacesByNormal"
 		
 		#Approximate complicated curves by splines
 		if approxBySpline:
@@ -997,28 +1062,16 @@ class mesh(object):
 				sf.lineLoop.approxBySpline(angleThresh=angleThresh)	
 		dROI.fixAllLoops()
 		
-		dROI.draw(backend='vtk')
-		
-		raw_input()
-		
-		print "before merge"
-		
 		#Read in geometry and merge 
 		dGeo=self.simulation.embryo.geometry.readGeoFile()
 		dGeo.merge(dROI)
 		
-		print "after merge"
-		
 		#Create boundary layer
 		blf=dGeo.addBoundaryLayerField(hfar=volSizeLayer,hwall_n=volSizeLayer,hwall_t=volSizeLayer,thickness=thickness,Quads=0.)
-		
-		print "after BLF"
 		
 		#Add surfaces to boundary layer mesh
 		blf.addFaceListByID(pyfrp_misc_module.objAttrToList(sfs,'Id'))
 		blf.setAsBkgdField()
-		
-		print "after setAsBkgdField"
 		
 		#Set global volSize
 		if volSizePx!=None:

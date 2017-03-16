@@ -1629,36 +1629,12 @@ def makeEmbryoFolderStruct(fn):
 
 	"""
 	
-	try:
-		os.mkdir(fn)
-	except OSError:
-		pass
-		
-	try:
-		os.mkdir(fn+"recover")
-	except OSError:
-		pass
-
-	try:
-		os.mkdir(fn+"pre")
-	except OSError:
-		pass
-	
-	try:
-		os.mkdir(fn+"bleach")
-	except OSError:
-		pass
-	
-	try:
-		os.mkdir(fn+"meshfiles")
-	except OSError:
-		pass
-	
-	try:
-		os.mkdir(fn+"lsm")
-	except OSError:
-		pass
-	
+	mkdir(fn)
+	mkdir(fn+"recover")
+	mkdir(fn+"pre")
+	mkdir(fn+"bleach")
+	mkdir(fn+"meshfiles")
+	mkdir(fn+"lsm")
 	
 	return 0
 	
@@ -1737,7 +1713,7 @@ def modIdx(i,l):
 	
 	Args:
 		i (int): Index.
-		l (list): Some list
+		l (list): Some list.
 		
 	Returns:
 		int: New index.
@@ -1745,4 +1721,23 @@ def modIdx(i,l):
 	"""
 	
 	return np.mod(i,len(l))
+
+def mkdir(fn):
+	
+	"""Tries to make folder if not already existent.
+	
+	Args:
+		fn (str): Path of folder to create.
+		
+	Returns:
+		bool: True if success, False otherwise.
+		
+	"""
+	
+	try:
+		os.mkdir(fn)
+		return True
+	except OSError:
+		printWarning("Could not create folder "+fn+" .")
+		return False
 	

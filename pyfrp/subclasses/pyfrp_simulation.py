@@ -283,7 +283,7 @@ class simulation(object):
 			showProgress (bool): Print out progress.
 		
 		Returns:
-			pyfrp.subclasses.pyfrp_simulation.simulation: Updated simulation instance.
+			bool: True if success, False otherwise.
 			
 		
 		"""
@@ -292,7 +292,15 @@ class simulation(object):
 		
 		if not self.embryo.checkROIIdxs()[1]:
 			self.embryo.computeROIIdxs()
-		
+			
+		if self.ICimg==None and self.ICmode in [2,3]:
+			printWarning("run: No ICimg was specified, but it is required for selected ICmode="+str(self.ICmode)+". Will grab first image in "+self.embryo.fnDatafolder)
+			#try:
+			self.setICimgByFn(self.embryo.getDataFolder()+'/'+self.embryo.getFileList()[0])
+			#except:
+				#printWarning("run: Was not able to set new ICimg. Will abort.")
+				#return False
+			
 		pyfrp_sim_module.simulateReactDiff(self,signal=signal,embCount=embCount,showProgress=showProgress,debug=debug)
 		return True
 	
@@ -311,6 +319,22 @@ class simulation(object):
 		
 		self.mesh=m
 		return self.mesh
+	
+	def setICimgByFn(self,fn):
+		
+		"""Sets image for initial condition interpolation given a filepath.
+		
+		Args:
+			fn (str): Path to file.
+			
+		Returns:
+			numpy.ndarray: New ICimg.
+		
+		"""
+		
+		img=pyfrp_img_module.loadImg(pyfrp_misc_module.fixPath(fn),self.embryo.dataEnc)
+		
+		return self.setICimg(img)
 		
 	def setICimg(self,img):
 		

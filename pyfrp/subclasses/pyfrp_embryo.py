@@ -98,7 +98,7 @@ class embryo:
 		#Data Image specifics
 		self.dataEnc='uint16'
 		self.dataFT='tif'
-		self.dataResPx=512.
+		self.dataResPx=512
 		self.dataResMu=322.34
 		
 		#DataSet files
@@ -375,7 +375,7 @@ class embryo:
 		
 		"""Sets resolution of data in px. """
 		
-		self.dataResPx=res 
+		self.dataResPx=int(res) 
 		self.computeConvFact()
 		return self.dataResPx
 	
@@ -1119,10 +1119,10 @@ class embryo:
 			allsqu.setName("All "+bleachedROI.getName())
 			allsqu.setZExtend(zmin,zmax)
 			allsqu.setId(self.getFreeROIId())
-			allsqu.setColor((0.1,0.,0.5))
+			allsqu.setColor((1.,140/255.,0.))
 			self.ROIs.append(allsqu)
 		else:	
-			allsqu=self.newSquareROI('All Square',self.getFreeROIId(),self.offsetBleachedPx,self.sideLengthBleachedPx,color=(0.1,0.,0.5))
+			allsqu=self.newSquareROI('All Square',self.getFreeROIId(),self.offsetBleachedPx,self.sideLengthBleachedPx,color=(1.,140/255.,0.))
 		
 		#Create All Out
 		allout=self.newCustomROI("All Out",self.getFreeROIId(),color=(0.3,0.4,0.5))
@@ -1603,7 +1603,9 @@ class embryo:
 		
 		if withImg:
 			ax=self.showDataImg(ax=ax,idx=idx)
-				
+		
+		pyfrp_plot_module.redraw(ax)
+		
 		return ax
 	
 	def loadDataImg(self,idx):
@@ -1669,7 +1671,7 @@ class embryo:
 			print r.name
 			currAxes=[axes[0+i],axes[len(self.ROIs)+i],axes[2*len(self.ROIs)+i]]
 			r.showIdxs(axes=currAxes)
-			
+		
 		return axes
 			
 	

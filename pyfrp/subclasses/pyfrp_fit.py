@@ -581,6 +581,7 @@ class fit:
 		printObjAttr('success',self)
 		printObjAttr('Rsq',self)
 		printObjAttr('MeanRsq',self)
+		printObjAttr('RsqByROI',self)
 		
 		return True
 	
