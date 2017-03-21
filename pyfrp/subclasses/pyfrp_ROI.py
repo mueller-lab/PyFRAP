@@ -2130,30 +2130,73 @@ class ROI(object):
 	
 	def addBoundaryLayerAtSurfaces(self,fn=None,segments=48):
 		
-		"""Adds a boundary layer field at the surfaces of intersection between ROI and geometry.
+		"""Adds boundary layer around ROI to the mesh.
 		
-		Will do this by:
+		Does this by:
 		
-			* Generating openscad object via :py:func:`genAsOpenscadInGeometry`.
-			* Rendering this to scad file via :py:func:`render2OpenscadInGeometry`.
-			* Calling :py:func:`pyfrp.modules.pyfrp_openscad_module.runOpenscad`.
+			* Generating a stl file describing ROI, see also :py:func:`pyfrp.subclasses.pyfrp_ROI.ROI.render2StlInGeometry`.
+			* Read in stl file as new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.domain` via
+			  :py:func:`pyfrp.modules.pyfrp_gmsh_IO_module.readStlFile`.
+			* Simplify new geometry via :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.simplifySurfaces`.
+			* Extracting selected surfaces via :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.gmshElement.extract`.
+			* If selected, surface boundaries are approximated into splines via 
+			  :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.gmshElement.extract`.
+			* Reading in geometry's .geo file via :py:func:`pyfrp.sublcasses.pyfrp_geometry.geometry.readGeoFile`.
+			* Merging ROI geometry into main geometry via :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.merge`.
+			* Adding a boundary layer mesh via :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addBoundaryLayerField`.
+			* Adding all surfaces of ROI's domain to boundary layer, see 
+			  :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField.addFaceListByID`.
+			* Writing new .geo file.
+			* Setting new .geo file as ``fnGeo``.
+			* Running :py:func:`genMesh`.
+			* Clean up .stl and .scad files that are not needed anymore.
 		
-		.. note:: If ``fn`` is not given, will save .stl file of ROI in same folder as the geometry file of the embryo with the following path:
-		   ``path/to/embryos/geo/file/nameOfEmbryo_nameOfROI.stl``.
-				
+		.. note:: ``volSizeLayer`` only allows a single definition of mesh size in layer. Note that the 
+		   :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField` class allows different mesh sizes
+		   normal and along surfaces. For more information, see its documentation.
+		
+		.. note:: If no ``fnOut`` is given, will save a new .geo file in same folder as original ``fnGeo`` with subfix:
+		   ``fnGeo_roiName_BL.geo``.
+		
+		.. note:: :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.simplifySurfaces` is not a simple procedure, 
+		   we recommend reading its documentation.
+		
+		If ``volSizePx`` is given, will overwrite mesh's ``volSizePx`` and set it globally at all nodes.
+		
+		Args:
+			roi (pyfrp.subclasses.pyfrp_ROI.ROI): An ROI.
+		
 		Keyword Args:
-			fn (str): Output filename.
+			fnOut (str): Path to new .geo file.
 			segments (int): Number of segments used for convex hull of surface.
+			simplify (bool): Simplify surfaces of stl file.
+			iterations (int): Number of iterations used for simplification.
+			triangIterations (int): Number of iterations used for subdivision of surfaces.
+			addPoints (bool): Allow adding points inside surface triangles.
+			fixSurfaces (bool): Allow fixing of surfaces, making sure they are coherent with Gmsh requirements.
+			debug (bool): Print debugging messages.
+			volSizePx (float): Global mesh density.
+			volSizeLayer (float): Boundary layer mesh size.
+			thickness (float): Thickness of boundary layer.
+			cleanUp (bool): Clean up temporary files when finished.
+			approxBySpline (bool): Approximate curvatures by spline.
+			angleThresh (float): Threshold angle under which loops are summarized.
+			faces (list): List of faces.
+			onlyAbs (bool): Take absolute value of faces into account.
 		
 		Returns:
-			str: Output filename.
+			str: Path to new .geo file.
 		
 		"""
 		
-		fnStl=self.render2StlInGeometry(fn=fn,segments=segments)
+		if hasattr(self.embryo,'simulation'):
+			printError("addBoundaryLayerAtSurfaces: Embryo does not have simulation yet.")
+			return ""
 		
-		
-		
+		return self.embryo.simulation.mesh.addBoundaryLayerAroundROI(self,fnOut=fnOut,segments=segments,simplify=simplify,iterations=iterations,triangIterations=triangIterations,
+							fixSurfaces=fixSurfaces,debug=debug,volSizePx=volSizePx,volSizeLayer=volSizeLayer,thickness=thickness,cleanUp=cleanUp,
+							approxBySpline=approxBySpline,angleThresh=angleThresh,faces=faces,onlyAbs=onlyAbs)	
+			
 		
 	
 class radialROI(ROI):

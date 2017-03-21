@@ -220,7 +220,7 @@ class domain:
 		
 		return e
 	
-	def addCircleByParameters(self,center,radius,z,volSize,plane="z"):
+	def addCircleByParameters(self,center,radius,z,volSize,plane="z",genLoop=False,genSurface=False):
 		
 		"""Adds circle to domain by given center and radius.
 		
@@ -252,12 +252,17 @@ class domain:
 		
 		Keyword Args:
 			plane (str): Plane in which circle is placed.
+			genLoop (bool): Create lineLoop.
+			genSurface (bool): Create ruledSurface.
 			
 		Returns:
 			tuple: Tuple containing:
 			
 				* vertices (list): List of vertices.
 				* arcs (list): List of arcs.
+				* loop (pyfrp.modules.pyfrp_gmsh_geometry.lineLoop): Line loop.
+				* surface (pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface): Ruled Surface.
+				
 		
 		"""
 		
@@ -281,7 +286,17 @@ class domain:
 		a3=self.addArc(v3,vcenter,v4)
 		a4=self.addArc(v4,vcenter,v1)
 		
-		return [vcenter,v1,v2,v3,v4],[a1,a2,a3,a4]
+		if genLoop or genSurface:
+			loop=self.addLineLoop(edgeIDs=[a1.Id,a2.Id,a3.Id,a4.Id])
+		else:
+			loop=None
+			
+		if genSurface:
+			surface=self.addRuledSurface(lineLoopID=loop.Id)
+		else:
+			surface=None
+		
+		return [vcenter,v1,v2,v3,v4],[a1,a2,a3,a4],loop,surface
 	
 	def addPolygonByParameters(self,coords,volSize,z=0.,plane="z"):
 		
@@ -321,13 +336,17 @@ class domain:
 		Keyword Args:
 			plane (str): Plane in which polygon is placed.
 			z (float): Height at which polygon is placed.
+			genLoop (bool): Create lineLoop.
+			genSurface (bool): Create ruledSurface.
 			
 		Returns:
 			tuple: Tuple containing:
 			
 				* vertices (list): List of vertices.
 				* lines (list): List of connecting lines.
-		
+				* loop (pyfrp.modules.pyfrp_gmsh_geometry.lineLoop): Line loop.
+				* surface (pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface): Ruled Surface.
+				
 		"""
 		
 		# Define coordinates
@@ -343,11 +362,23 @@ class domain:
 		for x in xs:
 			vertices.append(self.addVertex(x,volSize=volSize))
 		
-		# Add Arcs
+		# Add Lines
 		lines=[]
 		for i in range(len(vertices)):
 			lines.append(self.addLine(vertices[i],vertices[pyfrp_misc_module.modIdx(i+1,vertices)]))
-			
+		
+		# Add LineLoop
+		if genLoop or genSurface:
+			loop=self.addLineLoop(edgeIDs=pyfrp_misc_module.objAttrToList(lines,'Id'))
+		else:
+			loop=None
+		
+		# Add surface
+		if genSurface:
+			surface=self.addRuledSurface(lineLoopID=loop.Id)
+		else:
+			surface=None
+		
 		return vertices,lines
 	
 	def addRectangleByParameters(self,offset,sidelengthX,sidelengthY,z,volSize,plane="z"):
@@ -383,13 +414,17 @@ class domain:
 			
 		Keyword Args:
 			plane (str): Plane in which rectangle is placed.
+			genLoop (bool): Create lineLoop.
+			genSurface (bool): Create ruledSurface.
 			
 		Returns:
 			tuple: Tuple containing:
 			
 				* vertices (list): List of vertices.
 				* lines (list): List of connecting lines.
-		
+				* loop (pyfrp.modules.pyfrp_gmsh_geometry.lineLoop): Line loop.
+				* surface (pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface): Ruled Surface.
+				
 		"""
 		
 		coords=[[offset[0],offset[1],z],[offset[0]+sidelengthX,offset[1],z],
@@ -430,13 +465,17 @@ class domain:
 			
 		Keyword Args:
 			plane (str): Plane in which square is placed.
+			genLoop (bool): Create lineLoop.
+			genSurface (bool): Create ruledSurface.
 			
 		Returns:
 			tuple: Tuple containing:
 			
 				* vertices (list): List of vertices.
 				* lines (list): List of connecting lines.
-		
+				* loop (pyfrp.modules.pyfrp_gmsh_geometry.lineLoop): Line loop.
+				* surface (pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface): Ruled Surface.
+				
 		"""
 		
 		return self.addRectangleByParameters(offset,sidelength,sidelength,z,volSize,plane=plane)
@@ -508,15 +547,15 @@ class domain:
 				printError("addPrismByParameters: You gave a list of 3-dimensional vertex coordinates. However,the number of coordinates is odd, will not be able to continue.")
 				return
 				
-			vertices,lines = self.addPolygonByParameters(coords,volSize,z=0.,plane="z")
+			vertices,lines,ltemp,stemp = self.addPolygonByParameters(coords,volSize,z=0.,plane="z")
 			vertices1=vertices[:len(vertices)/2]
 			vertices2=vertices[len(vertices)/2:]
 			lines1=lines[:len(lines)/2]
 			lines2=lines[len(lines)/2:]
 				
 		else:	
-			vertices1,lines1 = self.addPolygonByParameters(coords,volSize,z=z,plane="z")
-			vertices2,lines2 = self.addPolygonByParameters(coords,volSize,z=z+height,plane="z")
+			vertices1,lines1,ltemp,stemp = self.addPolygonByParameters(coords,volSize,z=z,plane="z")
+			vertices2,lines2,ltemp,stemp = self.addPolygonByParameters(coords,volSize,z=z+height,plane="z")
 			
 			
 		# Connect them with lines
@@ -601,8 +640,6 @@ class domain:
 		
 		return self.addPrismByParameters(coords,volSize,height=height,z=offset[2],plane="z",genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol)
 	
-	
-	
 	def addCylinderByParameters(self,center,radius,z,height,volSize,plane="z",genLoops=True,genSurfaces=True,genVol=True):
 		
 		"""Adds cylinder to domain by given center and radius and height.
@@ -664,8 +701,8 @@ class domain:
 			printError("Cannot create surfaces when there are no loops.")
 			
 		# Create circles
-		vertices1,arcs1=self.addCircleByParameters(center,radius,z,volSize,plane=plane)
-		vertices2,arcs2=self.addCircleByParameters(center,radius,z+height,volSize,plane=plane)
+		vertices1,arcs1,ltemp,stemp=self.addCircleByParameters(center,radius,z,volSize,plane=plane)
+		vertices2,arcs2,ltemp,stemp=self.addCircleByParameters(center,radius,z+height,volSize,plane=plane)
 		
 		# Create connecting lines
 		lines=[]
@@ -702,7 +739,7 @@ class domain:
 		
 		return [vertices1,vertices2],[arcs1,arcs2],lines,loops,surfaces,surfaceLoop,vol
 	
-	def insertVertex(self,obj,copy=False,strict=True):
+	def insertVertex(self,obj,copy=False,strict=True,debug=False):
 		
 		"""Inserts vertex into domain.
 		
@@ -714,6 +751,7 @@ class domain:
 		Keyword Args:
 			copy (bool): Inserts copy of object.
 			strict (bool): Don't allow IDs to be assigned to multiple elements.
+			debug (bool): Print debugging output.
 			
 		Returns:
 			list: Updated edges list.
@@ -721,11 +759,12 @@ class domain:
 		"""
 		
 		if self.getVertexByX(obj.x)[0]!=False:
-			printWarning("Vertex with x=" +str(obj.x) + " already exists.")
+			if debug:
+				printWarning("Vertex with x=" +str(obj.x) + " already exists.")
 		
-		return self.insertElement("vertices",obj,copy=copy,strict=strict)
+		return self.insertElement("vertices",obj,copy=copy,strict=strict,debug=debug)
 		
-	def insertEdge(self,obj,copy=False,strict=True):
+	def insertEdge(self,obj,copy=False,strict=True,debug=False):
 		
 		"""Inserts edge into domain.
 		
@@ -737,6 +776,7 @@ class domain:
 		Keyword Args:
 			copy (bool): Inserts copy of object.
 			strict (bool): Don't allow IDs to be assigned to multiple elements.
+			debug (bool): Print debugging output.
 			
 		Returns:
 			list: Updated edges list.
@@ -744,7 +784,7 @@ class domain:
 		"""
 		
 		LOld=len(self.edges)
-		l=self.insertElement("edges",obj,copy=copy,strict=strict)
+		l=self.insertElement("edges",obj,copy=copy,strict=strict,debug=debug)
 		b=(LOld<len(self.edges))
 		
 		if b:
@@ -757,7 +797,7 @@ class domain:
 				
 		return l
 	
-	def insertLineLoop(self,obj,copy=False,strict=True):
+	def insertLineLoop(self,obj,copy=False,strict=True,debug=False):
 		
 		"""Inserts line loop into domain.
 		
@@ -769,15 +809,16 @@ class domain:
 		Keyword Args:
 			copy (bool): Inserts copy of object.
 			strict (bool): Don't allow IDs to be assigned to multiple elements.
-		
+			debug (bool): Print debugging output.
+			
 		Returns:
 			list: Updated lineLoops list.
 		
 		"""
 		
-		return self.insertElement("lineLoops",obj,copy=copy,strict=strict)
+		return self.insertElement("lineLoops",obj,copy=copy,strict=strict,debug=debug)
 	
-	def insertRuledSurface(self,obj,copy=False,strict=True):
+	def insertRuledSurface(self,obj,copy=False,strict=True,debug=False):
 		
 		"""Inserts ruled surface into domain.
 		
@@ -789,15 +830,16 @@ class domain:
 		Keyword Args:
 			copy (bool): Inserts copy of object.
 			strict (bool): Don't allow IDs to be assigned to multiple elements.
-		
+			debug (bool): Print debugging output.
+			
 		Returns:
 			list: Updated ruledSurfaces list.
 		
 		"""
 		
-		return self.insertElement("ruledSurfaces",obj,copy=copy,strict=strict)
+		return self.insertElement("ruledSurfaces",obj,copy=copy,strict=strict,debug=debug)
 	
-	def insertSurfaceLoop(self,obj,copy=False,strict=True):
+	def insertSurfaceLoop(self,obj,copy=False,strict=True,debug=False):
 		
 		"""Inserts surface loop into domain.
 		
@@ -809,15 +851,16 @@ class domain:
 		Keyword Args:
 			copy (bool): Inserts copy of object.
 			strict (bool): Don't allow IDs to be assigned to multiple elements.
-		
+			debug (bool): Print debugging output.
+			
 		Returns:
 			list: Updated surfaceLoops list.
 		
 		"""
 		
-		return self.insertElement("ruledSurfaces",obj,copy=copy,strict=strict)
+		return self.insertElement("ruledSurfaces",obj,copy=copy,strict=strict,debug=debug)
 	
-	def insertVolume(self,obj,copy=False,strict=True):
+	def insertVolume(self,obj,copy=False,strict=True,debug=False):
 		
 		"""Inserts volume into domain.
 		
@@ -829,15 +872,16 @@ class domain:
 		Keyword Args:
 			copy (bool): Inserts copy of object.
 			strict (bool): Don't allow IDs to be assigned to multiple elements.
-		
+			debug (bool): Print debugging output.
+			
 		Returns:
 			list: Updates volumes list.
 		
 		"""
 		
-		return self.insertElement("volumes",obj,copy=copy,strict=strict)
+		return self.insertElement("volumes",obj,copy=copy,strict=strict,debug=debug)
 	
-	def insertField(self,obj,copy=False,strict=True):
+	def insertField(self,obj,copy=False,strict=True,debug=False):
 		
 		"""Inserts field into domain.
 		
@@ -849,15 +893,16 @@ class domain:
 		Keyword Args:
 			copy (bool): Inserts copy of object.
 			strict (bool): Don't allow IDs to be assigned to multiple elements.
-		
+			debug (bool): Print debugging output.
+			
 		Returns:
 			list: Updates fields list.
 		
 		"""
 		
-		return self.insertElement("fields",obj,copy=copy,strict=strict)
+		return self.insertElement("fields",obj,copy=copy,strict=strict,debug=debug)
 	
-	def insertElement(self,element,obj,copy=False,strict=True):
+	def insertElement(self,element,obj,copy=False,strict=True,debug=False):
 		
 		"""Inserts gmshElement into domain.
 		
@@ -893,7 +938,8 @@ class domain:
 		Keyword Args:
 			copy (bool): Inserts copy of object.
 			strict (bool): Don't allow IDs to be assigned to multiple elements.
-		
+			debug (bool): Print debugging output.
+			
 		Returns:
 			list: Updated respective element list.
 			
@@ -902,14 +948,13 @@ class domain:
 		if element=='auto':
 			element = obj.getTypeListName()
 			if element in ['edges','bSplines','arcs','lines']:
-				return self.insertEdge(obj,strict=strict,copy=copy)
+				return self.insertEdge(obj,strict=strict,copy=copy,debug=debug)
 			if element=='vertices':
-				return self.insertVertex(obj,strict=strict,copy=copy)
-			
-		print element,obj
-		
-		if self.checkIdExists(obj.Id,getattr(self,element)):
-			printWarning(obj.getType() + " with Id=" +str(obj.getID()) + " already exits.")
+				return self.insertVertex(obj,strict=strict,copy=copy,debug=debug)
+				
+		if self.checkIdExists(obj.Id,getattr(self,element),debug=debug):
+			if debug:
+				printWarning(obj.getType() + " with Id=" +str(obj.getID()) + " already exits.")
 			if strict:
 				return getattr(self,element)
 				
@@ -984,14 +1029,17 @@ class domain:
 					
 		return sfs			
 					
-	def checkIdExists(self,Id,objList):
+	def checkIdExists(self,Id,objList,debug=False):
 		
 		"""Checks if any object in ``objList`` already has ID ``Id``.
 		
 		Args:
 			Id (int): ID to be checked.
 			objList (list): List of objects, for example ``edges``.
-			
+		
+		Keyword Args:
+			debug (bool): Print debugging output.
+		
 		Returns:
 			bool: True if any object has ID ``Id``.
 		
@@ -999,7 +1047,8 @@ class domain:
 		
 		IdList=pyfrp_misc_module.objAttrToList(objList,'Id')
 		if Id in IdList:
-			printWarning("Object with Id " + str(Id) + " already exists.")
+			if debug:
+				printWarning("Object with Id " + str(Id) + " already exists.")
 			return True
 		return False
 	
@@ -1536,7 +1585,7 @@ class domain:
 			NodesList (list): List of IDs of the Nodes that attractor field centers around.
 				
 		Returns:
-			pyfrp.modules.pyfrp_gmsh_geometry.attractorField: New attractorField instance.
+			pyfrp.modules.pyfrp_gmsh_geometry.minField: New attractorField instance.
 			
 		"""
 			
@@ -1563,7 +1612,7 @@ class domain:
 			List (list): List of field IDs.
 				
 		Returns:
-			pyfrp.modules.pyfrp_gmsh_geometry.attractorField: New boundaryLayerField instance.
+			pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField: New boundaryLayerField instance.
 			
 		"""
 		
@@ -2255,7 +2304,7 @@ class gmshElement(object):
 				
 			return elements	
 		
-	def extract(self,d=None,strict=True,copy=False):
+	def extract(self,d=None,strict=True,copy=False,debug=False):
 		
 		"""Extracts element and all elements necessary to define it.
 		
@@ -2266,6 +2315,7 @@ class gmshElement(object):
 			d (pyfrp.modules.pyfrp_gmsh_geometry.domain): Domain to insert element
 			copy (bool): Inserts copy of object.
 			strict (bool): Don't allow IDs to be assigned to multiple elements.
+			debug (bool): Print debugging output.
 			
 		Returns:
 			list: List of elements.
@@ -2275,7 +2325,7 @@ class gmshElement(object):
 		
 		if d!=None:
 			for el in elmts:
-				d.insertElement('auto',el,strict=strict,copy=copy)
+				d.insertElement('auto',el,strict=strict,copy=copy,debug=debug)
 		
 		return elmts
 		
@@ -2490,7 +2540,9 @@ class vertex(gmshElement):
 		If no field is given, will create new one with given parameters and add it to a minField. If no minField exists,
 		will create a new one too and set it as background field.
 		
-		See also :py:func:`addBoundaryLayerField` :py:func:`addMinField` and :py:func:`genMinBkgd`.
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addBoundaryLayerField`
+		:py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addMinField` and 
+		:py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.genMinBkgd`.
 		
 		Keyword Args:
 			boundField (pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField): Boundary layer field object.
@@ -2562,7 +2614,9 @@ class edge(gmshElement):
 		If no field is given, will create new one with given parameters and add it to a minField. If no minField exists,
 		will create a new one too and set it as background field.
 		
-		See also :py:func:`addBoundaryLayerField` :py:func:`addMinField` and :py:func:`genMinBkgd`.
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addBoundaryLayerField`
+		:py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addMinField` and 
+		:py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.genMinBkgd`.
 		
 		Keyword Args:
 			boundField (pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField): Boundary layer field object.
@@ -4429,7 +4483,9 @@ class ruledSurface(gmshElement):
 		If no field is given, will create new one with given parameters and add it to a minField. If no minField exists,
 		will create a new one too and set it as background field.
 		
-		See also :py:func:`addBoundaryLayerField` :py:func:`addMinField` and :py:func:`genMinBkgd`.
+		See also :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addBoundaryLayerField`
+		:py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addMinField` and 
+		:py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.genMinBkgd`.
 		
 		Keyword Args:
 			boundField (pyfrp.modules.pyfrp_gmsh_geometry.boundaryLayerField): Boundary layer field object.
@@ -4445,7 +4501,7 @@ class ruledSurface(gmshElement):
 			boundField=self.domain.addBoundaryLayerField()
 		
 		#Add Vertex
-		boundField.addSurfaceByID(self.Id)
+		boundField.addFaceByID(self.Id)
 		
 		#Set options
 		boundField.setFieldAttributes(**fieldOpts)
@@ -5335,8 +5391,6 @@ class minField(field):
 		
 		"""
 		
-		print self.FieldsList
-		
 		f=pyfrp_gmsh_IO_module.writeMinField(f,self.Id,pyfrp_misc_module.objAttrToList(self.FieldsList,'Id'))
 		
 		if self.isBkgdField():
@@ -5564,6 +5618,8 @@ class boundaryLayerField(field):
 		for elmnt in ["EdgesList","FacesList","NodesList"]:
 			if len(getattr(self,elmnt))>0:
 				print elmnt
+				print getattr(self,elmnt)
+				
 				elements[elmnt]=pyfrp_misc_module.objAttrToList(getattr(self,elmnt),'Id')
 		
 		return elements
@@ -5604,3 +5660,34 @@ class boundaryLayerField(field):
 		
 		return [self.FacesList,self.EdgesList,self.NodesList]
 	
+	def setFieldAttr(self,name,val):
+		
+		"""Sets field attribute.
+		
+		.. note:: Value can have any data type.
+		
+		Args:
+			name (str): Name of attribute.
+			val (float): Value of attribute.
+			
+			
+		"""
+		
+		
+		self.EdgesList=[]
+		self.FacesList=[]
+		self.FanNodesList=[]
+		self.FansList=[]
+		self.NodesList=[]
+	
+		
+		if name=="NodesList":
+			self.addNodeListByID(val)
+		elif name=="FacesList":
+			self.addFaceListByID(val)
+		elif name=="EdgesList":
+			self.addEdgeListByID(val)			
+		else:
+			setattr(self,name,val)
+	
+		

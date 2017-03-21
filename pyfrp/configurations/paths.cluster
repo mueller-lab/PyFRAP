@@ -1,3 +1,3 @@
-gmshBin=/fml/ag-mueller_share/PyFRAP_and_IdealFRAPData/gmsh/gmsh-2.16.0-Linux/bin/./gmsh
+gmshBin=/fml/ag-mueller_share/PyFRAP_and_IdealFRAPData/gmsh/gmsh-2.14.0-Linux/bin/./gmsh
 fijiBin=/opt/Fiji.app/./ImageJ-linux64
 openscadBin=openscad

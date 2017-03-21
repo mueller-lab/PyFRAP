@@ -1223,12 +1223,9 @@ def triangulatePoly(coords,addPoints=False,iterations=2,debug=False):
 	
 	if debug:
 		print "Found ", len(tri.simplices.copy()), "triangles in initial call."
-	
-	print "iterations in triangulatePoly", iterations
-	
+
 	#Incrementally refine triangulation
 	if addPoints:
-		print "addpoints on"
 		for i in range(iterations):
 			
 			mids=[]
@@ -1264,21 +1261,6 @@ def triangulatePoly(coords,addPoints=False,iterations=2,debug=False):
 		else:
 			triOutIdx.append(i)
 			midsOut.append(mid)
-	
-	
-	#pyfrp_plt.make_subplot([2,2])
-	
-	#ax=fig.add_subplot(221)
-	#ax.triplot(coordsTri[:,0],coordsTri[:,1],tri.simplices.copy()[triInIdx],c='r')
-	#ax=fig.add_subplot(222)
-	#ax.triplot(coordsTri[:,0],coordsTri[:,1],tri.simplices.copy()[triOutIdx],c='b')
-	#ax=fig.add_subplot(223)
-	#ax.triplot(coordsTri[:,0],coordsTri[:,1],tri.simplices.copy()[triOutIdx],c='b')
-	#ax.triplot(coordsTri[:,0],coordsTri[:,1],tri.simplices.copy()[triInIdx],c='r')
-	
-	#plt.draw()
-	#raw_input()
-		
 	
 	if debug:
 		print "Removed ", len(tri.simplices.copy())-len(triFinal), "triangles through COM criteria."	

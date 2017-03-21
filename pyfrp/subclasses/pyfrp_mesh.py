@@ -985,6 +985,9 @@ class mesh(object):
 			* Read in stl file as new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.domain` via
 			  :py:func:`pyfrp.modules.pyfrp_gmsh_IO_module.readStlFile`.
 			* Simplify new geometry via :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.simplifySurfaces`.
+			* Extracting selected surfaces via :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.gmshElement.extract`.
+			* If selected, surface boundaries are approximated into splines via 
+			  :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.gmshElement.extract`.
 			* Reading in geometry's .geo file via :py:func:`pyfrp.sublcasses.pyfrp_geometry.geometry.readGeoFile`.
 			* Merging ROI geometry into main geometry via :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.merge`.
 			* Adding a boundary layer mesh via :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addBoundaryLayerField`.
@@ -1023,7 +1026,11 @@ class mesh(object):
 			volSizeLayer (float): Boundary layer mesh size.
 			thickness (float): Thickness of boundary layer.
 			cleanUp (bool): Clean up temporary files when finished.
-		
+			approxBySpline (bool): Approximate curvatures by spline.
+			angleThresh (float): Threshold angle under which loops are summarized.
+			faces (list): List of faces.
+			onlyAbs (bool): Take absolute value of faces into account.
+			
 		Returns:
 			str: Path to new .geo file.
 		
@@ -1035,10 +1042,21 @@ class mesh(object):
 		#Build stl file for ROI
 		fnStl=roi.render2StlInGeometry(segments=segments,fn=fnOut.replace(".geo",".stl"))
 		
+		#print "after build stl"
+		#raw_input()
+		
 		#Read in stl file and simplify
 		dROI=pyfrp_gmsh_IO_module.readStlFile(fnStl)
+		
+		#print "after read stl"
+		#raw_input()
+		
 		if simplify: 
 			dROI.simplifySurfaces(iterations=iterations,triangIterations=triangIterations,fixSurfaces=fixSurfaces,debug=debug,addPoints=bool(triangIterations>0))		
+		
+		#print "after simplify"
+		#raw_input()
+		
 		
 		# If we extract faces, we have to put them in new ROI
 		if faces!='all' and len(faces)>0:
@@ -1046,10 +1064,16 @@ class mesh(object):
 			# Grab surfaces
 			sfs=dROI.getRuledSurfacesByNormal(faces,onlyAbs=onlyAbs)
 			
+			#dROI.draw(backend='vtk')
+			
 			# Insert in new domain
 			d2=pyfrp_gmsh_geometry.domain()
 			for sf in sfs:
-				sf.extract(d=d2)
+				sf.extract(d=d2,debug=debug)
+			
+			#print "after extract"
+			#raw_input()
+			
 			
 			# Overwrite sfs and dROI
 			sfs=d2.ruledSurfaces
@@ -1061,6 +1085,10 @@ class mesh(object):
 			for sf in sfs:
 				sf.lineLoop.approxBySpline(angleThresh=angleThresh)	
 		dROI.fixAllLoops()
+		
+		#dROI.draw(backend='vtk')
+		#print "bla"
+		#raw_input()
 		
 		#Read in geometry and merge 
 		dGeo=self.simulation.embryo.geometry.readGeoFile()
@@ -1093,7 +1121,12 @@ class mesh(object):
 			os.remove(fnStl.replace(".stl",".scad"))
 		
 		return fnOut
-			
+	
+	#def addBoundaryLayerAtSurfaces(self,sfs,fnOut=None,segments=48,simplify=True,iterations=3,triangIterations=2,
+			       #fixSurfaces=True,debug=False,volSizePx=None,volSizeLayer=10,thickness=15.,cleanUp=True,
+			       #approxBySpline=True,angleThresh=0.95,faces='all',onlyAbs=True):
+	
+	
 	def getMaxNodeDistance(self):
 		
 		"""Returns maximum node distance in x/y/z direction.
