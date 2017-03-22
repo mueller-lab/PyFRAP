@@ -39,8 +39,11 @@ import gc
 import sys
 import os
 import csv
+import shutil
 
 from pyfrp.modules import pyfrp_misc_module
+from pyfrp.modules import pyfrp_gmsh_IO_module
+from pyfrp.modules.pyfrp_term_module import *
 
 #===========================================================================================================================================================================
 #Module Functions
@@ -155,6 +158,9 @@ def copyMeshFiles(fn,fnGeo,fnMsh,debug=False):
 	If ``fn`` does not end on ``meshfiles``, will create a folder ``meshfiles`` 
 	where to dump new files.
 	
+	.. note:: If ``fnGeo`` is a merged file, will try to copy all used .geo and .msh files
+	   and also update the merged file such that it refers to the new mesh files.
+	
 	Args:
 		fn (str): Filepath or parent directory where to put meshfiles.
 		fnGeo (str): Filepath of geo file.
@@ -171,14 +177,15 @@ def copyMeshFiles(fn,fnGeo,fnMsh,debug=False):
 			
 	"""
 	
+	# Check if fn is dir or not, if not, grab parenting directory
 	if not os.path.isdir(fn):
-	
 		fn=os.path.realpath(fn)
 		fn=os.path.dirname(fn)
 	
+	# Create meshfile folder if necessary
 	if 'meshfiles'==os.path.split(fn)[-1]:
 		if debug:
-			print "Folder is already called meshfiles, will it as it is."
+			print "Folder is already called meshfiles, will leave it as it is."
 	else:
 		fn=pyfrp_misc_module.slashToFn(fn)
 		try:
@@ -190,20 +197,42 @@ def copyMeshFiles(fn,fnGeo,fnMsh,debug=False):
 		fn=pyfrp_misc_module.slashToFn(fn+"meshfiles")
 		if debug:
 			print "Created new folder " + fn + " ."
-			
-	if debug:
-		cmdGeo="cp -v " + fnGeo + " " + fn
-		cmdMsh="cp -v " + fnMsh + " " + fn
-	else:
-		cmdGeo="cp " + fnGeo + " " + fn
-		cmdMsh="cp " + fnMsh + " " + fn
+	
+	# Get list of files we want to copy
+	files=[fnGeo,fnMsh]
+	
+	# If it is a merged file, grab all included .msh files
+	isMerge,mergedFiles=pyfrp_gmsh_IO_module.isMergeFile(fnGeo)
+	files=files+mergedFiles
+	
+	# Also try to grab all corresponding .geo files
+	geoFiles=[]
+	for m in mergedFiles:
+		b,geoFile=pyfrp_gmsh_IO_module.getCorrespondingGeoFile(m)
+		if b:
+			geoFiles.append(geoFile)
+	files=files+geoFiles
+	
+	# Finally copy
+	for f in files:
+		try:
+			shutil.copy(f,fn)
+		except:
+			printWarning("copyMeshFiles: Was not able to copy file " + f )
 		
-	os.system(cmdGeo)
-	os.system(cmdMsh)
-	
-	fnGeoNew=fn+os.path.split(fnGeo)[-1]
-	fnMshNew=fn+os.path.split(fnMsh)[-1]
-	
+	# If it is a merged file, we have to update the merged geo file, since the file
+	# location of the merged mesh files changed
+	if isMerge:
+		mergedFilesNew=[]
+		for m in mergedFiles:
+			mergedFilesNew.append(fn+os.path.split(m)[-1])
+		fnGeoNew=fn+os.path.split(fnGeo)[-1]
+		
+		fnGeoNew,fnMshNew=pyfrp_gmsh_IO_module.mergeMeshes(mergedFilesNew,fnGeoNew)
+	else:
+		fnGeoNew=fn+os.path.split(fnGeo)[-1]
+		fnMshNew=fn+os.path.split(fnMsh)[-1]
+		
 	return fnGeoNew,fnMshNew
 	
 def copyAndRenameFile(fn,fnNew,debug=False):

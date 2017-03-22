@@ -270,7 +270,91 @@ class OverrideInstall(install):
 			
 		except ImportError:
 			log.info("Cannot find wget, will not be downloading gmsh. You will need to install it later manually")	
+	
+	#def downloadOpenscad(self):
+		
+		#"""Downloads openscad, moves it to executables directory and cleans up afterwards. 
+		
+		#Note that this will only work if *wget* is installed. 
+		#"""
+			
+		#http://files.openscad.org/OpenSCAD-2015.03-2-x86-64.zip	
+		#http://files.openscad.org/OpenSCAD-2015.03-3.dmg
+		#http://files.openscad.org/openscad-2014.03.x86-64.tar.gz
+		
+		##Flag to see if gmsh DL went through
+		#self.openscadDownloaded=False
+		
+		#self.makeExeFolder()
+		
+		##Get fileList before
+		#filesBefore=os.listdir('.')
+		
+		##Try to import wget
+		#try: 
+			#import wget
+			
+			##Get Architecture
+			#arch=platform.architecture()[0].replace('bit','')
+			
+			#if platform.system() in ["Windows"]:
+				#fnDL,folderFn=self.downloadOpenscadWin(arch,openscadVersion)
 				
+			#elif platform.system() in ["Linux"]:
+				#fnDL,folderFn=self.downloadOpenscadLinux(arch,openscadVersion)
+				
+			#elif platform.system() in ["Darwin"]:
+				#fnDL,folderFn=self.downloadOpenscadOSX(arch,openscadVersion)
+			
+			##Remove files
+			#self.cleanUpExe(fnDL,folderFn,filesBefore,'pyfrp/executables/openscad/')
+			
+			#uid,gid,mode=self.getPermDetails()
+			#if platform.system() not in ["Windows"]:
+				#self.changePermissions(self.openscadPath,uid,gid,mode)
+			
+			#self.addPathToWinPATHs(self.openscadPath)
+			
+			#log.info("Installed openscad to "+ self.openscadPath)
+			
+			##Set Flag=True
+			#self.openscadDownloaded=True
+			
+		#except ImportError:
+			#log.info("Cannot find wget, will not be downloading gmsh. You will need to install it later manually")	
+				
+	
+	#def downloadOpenscadWin(self,arch,gmshVersion):
+		
+		#"""Downloads Gmsh from Gmsh website for Windows
+		
+		#Args:
+			#arch (str): System architecture, e.g. 64/32.
+			#gmshVersion (str): gmshVersion String, e.g. 2.12.0 .
+			
+		#Returns:
+			#tuple: Tuple containing:
+			
+				#* fnDL (str): Donwload filename
+				#* folderFn (str): Filename of extracted download files
+			
+		#"""
+		
+		##Download Gmsh
+		#url='http://gmsh.info/bin/Windows/gmsh-'+gmshVersion+'-Windows'+arch+'.zip'
+		#folderFn, fnDL=self.downloadFileIfNotExist(url)
+		
+		##Decompress
+		#import zipfile 
+		#with zipfile.ZipFile(folderFn) as zf:
+			#zf.extractall()
+			
+		#folderFn='gmsh-'+gmshVersion+'-Windows'	
+		
+		#self.gmshPath='executables/gmsh/bin/gmsh.exe'
+		
+		#return fnDL,folderFn
+	
 	def downloadFileIfNotExist(self,url):
 		
 		"""Downloads URL if file does not already exist.
