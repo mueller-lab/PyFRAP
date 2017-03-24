@@ -415,7 +415,7 @@ def applyRadialICs(phi,simulation,radSteps=15,debug=False):
 	return phi
 		
 
-def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False,fixNeg=True):
+def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False,fixNeg=True,fillICWithConcRim=True):
 	
 	"""Interpolates initial conditions onto mesh.
 	
@@ -469,8 +469,10 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False,fixNeg=
 		#Get indices outside of bleached square but inside masterROI
 		indXSqu,indYSqu=pyfrp_idx_module.getSquareIdxImg(simulation.embryo.offsetBleachedPx,simulation.embryo.sideLengthBleachedPx,simulation.embryo.dataResPx)
 		
-		indX=pyfrp_misc_module.complValsSimple(simulation.embryo.masterROI.imgIdxX,indXSqu)
-		indY=pyfrp_misc_module.complValsSimple(simulation.embryo.masterROI.imgIdxX,indYSqu)
+		masterROI=simulation.embryo.getMasterROI()
+		
+		indX=pyfrp_misc_module.complValsSimple(masterROI.imgIdxX,indXSqu)
+		indY=pyfrp_misc_module.complValsSimple(masterROI.imgIdxX,indYSqu)
 		
 		if 'quad' in simulation.embryo.analysis.process.keys():
 			img=pyfrp_img_module.unflipQuad(np.flipud(simulation.ICimg))
@@ -484,8 +486,15 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False,fixNeg=
 	else:	
 		concRim=simulation.embryo.analysis.concRim
 	
+	if fillICWithConcRim:
+		masterROI=simulation.embryo.getMasterROI()
+		ICimg=concRim*np.ones(simulation.ICimg.shape)
+		ICimg[masterROI.imgIdxX,masterROI.imgIdxY]=simulation.ICimg[masterROI.imgIdxX,masterROI.imgIdxY]	
+	else:	
+		ICimg=simulation.ICimg.copy()
+	
 	#Generate interpolation function
-	f=interp.RectBivariateSpline(xInt, yInt, simulation.ICimg.T, bbox=[None, None, None, None], kx=1, ky=1, s=0)
+	f=interp.RectBivariateSpline(xInt, yInt, ICimg.T, bbox=[None, None, None, None], kx=3, ky=3, s=0)
 	
 	#Set all values of solution variable to concRim
 	phi.setValue(concRim)
@@ -671,8 +680,6 @@ def applyImperfectICs(phi,simulation,center,rJump,sliceHeight,maxVal=1.,maxMinVa
 		
 	#Compute sigmoid function
 	sigm,r = sigmoidBleachingFct(x,y,z,center,rJump,sliceHeight,maxVal=1.,maxMinValPerc=maxMinValPerc,minMinValPerc=minMinValPerc,rate=rate)
-	
-	
 	
 	#Multiplicate solution variable with sigmoid function
 	phi.value = phi.value * sigm

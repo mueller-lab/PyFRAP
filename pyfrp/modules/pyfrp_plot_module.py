@@ -669,9 +669,9 @@ def plotTS(xvec,yvec,label='',title='',sup='',ax=None,color=None,linewidth=1,leg
 	
 	return ax
 
-def plotSolutionVariable(x,y,val,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True,plane='xy',zs=None,zdir=None,title="Solution Variable",sup="",dThresh=None,nPts=1000,mode='normal'):
+def plotSolutionVariable(x,y,val,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True,plane='xy',zs=None,zdir=None,title="Solution Variable",sup="",dThresh=None,nPts=1000,mode='normal',typ='contour'):
 		
-	"""Plots simulation solution variable as 2D contour plot.
+	"""Plots simulation solution variable as 2D contour plot or 3D surface plot.
 	
 	.. note:: If no ``ax`` is given, will create new one.
 	
@@ -682,7 +682,7 @@ def plotSolutionVariable(x,y,val,ax=None,vmin=None,vmax=None,nlevels=25,colorbar
 	Acceptable input variables are ``"xy","xz","yz"``. See also
 	:py:func:`pyfrp.subclasses.pyfrp_ROI.ROI.getMaxExtendPlane`.
 	
-	``mode`` controls which contour function is used:
+	``mode`` controls which contour/surface function is used:
 	
 		* ``normal``: Will create rectangular grid and use ``scipy.interpolate.gridddata`` and interpolate solution onto it,
 		  then plot using ``matplotlib.pyplot.contourf``, see also http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.contourf and
@@ -690,6 +690,12 @@ def plotSolutionVariable(x,y,val,ax=None,vmin=None,vmax=None,nlevels=25,colorbar
 		
 		* ``tri``: Will plot irregular grid using ``matplotlib.pyplot.tricontourf``. See also 
 		  http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.tricontourf .
+	
+	``typ`` controls which plot type is used:
+	
+		* ``contour``: Produces contour plots using either ``matplotlib.pyplot.contourf`` or ``matplotlib.pyplot.tricontourf``.
+		
+		* ``surface``: Produces contour plots using either ``matplotlib.Axed3D.plot_surface`` or ``matplotlib.pyplot.plot_trisurf``.
 	
 	.. warning:: ``matplotlib.pyplot.tricontourf`` has problems when ``val`` only is in a single level of contour plot.
 		To avoid this, we currently add some noise in this case just to make it plottable. This is not the most elegant
@@ -712,16 +718,21 @@ def plotSolutionVariable(x,y,val,ax=None,vmin=None,vmax=None,nlevels=25,colorbar
 		nPts (int): Number of points used for interpolating (only if ``mode=normal``).
 		mode (str): Which contour function to use.
 		title (str): Title of plot.
+		typ (str): Type of plot.
 		
 	Returns:
 		matplotlib.axes: Axes used for plotting.
 	
 	"""
 	
+	#Check of entered plot type makes sense
+	if typ not in ['contour','surface']:
+		printError("Unknown plot type "+ typ)
+		return ax
+	
 	#Make axes if necessary
 	if ax==None:
-		if zs!=None and zdir!=None:
-			print "bla"
+		if (zs!=None and zdir!=None) or typ=='surface':
 			fig,axes = makeSubplot([1,1],titles=[title],sup=sup,proj=['3d'])
 		else:	
 			fig,axes = makeSubplot([1,1],titles=[title],sup=sup)
@@ -759,9 +770,16 @@ def plotSolutionVariable(x,y,val,ax=None,vmin=None,vmax=None,nlevels=25,colorbar
 	
 	#Plot 
 	if mode=='tri':
-		solPlot=ax.tricontourf(x,y,val,vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir,extend='both')
+		if typ=='surface':
+			solPlot=ax.plot_trisurf(x,y,val,cmap='jet',vmin=vmin,vmax=vmax)
+		elif typ=='contour':
+			solPlot=ax.tricontourf(x,y,val,vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir,extend='both')
 	else:
-		solPlot=ax.contourf(grid[0],grid[1],valPlot,vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir)	
+		
+		if typ=='surface':
+			solPlot=ax.plot_surface(grid[0],grid[1],valPlot,cmap='jet',vmin=vmin,vmax=vmax)
+		elif typ=='contour':
+			solPlot=ax.contourf(grid[0],grid[1],valPlot,vmin=vmin,vmax=vmax,levels=levels,offset=zs,zdir=zdir)	
 	
 	#Label
 	if len(plane)!=2:

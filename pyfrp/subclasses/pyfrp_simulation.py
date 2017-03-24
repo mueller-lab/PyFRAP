@@ -363,17 +363,25 @@ class simulation(object):
 		
 		return self.ICimg
 	
-	def showIC(self,ax=None,roi=None,nlevels=25,vmin=None,vmax=None):
+	def showIC(self,ax=None,roi=None,nlevels=25,vmin=None,vmax=None,typ='contour'):
 		
-		"""Plots initial conditions applied to mesh in 2D.
+		"""Plots initial conditions applied to mesh in 2D or 3D.
 		
 		If ``roi`` is given, will only plot initial conditions for nodes inside ROI, else 
 		will plot initial condition for all nodes in mesh.
 		
 		.. note:: Simulation needs to be run first before this plotting function
 		   can be used.
+		   
+		Example:
+		
+		>>> simulation.plotIC(typ='contour')
+		
+		will produce the following:
 		
 		.. image:: ../imgs/pyfrp_simulation/showIC.png
+		
+		See also :py:func:`pyfrp.modules.pyfrp_plot_module.plotSolutionVariable` and :py:func:`pyfrp.subclasses.pyfrp_ROI.plotSolutionVariable`.
 		
 		Keyword Args:
 			roi (pyfrp.subclasses.pyfrp_ROI.ROI): A PyFRAP ROI object.
@@ -381,6 +389,7 @@ class simulation(object):
 			vmax (float): Overall maximum value to be displayed in plot.
 			ax (matplotlib.axes): Axes used for plotting.
 			nlevels (int): Number of contour levels to display.
+			typ (str): Typ of plot.
 		
 		Returns:
 			matplotlib.axes: Axes used for plotting.
@@ -391,7 +400,10 @@ class simulation(object):
 		if self.IC!=None:
 			
 			if ax==None:
-				fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["IC"],sup="",tight=False)
+				if typ=='surface':
+					fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["IC"],proj=['3d'],sup="",tight=False)
+				else:	
+					fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["IC"],sup="",tight=False)
 				ax=axes[0]
 			
 			if roi==None:
@@ -402,16 +414,21 @@ class simulation(object):
 					vmin=min(self.IC)
 				if vmax==None:
 					vmax=max(self.IC)
-			
+				
 				levels=np.linspace(vmin,1.01*vmax,nlevels)
-		
-				ax.tricontourf(x,y,self.IC,vmin=vmin,vmax=vmax,levels=levels)
-				ax.autoscale(enable=True, axis='both', tight=True)
-			
+				
+				if typ=='contour':
+					ax.tricontourf(x,y,self.IC,vmin=vmin,vmax=vmax,levels=levels)
+					ax.autoscale(enable=True, axis='both', tight=True)
+				elif typ=='surface':
+					ax.plot_trisurf(x,y,self.IC,cmap='jet',vmin=vmin,vmax=vmax)
+				else:
+					printError("Unknown plot type "+ typ)
+				
 				ax.get_figure().canvas.draw()
 		
 			else:
-				ax=roi.plotSolutionVariable(self.IC,ax=ax,nlevels=nlevels,vmin=vmin,vmax=vmax)
+				ax=roi.plotSolutionVariable(self.IC,ax=ax,nlevels=nlevels,vmin=vmin,vmax=vmax,typ=typ)
 			
 			return ax
 			
@@ -419,7 +436,7 @@ class simulation(object):
 			printWarning("IC is not generated yet. Run simulation first.")
 			return None	
 		
-	def showICimg(self,ax=None):
+	def showICimg(self,ax=None,typ='contour',colorbar=True):
 		
 		"""Plots image used for initial 2D.
 		
@@ -433,11 +450,18 @@ class simulation(object):
 		
 		"""
 		
+		#Check of entered plot type makes sense
+		if typ not in ['contour','surface']:
+			printError("Unknown plot type "+ typ)
+			return ax
 		
 		if self.ICimg!=None:
 			
 			if ax==None:
-				fig,axes = pyfrp_plot_module.makeSubplot([1,1],sup="",tight=False)
+				if typ=='surface':
+					fig,axes = pyfrp_plot_module.makeSubplot([1,1],proj=['3d'],sup="",tight=False)
+				else:
+					fig,axes = pyfrp_plot_module.makeSubplot([1,1],sup="",tight=False)
 				ax=axes[0]
 				
 			res=self.ICimg.shape[0]
@@ -446,12 +470,14 @@ class simulation(object):
 			else:
 				X,Y=np.meshgrid(np.arange(res),np.arange(res))
 			
-			plt_ICs=ax.contourf(X,Y,self.ICimg)
-			#plt_ICs=ax.imshow()
-			
-			#ax.autoscale(enable=True, axis='both', tight=True)
-			plt.axis('equal')
-			#cb=plt.colorbar(plt_ICs,orientation='horizontal',pad=0.05,shrink=0.9)
+			if typ=='contour':
+				plt_ICs=ax.contourf(X,Y,self.ICimg)
+				plt.axis('equal')
+			elif typ=='surface':
+				plt_ICs=ax.plot_surface(X,Y,self.ICimg,cmap='jet')
+				
+			if colorbar:
+				cb=plt.colorbar(plt_ICs,orientation='horizontal',pad=0.05,shrink=0.9)
 			
 			plt.draw()
 			
@@ -494,7 +520,7 @@ class simulation(object):
 		
 		return xInt, yInt, f
 	
-	def computeInterpolatedSolutionToImg(self,vals,roi=None):
+	def computeInterpolatedSolutionToImg(self,vals,roi=None,method='linear'):
 		
 		"""Interpolates solution back onto 2D image.
 		
@@ -502,9 +528,14 @@ class simulation(object):
 		
 		If ``roi`` is specified, will only interpolate nodes of this ROI. 
 		
+		For more details about interpolation methods, check out 
+		https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.griddata.html .
+		
 		Keyword Args:
 			vals (numpy.ndarray): Solution to be interpolated.
 			roi (pyfrp.subclasses.pyfrp_ROI.ROI): A PyFRAP ROI.
+			method (str): Interpolation method.
+			fillVal (float): Value applied outside of ROI.
 			
 		Returns:
 			tuple: Tuple containing:
@@ -533,7 +564,7 @@ class simulation(object):
 			yInt=y
 			val=vals
 		
-		interpIC=interp.griddata((xInt,yInt),val,(X,Y),method='linear')
+		interpIC=interp.griddata((xInt,yInt),val,(X,Y),method=method)
 		
 		return X,Y,interpIC
 	
@@ -1146,7 +1177,7 @@ class simulation(object):
 		print "Simulation of embryo ", self.embryo.name, " Details."
 		printAllObjAttr(self)
 		
-	def mapOntoImgs(self,tvec=None,roi=None,fnOut="",showProgress=True):
+	def mapOntoImgs(self,tvec=None,roi=None,fnOut="",showProgress=True,method='linear',fillVal=0.,scale=True,enc='uint16'):
 		
 		"""Maps simulation solution back onto images.
 		
@@ -1154,11 +1185,16 @@ class simulation(object):
 		
 		.. note:: Only works if simulation has been run before and saved via ``saveSim``.
 		
+		For more details about interpolation methods, check out 
+		https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.interpolate.griddata.html .
+		
 		Keyword Args:
 			tvec (numpy.ndarray): Timepoints at which solution is saved to image.
 			roi (pyfrp.subclasses.pyfrp_ROI.ROI): PyFRAP ROI.
 			fnOut (str): Path where images should be saved.
 			showProgress (bool): Show progress of output.
+			method (str): Interpolation method.
+			fillVal (float): Value applied outside of ROI.
 		
 		Returns:
 			bool: True if everything ran through, False else.
@@ -1186,10 +1222,18 @@ class simulation(object):
 			if t >= tvec[j]:
 				j=j+1
 				
-				X,Y,img=self.computeInterpolatedSolutionToImg(self.vals[i],roi=roi)
+				# Interpolate
+				X,Y,img=self.computeInterpolatedSolutionToImg(self.vals[i],roi=roi,method=method)
 				
+				# If ROI is selected, fill everything outside of ROI with fillval
+				if roi!=None:
+					imgNew=fillVal*np.ones(img.shape)
+					imgNew[roi.imgIdxX,roi.imgIdxY]=img[roi.imgIdxX,roi.imgIdxY]
+					img=imgNew
+					
+				# Save img
 				enum=(len(str(len(tvec)))-len(str(j)))*"0"+str(j)
-				pyfrp_img_module.saveImg(img,fnOut+"t"+enum+".tif")
+				pyfrp_img_module.saveImg(img,fnOut+"t"+enum+".tif",scale=scale,enc=enc)
 				
 				if showProgress:
 					print "Saved for t=", t ," to ", fnOut+"t"+enum+".tif"

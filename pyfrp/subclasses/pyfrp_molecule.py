@@ -261,7 +261,9 @@ class molecule:
 			except OSError:
 				printError("Could not create " + fn+ ". Will not extract." )
 				return False
-				
+		
+		print "in mol.extract:", fn
+		
 		for embryo in self.embryos:
 			embryo.save(fn=fn+embryo.getName()+".emb",copyMeshFiles=copyMeshFiles,debug=debug)
 		

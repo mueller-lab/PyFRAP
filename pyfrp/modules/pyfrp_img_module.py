@@ -716,7 +716,8 @@ def saveImg(img,fn,enc="uint16",scale=True,maxVal=None):
 	img=np.nan_to_num(img)
 	
 	#Scale img
-	img=scaleToEnc(img,enc,maxVal=maxVal)
+	if scale:
+		img=scaleToEnc(img,enc,maxVal=maxVal)
 	skimage.io.imsave(fn,img)
 	
 	return fn

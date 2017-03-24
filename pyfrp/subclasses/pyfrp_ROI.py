@@ -1232,7 +1232,8 @@ class ROI(object):
 		
 		return xmin,xmax,ymin,ymax,zmin, zmax 
 		
-	def plotSolutionVariable(self,phi,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True,plane='xy',zs=None,zdir=None,mask=True,nPts=1000,mode='normal',title="Solution Variable"):
+	def plotSolutionVariable(self,phi,ax=None,vmin=None,vmax=None,nlevels=25,colorbar=True,plane='xy',zs=None,zdir=None,mask=True,nPts=1000,mode='normal',title="Solution Variable",
+			  typ='contour'):
 		
 		"""Plots simulation solution variable over all indices of ROI as 2D contour plot.
 		
@@ -1266,6 +1267,7 @@ class ROI(object):
 			nPts (int): Number of points used for interpolating (only if ``mode=normal``).
 			mode (str): Which contour function to use.
 			title (str): Title of plot.
+			typ (str): Type of plot.
 		
 		Returns:
 			matplotlib.axes: Axes used for plotting.
@@ -1309,7 +1311,7 @@ class ROI(object):
 			D=None
 		
 		ax=pyfrp_plot_module.plotSolutionVariable(x,y,val,ax=ax,vmin=vmin,vmax=vmax,nlevels=nlevels,colorbar=colorbar,
-					    plane=plane,zs=zs,zdir=zdir,sup=self.name,dThresh=D,nPts=nPts,mode=mode,title=title)
+					    plane=plane,zs=zs,zdir=zdir,sup=self.name,dThresh=D,nPts=nPts,mode=mode,title=title,typ=typ)
 		
 		return ax
 	

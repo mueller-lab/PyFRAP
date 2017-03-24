@@ -217,6 +217,10 @@ class embryo:
 			fn=self.name+".emb"
 		
 		if copyMeshFiles:
+			
+			print "before copyMeshFiles:", fn
+			print "fnGeo", self.geometry.fnGeo
+			
 			fnGeo,fnMesh=pyfrp_IO_module.copyMeshFiles(fn,self.geometry.fnGeo,self.simulation.mesh.fnMesh,debug=debug)
 			self.geometry.setFnGeo(fnGeo)
 			self.simulation.mesh.setFnMesh(fnMesh)

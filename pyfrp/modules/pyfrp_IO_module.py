@@ -201,6 +201,8 @@ def copyMeshFiles(fn,fnGeo,fnMsh,debug=False):
 	# Get list of files we want to copy
 	files=[fnGeo,fnMsh]
 	
+	print "before isMerge:", fn
+	
 	# If it is a merged file, grab all included .msh files
 	isMerge,mergedFiles=pyfrp_gmsh_IO_module.isMergeFile(fnGeo)
 	files=files+mergedFiles

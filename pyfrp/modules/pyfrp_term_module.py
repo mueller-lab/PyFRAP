@@ -35,32 +35,60 @@ custom output inside a Python/bash terminal.
 import colorama
 import PyQt4.QtGui as QtGui
 import numpy as np
+import inspect
 
 #===========================================================================================================================================================================
 #Module Functions
 #===========================================================================================================================================================================
 
 
-def printWarning(txt):
+def printWarning(txt,showCall=True,idx=2):
 	
-	"""Prints Warning of the form "WARNING: txt", while warning is rendered yellow.	
+	"""Prints Warning of the form "WARNING: txt", while warning is rendered yellow.
+	
+	Args:
+		txt (str): Text to be printed:
+		
+	Keyword Args:	
+		showCall (bool): Show function in which print function was called.
+		idx (int): Traceback index that is given to :py:func:`pyfrp.modules.pyfrp_term_module.getFunctionCall`.
+			
+	
 	"""
 
-	print(colorama.Fore.YELLOW + "WARNING:") + colorama.Fore.RESET + txt
+	print(colorama.Fore.YELLOW + "WARNING "+showCall*("("+getFunctionCall(idx)+")")+": ") + colorama.Fore.RESET + txt
 
-def printError(txt):
+def printError(txt,showCall=True,idx=2):
 	
-	"""Prints Error of the form "ERROR: txt", while error is rendered red.	
+	"""Prints Error of the form "ERROR: txt", while error is rendered red.
+	
+	Args:
+		txt (str): Text to be printed:
+		
+	Keyword Args:	
+		showCall (bool): Show function in which print function was called.
+		idx (int): Traceback index that is given to :py:func:`pyfrp.modules.pyfrp_term_module.getFunctionCall`.
+			
+	
 	"""
 	
-	print(colorama.Fore.RED + "ERROR:") + colorama.Fore.RESET + txt
+	print(colorama.Fore.RED + "ERROR "+showCall*("("+getFunctionCall(idx)+")")+": ") + colorama.Fore.RESET + txt
 
-def printNote(txt):
+def printNote(txt,showCall=True,idx=2):
 	
 	"""Prints note of the form "NOTE: txt", while note is rendered green.	
+	
+	Args:
+		txt (str): Text to be printed:
+		
+	Keyword Args:	
+		showCall (bool): Show function in which print function was called.
+		idx (int): Traceback index that is given to :py:func:`pyfrp.modules.pyfrp_term_module.getFunctionCall`.
+			
+	
 	"""
 
-	print(colorama.Fore.GREEN + "NOTE:") + colorama.Fore.RESET + txt
+	print(colorama.Fore.GREEN + "NOTE "+showCall*("("+getFunctionCall(idx)+")")+": ") + colorama.Fore.RESET + txt
 	
 def printDict(dic,maxL=5):
 	
@@ -209,3 +237,21 @@ def printTable(l,header,col=False):
 		
 	return header, table	
 
+def getFunctionCall(idx=1):
+	
+	"""Returns the name of function or method that was called idx frames outwards.
+	
+	.. note:: ``idx=0`` will of course return ``getFunctionCall``.
+	
+	Args:
+		idx (int): Steps outwards.
+	
+	Returns:
+		str: Name of function or method.
+	"""
+	
+	frame = inspect.currentframe()
+	try:
+		return inspect.getouterframes(frame)[idx][3]
+	except IndexError:
+		return ""

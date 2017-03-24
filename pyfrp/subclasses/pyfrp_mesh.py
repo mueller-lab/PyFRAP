@@ -857,7 +857,7 @@ class mesh(object):
 		
 		return axes
 	
-	def plotCellCenters(self,ax=None,proj=None,color='k',indicateHeight=False,s=5.):
+	def plotCellCenters(self,ax=None,proj=None,color='k',indicateHeight=False,s=5.,roi=None):
 		
 		"""Plots location of cell centers of mesh.
 		
@@ -887,7 +887,8 @@ class mesh(object):
 			color (str): Color of mesh nodes.
 			indicateHeight (bool): Indicate height by color.
 			s (float): Size of marker.
-		
+			roi (pyfrp.subclasses.pyfrp_ROI): ROI.
+			
 		Returns:
 			matplotlib.axes: Matplotlib axes.
 		
@@ -900,6 +901,12 @@ class mesh(object):
 		
 		
 		x,y,z = self.mesh.getCellCenters()
+		
+		if roi!=None:
+			x=x[roi.meshIdx]
+			y=y[roi.meshIdx]
+			z=z[roi.meshIdx]
+			
 		if pyfrp_plot_module.is3DAxes(ax):
 			if indicateHeight:
 				#color=cm.jet()
