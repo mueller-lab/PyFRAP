@@ -304,7 +304,7 @@ def refineMsh(fn,debug=False):
 	os.system(gmshBin+" -v "+ str(v) + " -refine " + fn)
 	return fn
 
-def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,volSizeMax=None):
+def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,volSizeMax=None,dim=3):
 	
 	"""Runs Gmsh generating mesh from .geo file.
 	
@@ -330,6 +330,7 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 		fnStout (str): File for gmsh stout.
 		fnSterr (str): File for gmsh sterr.
 		volSizeMax (float): Maximum allowed mesh element size.
+		dim (int): Dimension of mesh.
 		
 	Returns:
 		str: Path to mesh file.
@@ -354,7 +355,7 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 	
 	#Define which command to execute
 	gmshBin=getGmshBin()
-	cmd = gmshBin + " -v " + str(v) +" -3 -optimize -algo del3d"
+	cmd = gmshBin + " -v " + str(v) +" -"+str(dim)+ " -optimize -algo del3d"
 	if volSizeMax!=None:
 		cmd = cmd + " -clmax " + str(volSizeMax)
 	if fnOut!=None:

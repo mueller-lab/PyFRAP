@@ -1397,7 +1397,7 @@ class embryo:
 		self.geometry=pyfrp_geometry.xenopusBallQuad(self,center,imagingRadius)
 		return self.geometry
 	
-	def setGeometry2Custom(self,center,fnGeo=""):
+	def setGeometry2Custom(self,center,fnGeo="",dim=3):
 		
 		"""Sets embryo's geometry to :py:class:`pyfrp.subclasses.pyfrp_geometry.custom`.
 		
@@ -1409,7 +1409,7 @@ class embryo:
 			pyfrp.subclasses.pyfrp_geometry.custom: New custom geometry.
 		"""
 		
-		self.geometry=pyfrp_geometry.custom(self,center,fnGeo)
+		self.geometry=pyfrp_geometry.custom(self,center,fnGeo,dim=dim)
 		return self.geometry
 	
 	def newSimulation(self):
@@ -2180,7 +2180,7 @@ class embryo:
 				mesh=False
 		return img,mesh
 	
-	def quickAnalysis(self,maxDExpPx=None,timeScale='log'):
+	def quickAnalysis(self,maxDExpPx=None,timeScale='log',runIdxs=True,runAnalysis=True,runSimulation=True,runPin=True,runFit=True):
 			
 		"""Performs complete FRAP analysis of embryo object including:
 		
@@ -2194,13 +2194,21 @@ class embryo:
 		Keyword Args:
 			maxDExpPx (float): Maximum expected diffusion coefficient.
 			timeScale (str): Linear (``'lin'``) or logarithmic (``'log'``) time scaling.
+			runIdxs (bool): Run indexing.
+			runAnalysis (bool): Run image analysis.
+			runSimulation (bool): Run simulation.
+			runPin (bool): Run pinning.
+			runFit (bool): Run fitting.
+			
 		
 		"""
 		
-		self.computeROIIdxs()
-
+		if runIdxs:
+			self.computeROIIdxs()
+		
 		#Image analysis
-		self.analysis.run(showProgress=True)
+		if runAnalysis:
+			self.analysis.run(showProgress=True)
 
 		#Simulation
 		if maxDExpPx!=None:
@@ -2209,17 +2217,19 @@ class embryo:
 		if timeScale=='log':
 			self.simulation.toLogTimeScale()
 		
-		
-		self.simulation.run(showProgress=True)
+		if runSimulation:
+			self.simulation.run(showProgress=True)
 
 		#Pin Concentrations
-		bkgdVal,normVal,bkgdValSim,normValSim=self.computeIdealFRAPPinVals(debug=True,useMin=False,useMax=False,switchThresh=0.95)
-		self.pinAllROIs(bkgdVal=bkgdVal,normVal=normVal,bkgdValSim=bkgdValSim,normValSim=normValSim,debug=False)
+		if runPin:
+			bkgdVal,normVal,bkgdValSim,normValSim=self.computeIdealFRAPPinVals(debug=True,useMin=False,useMax=False,switchThresh=0.95)
+			self.pinAllROIs(bkgdVal=bkgdVal,normVal=normVal,bkgdValSim=bkgdValSim,normValSim=normValSim,debug=False)
 
 		#Run all fits
-		for fit in self.fits:
-			fit.run(debug=False)
-		
+		if runFit:
+			for fit in self.fits:
+				fit.run(debug=False)
+			
 		
 	def clearAllAttributes(self):
 		

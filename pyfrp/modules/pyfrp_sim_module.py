@@ -358,13 +358,13 @@ def applyIdealICs(phi,simulation,bleachedROI=None,valOut=None):
 	phi.setValue(valOut)
 	
 	#Find indices of all nodes that lie inside bleachedROI in x-y-direction
-	x,y,z=simulation.mesh.mesh.getCellCenters()
+	x,y,z=simulation.mesh.getCellCenters()
 	ind=bleachedROI.checkXYInside(np.asarray(x),np.asarray(y))
 	
 	#Set these nodes equal to first dataVec entry
 	phi.value[ind]=bleachedROI.dataVec[0]
 	
-	return phi	
+	return phi
 			
 def applyRadialICs(phi,simulation,radSteps=15,debug=False):
 	
@@ -456,7 +456,7 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False,fixNeg=
 		yInt = np.arange(1, res+1, 1)
 	
 	#Getting cell centers
-	x,y,z=simulation.mesh.mesh.getCellCenters()
+	x,y,z=simulation.mesh.getCellCenters()
 	
 	#Finding outer rim concentration
 	if simulation.embryo.analysis.concRim==None:
@@ -527,9 +527,15 @@ def applyInterpolatedICs(phi,simulation,matchWithMaster=True,debug=False,fixNeg=
 		ind=np.asarray(ind)
 		ind=ind[np.where(ins)[0]]
 		ind=list(ind)
-	
+		
 	#Apply interpolation
-	phi.value[ind]=f.ev(x[ind],y[ind])
+	try:
+		phi.value[ind]=f.ev(x[ind],y[ind])
+	except IndexError:
+		if debug:
+			printNote("Changed index array to nparray b/c of IndexError.")
+		ind=np.array(ind)
+		phi.value[ind]=f.ev(x[ind],y[ind])
 	
 	#Fix negative values if selected
 	if fixNeg:
@@ -663,7 +669,7 @@ def applyImperfectICs(phi,simulation,center,rJump,sliceHeight,maxVal=1.,maxMinVa
 	phi = applyInterpolatedICs(phi,simulation,matchWithMaster=matchWithMaster,debug=debug)
 	
 	#Get cell coordinates
-	x,y,z=simulation.mesh.mesh.getCellCenters()
+	x,y,z=simulation.mesh.getCellCenters()
 	x=np.asarray(x)
 	y=np.asarray(y)
 	z=np.asarray(z)

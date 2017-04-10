@@ -105,6 +105,7 @@ class mesh(object):
 		Keyword Args:
 			remesh (bool): Generate mesh with new volSize.
 			fnOut (str): Output filepath for meshfile.
+			dim (int): Dimension of mesh.
 		
 		Returns:
 			float: New volSize.
@@ -173,7 +174,8 @@ class mesh(object):
 		Keyword Args:
 			fnOut (str): Output filepath for meshfile.
 			debug (bool): Print debugging messages.
-		
+			dim (int): Dimension of mesh.
+			
 		Returns:
 			fipy.GmshImporter3D: Gmsh mesh object.
 		
@@ -181,11 +183,13 @@ class mesh(object):
 		
 		if fnOut==None:
 			fnOut=self.simulation.embryo.geometry.fnGeo.replace(".geo",".msh")
-			
+		
+		dim=self.simulation.embryo.geometry.getDim()
+		
 		if self.fromFile:
 			self.fnMesh=pyfrp_misc_module.fixPath(fnOut)
 		
-			pyfrp_gmsh_module.runGmsh(self.simulation.embryo.geometry.fnGeo,fnOut=fnOut,debug=debug,volSizeMax=self.volSizePx)
+			pyfrp_gmsh_module.runGmsh(self.simulation.embryo.geometry.fnGeo,fnOut=fnOut,debug=debug,volSizeMax=self.volSizePx,dim=dim)
 			
 			self.importMeshFromFile(self.fnMesh)
 		else:
@@ -232,13 +236,23 @@ class mesh(object):
 		
 		Args:
 			fn (str): Filepath to meshfile.
-				
+		
+		Keyword Args:
+			dim (int): Dimension of mesh.
+		
 		Returns:
 			fipy.GmshImporter3D: Gmsh mesh object.
 			
 		"""
 		
-		self.mesh=fipy.GmshImporter3D(fn)
+		dim=self.simulation.embryo.geometry.getDim()
+		
+		if dim==3:
+			self.mesh=fipy.GmshImporter3D(fn)
+		elif dim==2:
+			self.mesh=fipy.GmshImporter2D(fn)
+		else:
+			printError("Unknown dimensionality dim = "+str(dim))
 		self.fnMesh=fn
 		return self.mesh
 		
@@ -754,16 +768,18 @@ class mesh(object):
 		
 		"""
 	
-			
+		
+		x,y,z = self.getCellCenters()
+		
 		print "-------------------------------------------"
 		print "Mesh Statistics:"
 		print "-------------------------------------------"
-		print "Mesh has ", np.shape(self.mesh.x)[0] , " cells"
+		print "Mesh has ", np.shape(x)[0] , " cells"
 		print "Mesh has ", self.mesh._numberOfVertices, " vertices"
 		print "Mesh has ", self.mesh.numberOfFaces, " faces"
-		print "min x=", min(self.mesh.x), "max x=", max(self.mesh.x)
-		print "min y=", min(self.mesh.y), "max y=", max(self.mesh.y)
-		print "min z=", min(self.mesh.z), "max z=", max(self.mesh.z)
+		print "min x=", min(x), "max x=", max(x)
+		print "min y=", min(y), "max y=", max(y)
+		print "min z=", min(z), "max z=", max(z)
 		print "Maximum cell volume= ", max(self.mesh.getCellVolumes())
 		print "Minimum cell volume= ", min(self.mesh.getCellVolumes())
 			
@@ -831,10 +847,12 @@ class mesh(object):
 			list: List of ``matplotlib.axes``.
 			
 		"""
-			
-		volSortedByX,xSorted=pyfrp_misc_module.sortListsWithKey(self.mesh.getCellVolumes(),self.mesh.x)
-		volSortedByY,ySorted=pyfrp_misc_module.sortListsWithKey(self.mesh.getCellVolumes(),self.mesh.y)
-		volSortedByZ,zSorted=pyfrp_misc_module.sortListsWithKey(self.mesh.getCellVolumes(),self.mesh.z)
+		
+		x,y,z=self.getCellCenters()
+		
+		volSortedByX,xSorted=pyfrp_misc_module.sortListsWithKey(self.mesh.getCellVolumes(),x)
+		volSortedByY,ySorted=pyfrp_misc_module.sortListsWithKey(self.mesh.getCellVolumes(),y)
+		volSortedByZ,zSorted=pyfrp_misc_module.sortListsWithKey(self.mesh.getCellVolumes(),z)
 		
 		if axes==None:
 			fig,axes = pyfrp_plot_module.makeSubplot([1,3],titles=["Density(x)","Density(y)","Density(z)"])
@@ -900,7 +918,7 @@ class mesh(object):
 			ax=axes[0]
 		
 		
-		x,y,z = self.mesh.getCellCenters()
+		x,y,z = self.getCellCenters()
 		
 		if roi!=None:
 			x=x[roi.meshIdx]
@@ -949,11 +967,14 @@ class mesh(object):
 			rangeX (list): Range of box field in x-direction given as ``[minVal,maxVal]``.
 			rangeY (list): Range of box field in y-direction given as ``[minVal,maxVal]``.
 			rangeZ (list): Range of box field in z-direction given as ``[minVal,maxVal]``.
+			
+		Keyword Args:	
 			newFile (bool): Write new mesh into a new .geo file.
 			fnAppendix (str): Append this to new file name.
 			comment (str): Comment in .geo file before definition of box field.
 			run (bool): Run Gmsh on new .geo file afterwards.
 			fnOut (str): Path to output geo file.
+			dim (int): Dimension of mesh.
 			
 		Returns:
 			str: Path to new .geo file.
@@ -1037,6 +1058,7 @@ class mesh(object):
 			angleThresh (float): Threshold angle under which loops are summarized.
 			faces (list): List of faces.
 			onlyAbs (bool): Take absolute value of faces into account.
+			dim (int): Dimension of mesh.
 			
 		Returns:
 			str: Path to new .geo file.
@@ -1049,53 +1071,32 @@ class mesh(object):
 		#Build stl file for ROI
 		fnStl=roi.render2StlInGeometry(segments=segments,fn=fnOut.replace(".geo",".stl"))
 		
-		#print "after build stl"
-		#raw_input()
-		
 		#Read in stl file and simplify
 		dROI=pyfrp_gmsh_IO_module.readStlFile(fnStl)
 		
-		#print "after read stl"
-		#raw_input()
-		
 		if simplify: 
 			dROI.simplifySurfaces(iterations=iterations,triangIterations=triangIterations,fixSurfaces=fixSurfaces,debug=debug,addPoints=bool(triangIterations>0))		
-		
-		#print "after simplify"
-		#raw_input()
-		
-		
+	
 		# If we extract faces, we have to put them in new ROI
 		if faces!='all' and len(faces)>0:
 			
 			# Grab surfaces
 			sfs=dROI.getRuledSurfacesByNormal(faces,onlyAbs=onlyAbs)
 			
-			#dROI.draw(backend='vtk')
-			
 			# Insert in new domain
 			d2=pyfrp_gmsh_geometry.domain()
 			for sf in sfs:
 				sf.extract(d=d2,debug=debug)
 			
-			#print "after extract"
-			#raw_input()
-			
-			
 			# Overwrite sfs and dROI
 			sfs=d2.ruledSurfaces
 			dROI=d2
 			
-		
 		#Approximate complicated curves by splines
 		if approxBySpline:
 			for sf in sfs:
 				sf.lineLoop.approxBySpline(angleThresh=angleThresh)	
 		dROI.fixAllLoops()
-		
-		#dROI.draw(backend='vtk')
-		#print "bla"
-		#raw_input()
 		
 		#Read in geometry and merge 
 		dGeo=self.simulation.embryo.geometry.readGeoFile()
@@ -1128,11 +1129,7 @@ class mesh(object):
 			os.remove(fnStl.replace(".stl",".scad"))
 		
 		return fnOut
-	
-	#def addBoundaryLayerAtSurfaces(self,sfs,fnOut=None,segments=48,simplify=True,iterations=3,triangIterations=2,
-			       #fixSurfaces=True,debug=False,volSizePx=None,volSizeLayer=10,thickness=15.,cleanUp=True,
-			       #approxBySpline=True,angleThresh=0.95,faces='all',onlyAbs=True):
-	
+		
 	
 	def getMaxNodeDistance(self):
 		
@@ -1151,5 +1148,28 @@ class mesh(object):
 		
 		return max(distances[0]),max(distances[1]),max(distances[2])
 		
+	def getCellCenters(self):
+		
+		"""Returns cell centers of mesh.
+		
+		If the mesh is 2-dimensional, places all nodes at ``z=self.simulation.embryo.sliceHeight``.
+		
+		Returns:
+			tuple: Tuple containing:
+			
+				* x (list): x-coordinates of cells.
+				* y (list): y-coordinates of cells.
+				* z (list): z-coordinates of cells.
+				
+		"""
+		
+		if self.mesh==None:
+			return [],[],[]
+		
+		if len(self.mesh.getCellCenters())==3:
+			return self.mesh.getCellCenters()
+		else:
+			z=self.simulation.embryo.sliceHeightPx*np.ones((len(self.mesh.getCellCenters()[0]),))
+			return self.mesh.getCellCenters()[0],self.mesh.getCellCenters()[1],z
 		
 		

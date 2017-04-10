@@ -97,15 +97,26 @@ class geometry(object):
 	
 	"""
 	
-	def __init__(self,embryo,typ,fnGeo,center):
+	def __init__(self,embryo,typ,fnGeo,center,dim=3):
 		
 		self.typ=typ
 		self.embryo=embryo
 		self.fnGeo=pyfrp_misc_module.fixPath(fnGeo)
 		self.center=center
+		self.dim=dim
 		
 		self.geoFileParameters={}
+	
+	def getDim(self):
 		
+		"""Returns dimension of geometry.
+		
+		Returns:
+			int: Dimension.
+		"""
+		
+		return self.dim
+			
 	def getEmbryo(self):
 		
 		"""Returns :py:class:`pyfrp.subclasses.pyfrp_embryo.embryo` instance 
@@ -1344,8 +1355,8 @@ class custom(geometry):
 
 	"""
 	
-	def __init__(self,embryo,center,fnGeo):
+	def __init__(self,embryo,center,fnGeo,dim=3):
 		
-		geometry.__init__(self,embryo,"custom",fnGeo,center)
+		geometry.__init__(self,embryo,"custom",fnGeo,center,dim=dim)
 	
 	

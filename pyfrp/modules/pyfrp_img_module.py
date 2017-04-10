@@ -718,7 +718,14 @@ def saveImg(img,fn,enc="uint16",scale=True,maxVal=None):
 	#Scale img
 	if scale:
 		img=scaleToEnc(img,enc,maxVal=maxVal)
+	else:
+		#Convert to encoding
+		img=img.astype(enc)
+	
+	
+	
 	skimage.io.imsave(fn,img)
+	
 	
 	return fn
 
@@ -1266,11 +1273,72 @@ def getMeanIntensitiesImgs(fnFolder,fileList,dataEnc):
 		meanIntensities.append(np.mean(img))
 		
 	return meanIntensities	
-				
-def radialImgHist(img,center,nbins=10,byMean=True,maxR=None):
+
+def radialImgHist(img,center,maxR=None,nbins=10):
 	
 	"""Computes radial histogram of image from center.
+	
+	Args:
+		img (numpy.ndarray): Image to be profiled
+		center (list): Center of image.
+	
+	Keyword Args:
+		nbins (int): Number of bins of histogram.
+		maxR (float): Maximum radius considered.
 		
+	Returns:
+		tuple: Tuple containing:
+
+			* bins (numpy.ndarray): Bin vector.
+			* binsMid (numpy.ndarray): Array of midpoints of bins.
+			* histY (numpy.ndarray): Array of number of items per bin.
+			* binY (numpy.ndarray): Array of average value per bin.
+		
+	"""
+	
+	# Put image in 1D array
+	z=img.flatten()
+
+	# Get coordinates of pixels
+	res=img.shape[0]
+	X,Y=np.meshgrid(np.arange(res),np.arange(res))
+	x=X.flatten()
+	y=Y.flatten()
+
+	# Compute radii
+	c=np.array([np.complex(xc,yc) for xc,yc in zip(x,y)])
+	centerC=np.complex(center[0],center[1])
+	r=np.abs(c-centerC)
+	
+	# Get maximum radis if not given
+	if maxR==None:
+		maxR=max(r)+1E-10
+	
+	# Create bin vector
+	bins=np.linspace(0,maxR,nbins+1)
+
+	# Empty list for result
+	histY=[]
+	binY=[]
+
+	# Compute binY
+	for i in range(len(bins)-1):
+		ind=np.where((bins[i]<=r) * (r<bins[i+1]))[0]
+		histY.append(sum(ind))
+		binY.append(np.mean(z[ind]))
+
+	# Bin centers
+	binMid=bins[:-1]+np.diff(bins)
+	
+	return bins,binMid,histY,binY
+				
+def radialImgHist2(img,center,nbins=10,byMean=True,maxR=None):
+	
+	"""Computes radial histogram of image from center.
+	
+	This is an old version of :py:func`pyfrp.modules.pyfrp_img_module.radialImgHist`. If you are looking
+	for performance, you might prefer the new version.
+	
 	Args:
 		img (numpy.ndarray): Image to be profiled
 		center (list): Center of image.
@@ -1328,7 +1396,7 @@ def radialImgHist(img,center,nbins=10,byMean=True,maxR=None):
 	return bins,binsMid,histY,binY
 
 
-def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle='-',fullOutput=False,maxR=None,plotBinSize=False,label='',legend=False,linewidth=1.):
+def plotRadialHist(img,center,nbins=10,axes=None,color='r',linestyle='-',fullOutput=False,maxR=None,plotBinSize=False,label='',legend=False,linewidth=1,norm=0):
 	
 	"""Plots radial histogram of image from center.
 	
@@ -1338,13 +1406,14 @@ def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle
 	
 	.. image:: ../imgs/pyfrp_img_module/plotRadialHist.png
 	
+	
+	
 	Args:
 		img (numpy.ndarray): Image to be profiled
 		center (list): Center of image.
 	
 	Keyword Args:
 		nbins (int): Number of bins of histogram.
-		byMean (bool): Norm bins by number of items in bin.
 		maxR (float): Maximum radius considered.
 		plotBinSize (bool): Include number of items in bin on secondary axis.
 		axes (matplotlib.axes): Matplotlib axes used for plotting. If not specified, will generate new one.
@@ -1352,7 +1421,7 @@ def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle
 		linestyle (str): Linestyle of plot.
 		fullOutput (bool): Also return result arrays from radialImgHist ?
 		linewidth (float): Linewidth of plot.
-		
+		norm (int): Norm.
 	
 	Returns:
 		tuple: Tuple containing:
@@ -1366,7 +1435,7 @@ def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle
 		
 	"""
 	
-	bins,binsMid,histY,binY=radialImgHist(img,center,nbins=nbins,byMean=byMean,maxR=maxR)
+	bins,binsMid,histY,binY=radialImgHist(img,center,nbins=nbins,maxR=maxR)
 	
 	if axes==None:
 		fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Histogram"],sup="Histogram")
@@ -1374,7 +1443,7 @@ def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle
 		if plotBinSize:
 			ax2=ax.twinx()
 		
-	elif isinstance(axes,list): 
+	elif isinstance(axes,list) or isinstance(axes,tuple): 
 		if len(axes)==1:
 			ax=axes[0]
 			if plotBinSize:
@@ -1389,6 +1458,11 @@ def plotRadialHist(img,center,nbins=10,byMean=True,axes=None,color='r',linestyle
 	
 	if not plotBinSize:
 		ax2=None
+	
+	if norm==2:
+		binY=binY/max(binY)
+	elif norm==1:	
+		binY=(binY-min(binY))/(max(binY)-min(binY))
 	
 	ax.plot(binsMid,binY,color=color,linestyle=linestyle,label=label,linewidth=linewidth)
 	
@@ -1499,9 +1573,7 @@ def dist(p1,p2):
 	"""
 	
 	return np.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
-	
-
-		
+			
 def findProblematicNormingPixels(img,imgPre,dataOffset,axes=None,debug=False):
 	
 	"""Checks which pixels are problematic for norming.
@@ -1919,103 +1991,6 @@ def getImgSmoothness(arr):
 	#print "done"
 	#raw_input()
 
-
-
-##-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-##Find longest boundary 
-
-#def findLongestBoundary(vals,max_val):
-	
-	##Find longest boundary contour
-	#max_lengths=[]
-	
-	#for i in range(max_val):
-		#conts_embr=skimsr.find_contours(vals, i, fully_connected='high', positive_orientation='low')
-		
-		#if np.shape(conts_embr)[0]>0:
-		
-			#lengths=[]
-			#for cont in conts_embr:
-				#lengths.append(len(cont))
-			
-			#max_lengths.append(max(lengths))
-		
-		#else:
-			#max_lengths.append(-100)
-		
-	#max_len=max(max_lengths)
-	#opt_thresh=max_lengths.index(max_len)
-	
-	##Grab again longest boundary
-	#conts_final=skimsr.find_contours(vals, opt_thresh, fully_connected='high', positive_orientation='low')
-	
-	##Extracting longest boundary
-	#cont_lengths=[]
-	#for i in range(np.shape(conts_final)[0]):
-		#cont_lengths.append(np.shape(conts_final[i])[0])
-	
-	#indvec=find_range_ind(cont_lengths,20,max_len+10)
-	
-	#conts_final_new=[]
-	#for i in indvec:
-		#conts_final_new.append(conts_final[i])	
-	
-	#return conts_final_new, max_len, opt_thresh
-
-##-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-##Compute center of mass
-
-#def computeCOM(vals):
-	
-	##Compute center of mass
-	#mass=0
-	#x_weights=0
-	#y_weights=0
-	
-	#for i in range(np.shape(vals)[0]):
-		#for j in range(np.shape(vals)[1]):
-			#mass=mass+vals[i,j]
-			#x_weights=x_weights+i*vals[i,j]
-			#y_weights=y_weights+j*vals[i,j]
-			
-	#com=[x_weights/mass,y_weights/mass]		
-	
-	#return com
-
-##-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-##Compute final radius through histogram
-
-#def computeRadiusHist(radiuses,debug_opt):
-	
-	#bins=round(len(radiuses)/20)
-	#data,bin_edges=histogram(radiuses,bins=bins)
-	
-	#bin_vec=linspace(min(radiuses),max(radiuses),bins)
-	
-	#if debug_opt==1:
-		#fig=plt.figure()
-		#fig.show()
-		#ax=fig.add_subplot(111)
-		#ax.bar(bin_vec,data)
-		
-		#plt.draw()
-		#raw_input()
-		
-	#ind=data.argmax()
-	
-	#return radiuses[ind]
-		
-##-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-##find index of all entries in vec with vals between valmin and valmax
-
-#def find_range_ind(vec,valmin,valmax):
-	#indvec=[]
-	#for i in range(np.shape(vec)[0]):
-		#if vec[i] >= valmin and vec[i] <= valmax:
-			#indvec.append(i)
-			
-	#return indvec	
-	
 ##-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ##Crop concentration of rim from pre image
 

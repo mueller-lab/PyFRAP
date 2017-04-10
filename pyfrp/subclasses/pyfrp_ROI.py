@@ -398,8 +398,8 @@ class ROI(object):
 				
 		"""
 		
-		mesh=self.embryo.simulation.mesh.mesh
-		y=np.asarray(mesh.y)[self.meshIdx]	
+		mesh=self.embryo.simulation.mesh
+		y=np.asarray(mesh.getCellCenters[1])[self.meshIdx]	
 		
 		return min(y) , max(y)
 	
@@ -415,8 +415,8 @@ class ROI(object):
 				
 		"""
 		
-		mesh=self.embryo.simulation.mesh.mesh
-		x=np.asarray(mesh.x)[self.meshIdx]	
+		mesh=self.embryo.simulation.mesh
+		x=np.asarray(mesh.getCellCenters[0])[self.meshIdx]	
 		
 		return min(x) , max(x)
 	
@@ -764,16 +764,16 @@ class ROI(object):
 	
 	def showMeshIdx(self,ax=None):
 		
-		mesh=self.embryo.simulation.mesh.mesh
+		x,y,z=self.embryo.simulation.mesh.getCellCenters()
 		
 		if ax==None:
 			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["MeshIdx"],sup=self.name+" MeshIdx",proj=['3d'])
 			ax=axes[0]
 		
 		#Somehow need to convert to np array since slicing does not work for fipy variables
-		x=np.asarray(mesh.x)[self.meshIdx]
-		y=np.asarray(mesh.y)[self.meshIdx]
-		z=np.asarray(mesh.z)[self.meshIdx]
+		x=np.asarray(x)[self.meshIdx]
+		y=np.asarray(y)[self.meshIdx]
+		z=np.asarray(z)[self.meshIdx]
 		
 		ax.scatter(x,y,z,c=self.color)
 		plt.draw()
@@ -784,15 +784,15 @@ class ROI(object):
 		
 		
 		
-		mesh=self.embryo.simulation.mesh.mesh
+		x,y,z=self.embryo.simulation.mesh.getCellCenters()
 		
 		if ax==None:
 			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["MeshIdx"],sup=self.name+" MeshIdx")
 			ax=axes[0]
 		
 		#Somehow need to convert to np array since slicing does not work for fipy variables
-		x=np.asarray(mesh.x)[self.meshIdx]
-		y=np.asarray(mesh.y)[self.meshIdx]
+		x=np.asarray(x)[self.meshIdx]
+		y=np.asarray(y)[self.meshIdx]
 	
 		ax.scatter(x,y,c=self.color)
 		plt.draw()
@@ -855,7 +855,7 @@ class ROI(object):
 					printWarning("Mesh has not been generated, will not compute meshIdxs")
 				else:
 				
-					self.computeMeshIdx(self.embryo.simulation.mesh.mesh)
+					self.computeMeshIdx(self.embryo.simulation.mesh)
 				
 					if matchMesh:
 						if self!=masterROI:
@@ -922,8 +922,23 @@ class ROI(object):
 	
 	def matchMeshIdx(self,r,matchZ=False):
 		
-		x=np.asarray(self.embryo.simulation.mesh.mesh.x)[self.meshIdx]
-		y=np.asarray(self.embryo.simulation.mesh.mesh.y)[self.meshIdx]
+		"""Matches mesh indices of ROI with the ones of a different ROI.
+		
+		Args:
+			r (pyfrp.subclasses.pyfrp_ROI.ROI): ROI to match with.
+			
+		Keyword Args:
+			matchZ (bool): Also match with respect to z.
+			
+		Returns:
+			numpy.ndarray: Matched list of mesh indices.
+		
+		"""
+		
+		x,y,z=self.embryo.simulation.mesh.getCellCenters()
+		
+		x=np.asarray(x)[self.meshIdx]
+		y=np.asarray(y)[self.meshIdx]
 		
 		ins=r.checkXYInside(x,y)
 		
@@ -933,12 +948,39 @@ class ROI(object):
 		return self.meshIdx
 	
 	def checkZInside(self,z):
+		
+		"""Checks if z coordinate is within ROIs z-range.
+		
+		Arg:
+			z (float): z-coordinate.
+			
+		Returns:
+			bool: True if inside.
+		"""
+		
 		if self.zmin<= z and z<=self.zmax:
 			return True
 		else:
 			return False
 	
 	def showIdxs(self,axes=None):
+		
+		"""Shows all three types of ROI indices.
+		
+		Shows:
+			
+			* Mesh indices by calling :py:func:`pyfrp.subclasses.pyfrp_ROI.ROI.showMeshIdx`
+			* Image indices by calling :py:func:`pyfrp.subclasses.pyfrp_ROI.ROI.showImgIdx`
+			* Extended indices by calling :py:func:`pyfrp.subclasses.pyfrp_ROI.ROI.showExtImgIdx`
+		
+		Keyword Args:
+			axes (list): List of axes to plot in (at least ``len(axes)=3``). 
+		
+		Returns:
+			list: List of ``matplotlib.axes``.	
+		
+		"""
+		
 		wereNone=False
 		if axes==None:
 			fig,axes = pyfrp_plot_module.makeSubplot([1,3],titles=["MeshIdx","imgIdx","extImgIdx"],sup=self.name+" Idx",proj=['3d',None,None])
@@ -1281,7 +1323,7 @@ class ROI(object):
 			val=np.asarray(phi)
 		
 		#Get x/y/z/values coordinates in ROI
-		x,y,z=self.embryo.simulation.mesh.mesh.getCellCenters()
+		x,y,z=self.embryo.simulation.mesh.getCellCenters()
 		x=x[self.meshIdx]
 		y=y[self.meshIdx]
 		z=z[self.meshIdx]
@@ -1616,7 +1658,7 @@ class ROI(object):
 		fnOut=self.embryo.simulation.mesh.addBoxField(self.embryo.simulation.mesh.volSizePx/factor,xExtend,yExtend,zExtend,comment=self.name+" field",run=run,fnOut=fnOut)
 	
 		if findIdxs:
-			self.computeMeshIdx(self.embryo.simulation.mesh.mesh)
+			self.computeMeshIdx(self.embryo.simulation.mesh)
 		
 		if debug and findIdxs:
 			print "Mesh Nodes in ROI after: ", len(self.meshIdx)
@@ -1664,11 +1706,11 @@ class ROI(object):
 		
 		#Get current node numbers
 		if ROIReq==None:
-			self.computeMeshIdx(self.embryo.simulation.mesh.mesh)
+			self.computeMeshIdx(self.embryo.simulation.mesh)
 			nNodes=len(self.meshIdx)
 			nNodesAll=self.embryo.simulation.mesh.getNNodes()
 		else:
-			ROIReq.computeMeshIdx(ROIReq.embryo.simulation.mesh.mesh)
+			ROIReq.computeMeshIdx(ROIReq.embryo.simulation.mesh)
 			nNodes=len(ROIReq.meshIdx)
 			nNodesROIReq=len(ROIReq.meshIdx)
 			nNodesAll=ROIReq.embryo.simulation.mesh.getNNodes()
@@ -1688,7 +1730,7 @@ class ROI(object):
 			if ROIReq==None:
 				nNodesNew=len(self.meshIdx)
 			else:
-				ROIReq.computeMeshIdx(ROIReq.embryo.simulation.mesh.mesh)
+				ROIReq.computeMeshIdx(ROIReq.embryo.simulation.mesh)
 				nNodesNew=len(ROIReq.meshIdx)
 				nNodesROIReqNew=len(ROIReq.meshIdx)
 			nNodesROINew=len(self.meshIdx)
@@ -1813,17 +1855,17 @@ class ROI(object):
 			ax=axes[0]
 		
 		if direction=='x':
-			x=self.embryo.simulation.mesh.mesh.x
+			x=self.embryo.simulation.mesh.getCellCenters()[0]
 		elif direction=='y':
-			x=self.embryo.simulation.mesh.mesh.y
+			x=self.embryo.simulation.mesh.getCellCenters()[1]
 		elif direction=='z':
-			x=self.embryo.simulation.mesh.mesh.z
+			x=self.embryo.simulation.mesh.getCellCenters()[2]
 		elif direction=='r':
 			if hasattr(self,'center'):
 				center=self.center
 			else:
 				center=self.embryo.geometry.center
-			x=np.sqrt((self.embryo.simulation.mesh.mesh.x-center[0])**2+(self.embryo.simulation.mesh.mesh.y-center[1])**2)
+			x=np.sqrt((self.embryo.simulation.mesh.getCellCenters()[0]-center[0])**2+(self.embryo.simulation.mesh.getCellCenters()[1]-center[1])**2)
 		else:
 			printError('Direction '+ direction+ 'unknown. Will not plot.')
 			return ax
@@ -2521,7 +2563,7 @@ class sliceROI(ROI):
 				
 		"""
 		
-		x,y,z=mesh.cellCenters
+		x,y,z=mesh.getCellCenters()
 		self.meshIdx=pyfrp_idx_module.getSliceIdxMesh(z,self.zmin,self.zmax)
 		return self.meshIdx
 	

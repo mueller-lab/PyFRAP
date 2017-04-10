@@ -201,8 +201,6 @@ def copyMeshFiles(fn,fnGeo,fnMsh,debug=False):
 	# Get list of files we want to copy
 	files=[fnGeo,fnMsh]
 	
-	print "before isMerge:", fn
-	
 	# If it is a merged file, grab all included .msh files
 	isMerge,mergedFiles=pyfrp_gmsh_IO_module.isMergeFile(fnGeo)
 	files=files+mergedFiles
@@ -318,6 +316,45 @@ def writeTableToCSV(l,header,fn,col=False):
 	
 	return header,table
 			
+def readCSV(fn,hasHeader=True,delimiter=',',dtype=str):
 	
+	"""Reads csv sheet.
 	
+	Args:
+		fn (str): Path to file.
+		
+	Keyword Args:	
+		hasHeader (bool): File has header.
+		delimiter (str): Delimiter of csv sheet.
+		dtype (dtype): Datatype to convert array to.
 	
+	Returns:
+		tuple: Tuple containing:
+		
+			* header (list): List of header entries.
+			* rows (list): Read rows.
+	
+	"""
+	
+	rows=[]
+	
+	with open(fn,'rb') as f:
+		
+		fcsv=csv.reader(f,delimiter=delimiter)
+		
+		for i,row in enumerate(fcsv):
+			
+			
+			
+			if i==0:
+				if hasHeader:
+					header=row
+				else:
+					header=[]
+					rows.append(pyfrp_misc_module.listToDtype(row,dtype))
+			else:
+				rows.append(pyfrp_misc_module.listToDtype(row,dtype))
+			
+	return header,rows	
+	
+

@@ -408,7 +408,7 @@ class simulation(object):
 			
 			if roi==None:
 		
-				x,y,z=self.mesh.mesh.getCellCenters()
+				x,y,z=self.mesh.getCellCenters()
 			
 				if vmin==None:
 					vmin=min(self.IC)
@@ -520,7 +520,7 @@ class simulation(object):
 		
 		return xInt, yInt, f
 	
-	def computeInterpolatedSolutionToImg(self,vals,roi=None,method='linear'):
+	def computeInterpolatedSolutionToImg(self,vals,roi=None,method='linear',res=None):
 		
 		"""Interpolates solution back onto 2D image.
 		
@@ -536,6 +536,7 @@ class simulation(object):
 			roi (pyfrp.subclasses.pyfrp_ROI.ROI): A PyFRAP ROI.
 			method (str): Interpolation method.
 			fillVal (float): Value applied outside of ROI.
+			res (int): Resolution of resulting images in pixels.
 			
 		Returns:
 			tuple: Tuple containing:
@@ -547,13 +548,20 @@ class simulation(object):
 		"""
 		
 		#Get image resolution and center of geometry
-		res=self.ICimg.shape[0]
+		if res==None:
+			res=self.ICimg.shape[0]
 		
 		#Build Empty Img
 		X,Y=np.meshgrid(np.arange(res),np.arange(res))
 		
 		#Get cellcenters
-		x,y,z=self.mesh.mesh.getCellCenters()
+		x,y,z=self.mesh.getCellCenters()
+		##print x
+		##print y
+		##print z
+		##print roi.meshIdx
+		#print max(roi.meshIdx)
+		#print len(x)
 		
 		if roi!=None:
 			xInt=x[roi.meshIdx]
@@ -1063,7 +1071,7 @@ class simulation(object):
 		"""
 		
 		#Retrieve values
-		x,y,z=self.mesh.mesh.getCellCenters()
+		x,y,z=self.mesh.getCellCenters()
 	
 		if roi!=None:
 			idxs=roi.meshIdx
@@ -1177,7 +1185,7 @@ class simulation(object):
 		print "Simulation of embryo ", self.embryo.name, " Details."
 		printAllObjAttr(self)
 		
-	def mapOntoImgs(self,tvec=None,roi=None,fnOut="",showProgress=True,method='linear',fillVal=0.,scale=True,enc='uint16'):
+	def mapOntoImgs(self,tvec=None,roi=None,fnOut="",showProgress=True,method='linear',fillVal=0.,scale=True,enc='uint16',res=None):
 		
 		"""Maps simulation solution back onto images.
 		
@@ -1195,6 +1203,9 @@ class simulation(object):
 			showProgress (bool): Show progress of output.
 			method (str): Interpolation method.
 			fillVal (float): Value applied outside of ROI.
+			scale (bool): Scale to encoding range.
+			enc (str): Encoding.
+			res (int): Resolution of resulting images in pixels.
 		
 		Returns:
 			bool: True if everything ran through, False else.
@@ -1223,7 +1234,7 @@ class simulation(object):
 				j=j+1
 				
 				# Interpolate
-				X,Y,img=self.computeInterpolatedSolutionToImg(self.vals[i],roi=roi,method=method)
+				X,Y,img=self.computeInterpolatedSolutionToImg(self.vals[i],roi=roi,method=method,res=res)
 				
 				# If ROI is selected, fill everything outside of ROI with fillval
 				if roi!=None:

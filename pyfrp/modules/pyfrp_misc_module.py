@@ -1325,7 +1325,8 @@ def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True,rec
 		preIdent (list): List of identifiers for pre-bleach data
 		colorPrefix (str): Defines how to detect if multichannel or not
 		cleanUp (bool): Clean up .tif files from other channels afterwards.
-			
+	
+		
 	Returns:
 		pyfrp.subclasses.pyfrp_embryo.embryo: Created Embryo in case of success, otherwise -1
 
@@ -1740,4 +1741,20 @@ def mkdir(fn):
 	except OSError:
 		printWarning("Could not create folder "+fn+" .")
 		return False
+
+def listToDtype(row,dtype):
 	
+	"""Converts all entries in list to specified datatype.
+	
+	Args:
+		row (list): Some list.
+		dtype (dtype): Some datatype.
+		
+	Returns:
+		list: Converted list.
+	"""
+	
+	rowNew=[]
+	for r in row:
+		rowNew.append(dtype(r))
+	return rowNew		

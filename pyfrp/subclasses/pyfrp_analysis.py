@@ -854,6 +854,10 @@ class analysis:
 			processDic=dict(self.process)
 			processDic=self.removeProcessStep(processDic,'norm')
 			
+			#removeProcesses=['norm','median']
+			
+			#processDic=self.removeProcessStep(processDic,'median')
+			
 			imgPre=pyfrp_img_module.processImg(meanImg,processDic,flatteningMask,bkgdMask,None,dataOffset=self.dataOffset)
 		
 		self.preMask=imgPre

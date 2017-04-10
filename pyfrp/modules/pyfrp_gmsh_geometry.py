@@ -5617,9 +5617,6 @@ class boundaryLayerField(field):
 		elements={}
 		for elmnt in ["EdgesList","FacesList","NodesList"]:
 			if len(getattr(self,elmnt))>0:
-				print elmnt
-				print getattr(self,elmnt)
-				
 				elements[elmnt]=pyfrp_misc_module.objAttrToList(getattr(self,elmnt),'Id')
 		
 		return elements

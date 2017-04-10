@@ -301,7 +301,7 @@ def getCircleIdxMesh(center,radius,mesh,zmin="-inf",zmax="inf",debug=False):
 	Args:
 		center (numpy.ndarray): Center of circle.
 		radius (float): Radius of circle.
-		mesh (fipy.Gmsh3DImporter): Mesh.
+		mesh (pyfrp.subclasses.pyfrp_mesh.mesh): Mesh.
 		
 	Keyword Args:
 		zmin (float): Minimal z-coordinate.
@@ -312,13 +312,13 @@ def getCircleIdxMesh(center,radius,mesh,zmin="-inf",zmax="inf",debug=False):
 		list: List of mesh indices inside circle. 
 		
 	"""
-		
+	
 	#Checking that zmin/zmax are converted into numpy floats
 	zmin=pyfrp_misc.translateNPFloat(zmin)
 	zmax=pyfrp_misc.translateNPFloat(zmax)
 	
 	#Grabbing cellCenters of mesh
-	x,y,z=mesh.cellCenters
+	x,y,z=mesh.getCellCenters()
 	
 	#Convert into complex numbers
 	c=np.array([np.complex(xc,yc) for xc,yc in zip(x,y)])
@@ -369,7 +369,7 @@ def getRectangleIdxMesh(sidelengthX,sidelengthY,offset,mesh,zmin="-inf",zmax="in
 		offset (numpy.ndarray): Offset of rectangle.
 		sidelengthX (float): Sidelength in x-directiion.
 		sidelengthY (float): Sidelength in y-directiion.
-		mesh (fipy.Gmsh3DImporter): Mesh.
+		mesh (pyfrp.subclasses.pyfrp_mesh.mesh): Mesh.
 		
 	Keyword Args:
 		zmin (float): Minimal z-coordinate.
@@ -386,7 +386,7 @@ def getRectangleIdxMesh(sidelengthX,sidelengthY,offset,mesh,zmin="-inf",zmax="in
 	zmax=pyfrp_misc.translateNPFloat(zmax)
 	
 	#Grabbing cellCenters of mesh
-	x,y,z=mesh.cellCenters
+	x,y,z=mesh.getCellCenters()
 	
 	#Getting indices
 	indSquare=np.where((offset[0]<x) & (x<offset[0]+sidelengthX) & (offset[1]<y) & (y<offset[1]+sidelengthY))[0]
@@ -409,7 +409,7 @@ def getSquareIdxMesh(sidelength,offset,mesh,zmin="-inf",zmax="inf",debug=False):
 	Args:
 		offset (numpy.ndarray): Offset of square.
 		sidelength (float): Sidelength.
-		mesh (fipy.Gmsh3DImporter): Mesh.
+		mesh (pyfrp.subclasses.pyfrp_mesh.mesh): Mesh.
 		
 	Keyword Args:
 		zmin (float): Minimal z-coordinate.
@@ -426,7 +426,7 @@ def getSquareIdxMesh(sidelength,offset,mesh,zmin="-inf",zmax="inf",debug=False):
 	zmax=pyfrp_misc.translateNPFloat(zmax)
 	
 	#Grabbing cellCenters of mesh
-	x,y,z=mesh.cellCenters
+	x,y,z=mesh.getCellCenters()
 	
 	#Getting indices
 	indSquare=np.where((offset[0]<x) & (x<offset[0]+sidelength) & (offset[1]<y) & (y<offset[1]+sidelength))[0]
@@ -446,7 +446,7 @@ def getPolyIdxMesh(corners,mesh,zmin="-inf",zmax="inf",debug=False):
 	
 	Args:
 		corners (list): List of (x,y)-coordinates of corners.
-		mesh (fipy.Gmsh3DImporter): Mesh.
+		mesh (pyfrp.subclasses.pyfrp_mesh.mesh): Mesh.
 		
 	Keyword Args:
 		zmin (float): Minimal z-coordinate.
@@ -463,7 +463,7 @@ def getPolyIdxMesh(corners,mesh,zmin="-inf",zmax="inf",debug=False):
 	zmax=pyfrp_misc.translateNPFloat(zmax)
 	
 	#Grabbing cellCenters of mesh
-	x,y,z=mesh.cellCenters
+	x,y,z=mesh.getCellCenters()
 	
 	#Bookkeeping list
 	indPoly=[]
