@@ -525,7 +525,7 @@ class mesh(object):
 		"""
 		
 		#vtk
-		import vtk
+		from pyfrp.modules import pyfrp_vtk_module
 		
 		if not os.path.isfile(self.fnMesh):
 			printWarning("Filepath to meshfile has not been specified yet. Cannot plot.")
@@ -533,41 +533,11 @@ class mesh(object):
 		if fnVTK=="":
 			fnVTK=self.writeVTKFile(sub=sub)
 		
-		# Read the source file.
-		reader = vtk.vtkUnstructuredGridReader()
-		reader.SetFileName(fnVTK)
-		reader.Update() 
-		output = reader.GetOutput()
-		
-		#Extract Edges 
-		edges=vtk.vtkExtractEdges()
-		edges.SetInput(reader.GetOutput()) 
-		
-		#Make edges into tubes
-		tubes = vtk.vtkTubeFilter()
-		tubes.SetInput(edges.GetOutput())
-		tubes.SetRadius(0.5)
-		tubes.SetNumberOfSides(3)
-
-		#Genereate wireframe mapper
-		wireFrameMapper=vtk.vtkPolyDataMapper()
-		wireFrameMapper.SetInput(tubes.GetOutput())
-		wireFrameMapper.SetScalarVisibility(0)
-		
-		#Make Actor
-		wireFrameActor=vtk.vtkActor()
-		wireFrameActor.SetMapper(wireFrameMapper)
-		wireFrameActor.GetProperty().SetColor(0,0,0)
-		wireFrameActor.SetPickable(0)
-
-		#Create the Renderer
-		renderer = vtk.vtkRenderer()
-		renderer.AddActor(wireFrameActor)
-		renderer.SetBackground(1, 1, 1) # Set background to white
-
+		renderer = pyfrp_vtk_module.importVTKMeshFile(fnVTK,bkgdColor=[1,1,1],color=[0,0,0])
+	
 		return renderer
 	
-	def plotMesh(self,fnVTK=""):
+	def plotMesh(self,fnVTK="",bkgd=[1,1,1]):
 		
 		"""Plots the mesh using VTK.
 		
@@ -585,26 +555,18 @@ class mesh(object):
 		
 		"""
 		
-		
-		#vtk
-		import vtk
-		
-		#import vtk file
+		from pyfrp.modules import pyfrp_vtk_module
+	
+		# Import vtk file
 		renderer=self.importVTKFile(fnVTK=fnVTK)
 		
-		#Window
-		renderWindow = vtk.vtkRenderWindow()
+		# Create renderWindow
+		renderer, renderWindow, renderWindowInteractor = pyfrp_vtk_module.makeVTKCanvas(offScreen=False,bkgd=bkgd,renderer=renderer)
 		
 		# This seems to be the key to have a renderer without displaying. However it returns floating 
 		# Errors.
-		#renderWindow.OffScreenRenderingOn() 
-		
-		renderWindow.AddRenderer(renderer)
-		
-		#Interactor
-		interactor = vtk.vtkRenderWindowInteractor()
-		interactor.SetRenderWindow(renderWindow)
-		
+		##renderWindow.OffScreenRenderingOn() 
+			
 		#Start
 		renderWindow.GetInteractor().Initialize()
 		renderWindow.GetInteractor().Start()
@@ -646,28 +608,13 @@ class mesh(object):
 		
 		"""
 		
-		#vtk
-		import vtk
+		from pyfrp.modules import pyfrp_vtk_module
 		
 		#Plot again if necessary
 		if renderer==None:
 			renderer=self.plotMesh(fnVTK=fnVTK)
 		
-		#Generate exporter
-		exp = vtk.vtkGL2PSExporter()
-		exp.SetRenderWindow(renderer)
-		
-		#Get extension
-		basename,ext=os.path.splitext(fnOut)
-		vectorFileFormats = {'.ps': 0, '.eps': 1, '.pdf': 2, '.tex': 3,'.svg':4}
-		
-		exp.SetFilePrefix(basename)
-		exp.SetFileFormat(vectorFileFormats[ext.lower()])
-		
-		exp.Write()
-		
-		return exp
-	
+		return pyfrp_vtk_module.saveRendererToPS(renderer,fnOut)
 	
 	def saveMeshToImg(self,fnOut,fnVTK="",renderer=None,magnification=10,show=True):
 		
@@ -708,9 +655,6 @@ class mesh(object):
 		
 		"""
 		
-		#vtk
-		import vtk
-		
 		#Plot again if necessary
 		if renderer==None:
 			if show:
@@ -720,41 +664,8 @@ class mesh(object):
 				renderer=self.importVTKFile(fnVTK=fnVTK)
 				printWarning("Currently this option leads to segmentation faults. Should be fixed in further version.")
 					
-		#Generate exporter
-		vtkImageWriters = {
-			'.tif': vtk.vtkTIFFWriter(),
-			'.tiff': vtk.vtkTIFFWriter(),
-			'.bmp': vtk.vtkBMPWriter(),
-			'.pnm': vtk.vtkPNMWriter(),
-			'.png': vtk.vtkPNGWriter(),
-			'.jpg': vtk.vtkJPEGWriter(),
-			'.jpeg': vtk.vtkJPEGWriter(),
-			'.ps': vtk.vtkPostScriptWriter(),
-			'.eps': vtk.vtkPostScriptWriter(),  
-			}
-		
-		#Get extension
-		basename,ext=os.path.splitext(fnOut)
-
-		#Large Image renderer for nicer images
-		rendererLarge=vtk.vtkRenderLargeImage()
-		rendererLarge.SetInput(renderer)
-		rendererLarge.SetMagnification(magnification)
-
-		#Get proper writer
-		try:
-			writer = vtkImageWriters[ext.lower()]
-		except KeyError:
-			printError("Extension "+ext+" is currently not supported")
-			return None
-		
-		#Write
-		writer.SetFileName(fnOut)
-		
-		writer.SetInputConnection(rendererLarge.GetOutputPort())
-		writer.Write()
-		
-		return writer
+	
+		return pyfrp_vtk_module.saveRendererToImg(renderer,fnOut,magnification=magnification)
 	
 	def printStats(self,tetLenghts=False):
 		

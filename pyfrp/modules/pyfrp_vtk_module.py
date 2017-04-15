@@ -492,3 +492,157 @@ def getVTKPolyDataMapper(polyData):
 		mapper.SetInputData(polyData)
 		
 	return mapper	
+
+def importVTKMeshFile(fnVTK,bkgdColor=[1,1,1],color=[0,0,0]):
+
+	"""Imports a .vtk file into a vtk renderer.
+	
+	Keyword Args:
+		fnVTK (str): Path to input vtk file.
+		sub (bool): Subprocess flag.
+		
+	Returns:
+		vtk.vtkRenderer: Renderer object.
+	
+	"""
+	
+	# Read the source file.
+	reader = vtk.vtkUnstructuredGridReader()
+	reader.SetFileName(fnVTK)
+	reader.Update() 
+	output = reader.GetOutput()
+	
+	#Extract Edges 
+	edges=vtk.vtkExtractEdges()
+	edges.SetInput(reader.GetOutput()) 
+	
+	#Make edges into tubes
+	tubes = vtk.vtkTubeFilter()
+	tubes.SetInput(edges.GetOutput())
+	tubes.SetRadius(0.5)
+	tubes.SetNumberOfSides(3)
+
+	#Genereate wireframe mapper
+	wireFrameMapper=vtk.vtkPolyDataMapper()
+	wireFrameMapper.SetInput(tubes.GetOutput())
+	wireFrameMapper.SetScalarVisibility(0)
+	
+	#Make Actor
+	wireFrameActor=vtk.vtkActor()
+	wireFrameActor.SetMapper(wireFrameMapper)
+	wireFrameActor.GetProperty().SetColor(color[0],color[1],color[2])
+	wireFrameActor.SetPickable(0)
+
+	#Create the Renderer
+	renderer = vtk.vtkRenderer()
+	renderer.AddActor(wireFrameActor)
+	renderer.SetBackground(bkgdColor[0], bkgdColor[1], bkgdColor[2]) # Set background to white
+	
+	return renderer
+
+def saveRendererToPS(renderer,fnOut):
+	
+	"""Saves mesh to postscript file.
+	
+	Supported extensions are:
+	
+		* '.ps'  (PostScript)
+		* '.eps' (Encapsualted PostScript)
+		* '.pdf' (Portable Document Format)
+		* '.tex' (LaTeX)
+		* '.svg' (Scalable Vector Graphics)
+			
+	.. note:: This function imports *vtk*. *vtk* is only necessary in a few functions,
+		hence only imported when needed. This should make PyFRAP more portable.
+	
+	Some code taken from http://www.programcreek.com/python/example/23102/vtk.vtkGL2PSExporter .
+	
+	Args:
+		fnOut (str): Path to output file.
+		renderer (vtk.vtkOpenGLRenderer): Renderer.
+		
+	Returns:
+		vtk.vtkGL2PSExporter: Exporter object.
+	
+	"""
+	
+	#Generate exporter
+	exp = vtk.vtkGL2PSExporter()
+	exp.SetRenderWindow(renderer)
+	
+	#Get extension
+	basename,ext=os.path.splitext(fnOut)
+	vectorFileFormats = {'.ps': 0, '.eps': 1, '.pdf': 2, '.tex': 3,'.svg':4}
+	
+	exp.SetFilePrefix(basename)
+	exp.SetFileFormat(vectorFileFormats[ext.lower()])
+	
+	exp.Write()
+	
+	return exp
+
+def saveRendererToImg(renderer,fnOut,magnification=10):
+	
+	"""Saves renderer to image file.
+	
+	Supported extensions are:
+		
+		* '.ps'  (PostScript)
+		* '.eps' (Encapsualted PostScript)
+		* '.pdf' (Portable Document Format)
+		* '.jpg' (Joint Photographic Experts Group)
+		* '.png' (Portable Network Graphics)
+		* '.pnm' (Portable Any Map)
+		* '.tif' (Tagged Image File Format)
+		* '.bmp' (Bitmap Image)
+	
+	Some code taken from http://www.programcreek.com/python/example/23102/vtk.vtkGL2PSExporter .
+	
+	Args:
+		fnOut (str): Path to output file.
+		renderer (vtk.vtkOpenGLRenderer): Renderer.
+		
+	Keyword Args:
+		magnification (int): Degree of magnification.
+		
+	Returns:
+		vtk.vtkExporter: Exporter object.
+	
+	"""
+	
+	
+	#Generate exporter
+	vtkImageWriters = {
+		'.tif': vtk.vtkTIFFWriter(),
+		'.tiff': vtk.vtkTIFFWriter(),
+		'.bmp': vtk.vtkBMPWriter(),
+		'.pnm': vtk.vtkPNMWriter(),
+		'.png': vtk.vtkPNGWriter(),
+		'.jpg': vtk.vtkJPEGWriter(),
+		'.jpeg': vtk.vtkJPEGWriter(),
+		'.ps': vtk.vtkPostScriptWriter(),
+		'.eps': vtk.vtkPostScriptWriter(),  
+		}
+	
+	#Get extension
+	basename,ext=os.path.splitext(fnOut)
+
+	#Large Image renderer for nicer images
+	rendererLarge=vtk.vtkRenderLargeImage()
+	rendererLarge.SetInput(renderer)
+	rendererLarge.SetMagnification(magnification)
+
+	#Get proper writer
+	try:
+		writer = vtkImageWriters[ext.lower()]
+	except KeyError:
+		printError("Extension "+ext+" is currently not supported")
+		return None
+	
+	#Write
+	writer.SetFileName(fnOut)
+	
+	writer.SetInputConnection(rendererLarge.GetOutputPort())
+	writer.Write()
+
+	return writer
