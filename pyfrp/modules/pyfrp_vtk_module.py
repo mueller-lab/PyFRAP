@@ -493,13 +493,17 @@ def getVTKPolyDataMapper(polyData):
 		
 	return mapper	
 
-def importVTKMeshFile(fnVTK,bkgdColor=[1,1,1],color=[0,0,0]):
+def importVTKMeshFile(fnVTK,bkgdColor=[255,255,255],color=[0,0,0],renderer=None):
 
-	"""Imports a .vtk file into a vtk renderer.
+	"""Imports a .vtk file into a vtk renderer and draws it as a wireframe.
+	
+	See also :py:func:`pyfrp.modules.pyfrp_vtk_module.unstructedGridToWireframe`.
 	
 	Keyword Args:
 		fnVTK (str): Path to input vtk file.
-		sub (bool): Subprocess flag.
+		bkgdColor (list): Background color in RGB values.
+		color (list): Color of mesh in RGB values.
+		renderer (vtk.vtkRenderer): Some renderer.
 		
 	Returns:
 		vtk.vtkRenderer: Renderer object.
@@ -511,10 +515,29 @@ def importVTKMeshFile(fnVTK,bkgdColor=[1,1,1],color=[0,0,0]):
 	reader.SetFileName(fnVTK)
 	reader.Update() 
 	output = reader.GetOutput()
+
+	return unstructedGridToMesh(output,bkgdColor=bkgdColor,color=color,renderer=None)
+
+def unstructedGridToWireframe(grid,bkgdColor=[255,255,255],color=[0,0,0],renderer=None):
+	
+	"""Extracts mesh as wireframe plot from unstructured grid and adds it to renderer.
+	
+	.. note:: Will create new renderer if none is given.
+	
+	Keyword Args:
+		fnVTK (str): Path to input vtk file.
+		bkgdColor (list): Background color in RGB values.
+		color (list): Color of mesh in RGB values.
+		renderer (vtk.vtkRenderer): Some renderer.
+		
+	Returns:
+		vtk.vtkRenderer: Renderer object.
+	
+	"""
 	
 	#Extract Edges 
 	edges=vtk.vtkExtractEdges()
-	edges.SetInput(reader.GetOutput()) 
+	edges.SetInput(grid) 
 	
 	#Make edges into tubes
 	tubes = vtk.vtkTubeFilter()
@@ -534,12 +557,73 @@ def importVTKMeshFile(fnVTK,bkgdColor=[1,1,1],color=[0,0,0]):
 	wireFrameActor.SetPickable(0)
 
 	#Create the Renderer
-	renderer = vtk.vtkRenderer()
+	if renderer==None:
+		renderer = vtk.vtkRenderer()
+		
+	# Add to renderer	
 	renderer.AddActor(wireFrameActor)
-	renderer.SetBackground(bkgdColor[0], bkgdColor[1], bkgdColor[2]) # Set background to white
+	renderer.SetBackground(bkgdColor[0], bkgdColor[1], bkgdColor[2]) 
 	
 	return renderer
 
+def meshToUnstructeredGrid(mesh):
+	
+	"""Converts a FiPy mesh structure to a vtkUnstructuredGrid.
+	
+	Works for 2D and 3D meshes.
+	
+	Args:
+		mesh (fipy.GmshImporter3D): Some Fipy mesh object.
+		
+	Returns:
+		vtk.vtkUnstructuredGrid	
+	"""
+	
+	
+	# Get vertex coordinates
+	coords=mesh.vertexCoords
+	
+	if len(coords)==2:
+		x,y=coords
+		dim=2
+	else:
+		x,y,z=coords
+		dim=3
+		
+	# Insert them as points
+	points = vtk.vtkPoints()
+	for i in range(len(x)):
+		if dim==2:
+			points.InsertNextPoint(x[i], y[i],0)
+		else:	
+			points.InsertNextPoint(x[i], y[i],z[i])
+
+	# Insert tetrahedrons
+	verts=mesh._getOrderedCellVertexIDs().T
+		
+	cellArray = vtk.vtkCellArray()
+	for j,vert in enumerate(verts):
+		
+		if dim==3:
+			tetra = vtk.vtkTetra()
+		else:
+			tetra = vtk.vtkTriangle()
+			
+		for i,v in enumerate(vert):
+			tetra.GetPointIds().SetId(i, v)
+		cellArray.InsertNextCell(tetra)
+
+	# Grid
+	grid = vtk.vtkUnstructuredGrid()
+	grid.SetPoints(points)
+	
+	if dim==3:
+		grid.SetCells(vtk.VTK_TETRA, cellArray)
+	else:
+		grid.SetCells(vtk.VTK_TRIANGLE, cellArray)
+	
+	return grid
+	
 def saveRendererToPS(renderer,fnOut):
 	
 	"""Saves mesh to postscript file.

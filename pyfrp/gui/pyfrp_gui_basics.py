@@ -153,8 +153,8 @@ class basicCanvasDialog(QtGui.QDialog):
 	def showImg(self,img):
 		
 		self.ax.imshow(img)
-		self.ax.set_xlim(img.shape[0])
-		self.ax.set_ylim(img.shape[1])
+		self.ax.set_xlim([1,img.shape[0]])
+		self.ax.set_ylim([1,img.shape[1]])
 		
 		self.canvas.draw()
 		

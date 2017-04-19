@@ -116,6 +116,14 @@ pyfrp.gui.pyfrp_gui_statistics_dialogs module
     :undoc-members:
     :show-inheritance:
 
+pyfrp.gui.pyfrp_gui_vtk module
+------------------------------
+
+.. automodule:: pyfrp.gui.pyfrp_gui_vtk
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyfrp.gui.pyfrp_term module
 ---------------------------
 

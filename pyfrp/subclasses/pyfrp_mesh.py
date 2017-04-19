@@ -537,7 +537,7 @@ class mesh(object):
 	
 		return renderer
 	
-	def plotMesh(self,fnVTK="",bkgd=[1,1,1]):
+	def plotMesh(self,fromFile=False,fnVTK="",bkgd=[255,255,255],color=[0,0,0]):
 		
 		"""Plots the mesh using VTK.
 		
@@ -549,6 +549,8 @@ class mesh(object):
 		
 		Keyword Args:
 			fnVTK (str): Path to input vtk file.
+			bkgd (list): Background color of renderer in RGB values.
+			color (list): Color of mesh in RGB values.
 			
 		Returns:
 			vtk.vtkRenderWindow: RenderWindow object.
@@ -558,7 +560,14 @@ class mesh(object):
 		from pyfrp.modules import pyfrp_vtk_module
 	
 		# Import vtk file
-		renderer=self.importVTKFile(fnVTK=fnVTK)
+		if fromFile:
+			renderer=self.importVTKFile(fnVTK=fnVTK)
+		
+		# Generate everything directly from mesh
+		else:
+			grid=pyfrp_vtk_module.meshToUnstructeredGrid(self.mesh)
+			renderer = pyfrp_vtk_module.unstructedGridToWireframe(grid,bkgdColor=bkgd,color=color,renderer=None)
+		
 		
 		# Create renderWindow
 		renderer, renderWindow, renderWindowInteractor = pyfrp_vtk_module.makeVTKCanvas(offScreen=False,bkgd=bkgd,renderer=renderer)
