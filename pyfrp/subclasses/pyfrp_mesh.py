@@ -906,7 +906,6 @@ class mesh(object):
 		pyfrp_gmsh_IO_module.addBoxField(self.simulation.embryo.geometry.fnGeo,volSizeIn,self.volSizePx,rangeX,rangeY,rangeZ,comment=comment,fnOut=fnOut)
 		self.simulation.embryo.geometry.setFnGeo(fnOut)
 		
-		
 		if run:
 			self.genMesh()
 		

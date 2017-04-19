@@ -313,7 +313,7 @@ class geometry(object):
 		
 		return domain
 	
-	def plotGeometry(self,ax=None,color='k',ann=False):
+	def plotGeometry(self,ax=None,color='k',ann=False,backend='mpl'):
 		
 		"""Plots geometry in 3D.
 		
@@ -326,6 +326,7 @@ class geometry(object):
 			ax (matplotlib.axes): Axes to draw in.
 			color (str): Color of plot.
 			ann (bool): Show annotations.
+			backend (str): Backend used for drawing.
 		
 		Returns:
 			matplotlib.axes: Axes used for plotting.
@@ -337,11 +338,11 @@ class geometry(object):
 		if domain==None:
 			return ax
 		
-		if ax==None:
-			fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Geometry " +self.typ],proj=['3d'])
-			ax=axes[0]
+		#if ax==None:
+			#fig,axes = pyfrp_plot_module.makeSubplot([1,1],titles=["Geometry " +self.typ],proj=['3d'])
+			#ax=axes[0]
 		
-		domain.draw(ax=ax,color=color,ann=ann)
+		domain.draw(ax=ax,color=color,ann=ann,backend=backend)
 		
 		return ax
 	

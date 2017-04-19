@@ -363,7 +363,7 @@ class simulation(object):
 		
 		return self.ICimg
 	
-	def showIC(self,ax=None,roi=None,nlevels=25,vmin=None,vmax=None,typ='contour'):
+	def showIC(self,ax=None,roi=None,nlevels=25,vmin=None,vmax=None,typ='contour',scale=True):
 		
 		"""Plots initial conditions applied to mesh in 2D or 3D.
 		
@@ -390,6 +390,7 @@ class simulation(object):
 			ax (matplotlib.axes): Axes used for plotting.
 			nlevels (int): Number of contour levels to display.
 			typ (str): Typ of plot.
+			scale (bool): Equal axis in case of contour plot.
 		
 		Returns:
 			matplotlib.axes: Axes used for plotting.
@@ -419,7 +420,8 @@ class simulation(object):
 				
 				if typ=='contour':
 					ax.tricontourf(x,y,self.IC,vmin=vmin,vmax=vmax,levels=levels)
-					ax.autoscale(enable=True, axis='both', tight=True)
+					if scale:
+						ax.autoscale(enable=True, axis='both', tight=True)
 				elif typ=='surface':
 					ax.plot_trisurf(x,y,self.IC,cmap='jet',vmin=vmin,vmax=vmax)
 				else:
@@ -436,7 +438,7 @@ class simulation(object):
 			printWarning("IC is not generated yet. Run simulation first.")
 			return None	
 		
-	def showICimg(self,ax=None,typ='contour',colorbar=True):
+	def showICimg(self,ax=None,typ='contour',colorbar=True,scale=True):
 		
 		"""Plots image used for initial 2D.
 		
@@ -444,6 +446,7 @@ class simulation(object):
 		
 		Keyword Args:
 			ax (matplotlib.axes): Axes used for plotting.
+			scale (bool): Equal axis.
 			
 		Returns:
 			matplotlib.axes: Axes used for plotting.
@@ -472,7 +475,8 @@ class simulation(object):
 			
 			if typ=='contour':
 				plt_ICs=ax.contourf(X,Y,self.ICimg)
-				plt.axis('equal')
+				if scale:
+					plt.axis('equal')
 			elif typ=='surface':
 				plt_ICs=ax.plot_surface(X,Y,self.ICimg,cmap='jet')
 				
@@ -1252,7 +1256,56 @@ class simulation(object):
 		return True
 		
 		
+	def visualize(self,cut=False,app=None):
 		
+		"""Visualizes simulation using VTK.
 		
+		Uses :py:class:`pyfrp.gui.pyfrp_gui_vtk.vtkSimVisualizer` to visualize the simulation. If ``cut=True``, will also
+		add a cutter that allows to cut through the 3D simulation and display single slices, see also
+		:py:class:`pyfrp.gui.pyfrp_gui_vtk.vtkSimVisualizerCutter`. Cutter only works for 3D simulations.
 		
+		If no application is specified, will launch a new ``QtGui.QApplication``. 
+		
+		.. note:: Simulation results must be saved in ``simulation`` object via ``saveSim=True``.
+		
+		Example:
+		
+		>>> emb.simulation.visualize(cut=False)
+		
+		.. image:: ../imgs/pyfrp_gui_vtk/vtkSimVisualizer.png
+		
+		and 
+	
+		>>> emb.simulation.visualize(cut=True)
+		
+		.. image:: ../imgs/pyfrp_gui_vtk/vtkSimVisualizerCutter.png
+	
+		Keyword Args:
+			cut (bool): Visualize with cutter.
+			app (QtGui.QApplication): Some application.
+		
+		"""
+		
+		# Check if running makes sense
+		if len(self.vals)==0:
+			printWarning("Embryo does not have saved simulation. Rerun simulation with saveSim=True.")
+			return 
+		
+		if self.embryo.geometry.dim==2 and cut:
+			printWarning("vtkSimVisualizerCutter does only work and make sense for 3D geometries. Falling back to vtkSimVisualizer.")
+			cut=False
+	
+		# Import right module from gui submodule
+		from pyfrp.gui import pyfrp_gui_vtk
+		
+		# Create QApplication
+		if app==None:
+			app = QtGui.QApplication([])
+		
+		if cut:
+			widget=pyfrp_gui_vtk.vtkSimVisualizerCutter(self.embryo)
+		else:
+			widget=pyfrp_gui_vtk.vtkSimVisualizer(self.embryo)
+		
+		app.exec_()
 	
