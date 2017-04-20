@@ -537,7 +537,7 @@ class mesh(object):
 	
 		return renderer
 	
-	def plotMesh(self,fromFile=False,fnVTK="",bkgd=[255,255,255],color=[0,0,0]):
+	def plotMesh(self,fromFile=False,fnVTK="",bkgd=[255,255,255],color=[0,0,0],renderer=None,renderWindow=None):
 		
 		"""Plots the mesh using VTK.
 		
@@ -551,9 +551,11 @@ class mesh(object):
 			fnVTK (str): Path to input vtk file.
 			bkgd (list): Background color of renderer in RGB values.
 			color (list): Color of mesh in RGB values.
+			renderer (vtk.vtkRenderer): Some renderer.
+			renderWindow (vtk.RenderWindow): Some renderWindow or dummy value.
 			
 		Returns:
-			vtk.vtkRenderWindow: RenderWindow object.
+			vtk.vtkRenderer: Renderer object.
 		
 		"""
 		
@@ -566,21 +568,21 @@ class mesh(object):
 		# Generate everything directly from mesh
 		else:
 			grid=pyfrp_vtk_module.meshToUnstructeredGrid(self.mesh)
-			renderer = pyfrp_vtk_module.unstructedGridToWireframe(grid,bkgdColor=bkgd,color=color,renderer=None)
-		
+			renderer = pyfrp_vtk_module.unstructedGridToWireframe(grid,bkgdColor=bkgd,color=color,renderer=renderer)
 		
 		# Create renderWindow
-		renderer, renderWindow, renderWindowInteractor = pyfrp_vtk_module.makeVTKCanvas(offScreen=False,bkgd=bkgd,renderer=renderer)
+		if renderWindow==None:
+			renderer, renderWindow, renderWindowInteractor = pyfrp_vtk_module.makeVTKCanvas(offScreen=False,bkgd=bkgd,renderer=renderer)
 		
-		# This seems to be the key to have a renderer without displaying. However it returns floating 
-		# Errors.
-		##renderWindow.OffScreenRenderingOn() 
-			
-		#Start
-		renderWindow.GetInteractor().Initialize()
-		renderWindow.GetInteractor().Start()
+			# This seems to be the key to have a renderer without displaying. However it returns floating 
+			# Errors.
+			##renderWindow.OffScreenRenderingOn() 
+				
+			#Start
+			renderWindow.GetInteractor().Initialize()
+			renderWindow.GetInteractor().Start()
 		
-		return renderWindow
+		return renderer
 	
 	def saveMeshToPS(self,fnOut,fnVTK="",renderer=None):
 		

@@ -254,7 +254,7 @@ class pyfrp(QtGui.QMainWindow):
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Initialization Methods
+	#SecInit: Initialization Methods
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def initMainMenubar(self):
@@ -285,6 +285,7 @@ class pyfrp(QtGui.QMainWindow):
 		self.initSimulationMenubar()
 		self.initFittingMenubar()
 		self.initStatsMenubar()
+		#self.initPlottingMenubar()
 		self.initSettingsMenubar()
 	
 	def initFileMenubar(self):
@@ -304,7 +305,6 @@ class pyfrp(QtGui.QMainWindow):
 		exitButton = QtGui.QAction('Exit', self)
 		exitButton.setShortcut('Ctrl+Q')	
 		self.connect(exitButton, QtCore.SIGNAL('triggered()'), QtCore.SLOT('close()'))
-	
 	
 		self.mbFile.addAction(newMoleculeButton)
 		self.mbFile.addAction(loadMoleculeButton)
@@ -438,6 +438,8 @@ class pyfrp(QtGui.QMainWindow):
 		refineMeshButton = QtGui.QAction('Refine Mesh', self)
 		self.connect(refineMeshButton, QtCore.SIGNAL('triggered()'), self.refineMesh)
 		
+		addBoundaryLayerMeshAroundROIButton = QtGui.QAction('Add boundary layer around ROI', self)
+		self.connect(addBoundaryLayerMeshAroundROIButton, QtCore.SIGNAL('triggered()'), self.addBoundaryLayerMeshAroundROI)
 		
 		forceMeshButton = QtGui.QAction('Force Mesh Density', self)
 		self.connect(forceMeshButton, QtCore.SIGNAL('triggered()'), self.forceMeshDensity)
@@ -471,9 +473,11 @@ class pyfrp(QtGui.QMainWindow):
 		self.meshSimulationMB.addAction(refineMeshButton)
 		self.meshSimulationMB.addAction(forceMeshButton)
 		self.meshSimulationMB.addAction(forceROIMeshButton)
+		self.meshSimulationMB.addAction(addBoundaryLayerMeshAroundROIButton)
 		self.meshSimulationMB.addAction(printMeshButton)
 		self.meshSimulationMB.addAction(plotMeshButton)
 		self.meshSimulationMB.addAction(plotMeshDensityButton)
+		
 		
 		
 		self.plotSimulationMB=self.mbSimulation.addMenu('&Plotting')
@@ -557,21 +561,65 @@ class pyfrp(QtGui.QMainWindow):
 		selectCrucialParametersButton = QtGui.QAction('Select CrucialParameters', self)
 		self.connect(selectCrucialParametersButton, QtCore.SIGNAL('triggered()'), self.selectCrucialParameters)
 		
-		
 		summarizeMoleculeButton = QtGui.QAction('Summarize Molecule', self)
 		self.connect(summarizeMoleculeButton, QtCore.SIGNAL('triggered()'), self.summarizeMolecule)
-		
 		
 		self.mbStatistics.addAction(selectFitsButton)
 		self.mbStatistics.addAction(selectCrucialParametersButton)
 		self.mbStatistics.addAction(summarizeMoleculeButton)
 	
+	#def initPlottingMenubar(self):
+		
+		#"""Creates entries of statistics menubar and connects actions with gui methods.
+		#"""
+		
+		#newMPLTabButton = QtGui.QAction('New Matplotlib tab', self)
+		#self.connect(newMPLTabButton, QtCore.SIGNAL('triggered()'), self.createPlotTab)
+		
+		#newVTKTabButton = QtGui.QAction('New Matplotlib tab', self)
+		#self.connect(newVTKTabButton, QtCore.SIGNAL('triggered()'), self.createVtkTab)
+	
+		#self.newTabMB=self.mbPlotting.addMenu('&New Tab')
+		#self.newTabMB.addAction(newMPLTabButton)
+		#self.newTabMB.addAction(newVTKTabButton)
+			
+		#showImgIndButton = QtGui.QAction('Show image indices', self)
+		#self.connect(showImgIndButton, QtCore.SIGNAL('triggered()'), self.showROIImgIdx)
+		
+		#showMeshIndButton = QtGui.QAction('Show mesh indices', self)
+		#self.connect(showImgIndButton, QtCore.SIGNAL('triggered()'), self.showROIMeshIdx)
+		
+		#showExtIndButton = QtGui.QAction('Show extended indices', self)
+		#self.connect(showExtIndButton, QtCore.SIGNAL('triggered()'), self.showROIExtIdx)
+		
+		#showROIIndButton = QtGui.QAction('Show all indices', self)
+		#self.connect(showROIIndButton, QtCore.SIGNAL('triggered()'), self.showROIIdx)
+		
+		#showROIBoundButton = QtGui.QAction('Show ROI boundaries', self)
+		#self.connect(showROIBoundButton, QtCore.SIGNAL('triggered()'), self.showROIBoundaries)
+		
+		#showROIBoundButton = QtGui.QAction('Show all ROI boundaries', self)
+		#self.connect(showROIBoundButton, QtCore.SIGNAL('triggered()'), self.showAllROIBoundaries)
+		
+		#self.embryoPlotMB=self.mbPlotting.addMenu('&Embryo')
+		#self.ROIPlotMB=self.embryoPlotMB.addMenu('&ROI')
+		
+		
+		
+		
+		
+		#self.geomPlotMB=self.embryoPlotMB.addMenu('&Geometry')
+		#self.analysisPlotMB=self.embryoPlotMB.addMenu('&Analysis')
+		#self.simulationPlotMB=self.embryoPlotMB.addMenu('&Simulation')
+		#self.fittingPlotMB=self.embryoPlotMB.addMenu('&Fitting')
+		#self.statisticsPlotMB=self.embryoPlotMB.addMenu('&Statistics')
+		
 	def initSettingsMenubar(self):
 		
 		"""Creates entries of settings menubar and connects actions with gui methods.
 		"""
 		
-		setPathFileButton = QtGui.QAction('Self Path File', self)
+		setPathFileButton = QtGui.QAction('Set Path File', self)
 		self.connect(setPathFileButton, QtCore.SIGNAL('triggered()'), self.setPathFile)
 		
 		setGmshButton = QtGui.QAction('Set Gmsh Path', self)
@@ -648,13 +696,20 @@ class pyfrp(QtGui.QMainWindow):
 		return frame
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Configuration handling
+	#SecConfig: Configuration handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Initialize Configuration from file
 	
 	def initConfiguration(self):
+		
+		"""Initialize Configuration from file.
+		
+		Does this by:
+		
+			* Loading config file.
+			* Updating history
+			* Calling :py:func:`updateConfig`.
+		
+		"""
 		
 		fn=pyfrp_misc_module.getConfDir()+"lastConfiguration.conf"
 		
@@ -669,10 +724,17 @@ class pyfrp(QtGui.QMainWindow):
 		
 		return self.config
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Update configuration of GUI to match with config
-	
 	def updateConfig(self):
+		
+		"""Update configuration of GUI to match with config.
+		
+		That is:
+			
+			* hide/show parts of GUI.
+			* Update recently opened files menubar.
+			* Update Path file.
+			
+		"""
 		
 		self.console.setHidden(self.config.termHidden)
 		self.propBar.setHidden(self.config.propHidden)
@@ -687,22 +749,30 @@ class pyfrp(QtGui.QMainWindow):
 		self.config.copyPathFileToDefaultLocation()
 		
 		return self.config
-		
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Makes filename the most recently opened file, adds it to config.recentFiles and updates menubar  
 	
 	def appendRecent(self,fn):
-	
+		
+		"""Makes filename the most recently opened file, adds it to config.recentFiles and updates menubar.  
+		
+		Args:
+			fn (str): Some filename.
+		"""
+		
 		self.config.addRecentFile(fn)
 		self.recentMB.clear()
 		self.updateRecentMBs()
 		
 		return self.recentMB
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Updates recently opened menubar  
-	
 	def updateRecentMBs(self):
+		
+		"""Updates recently opened menubar.
+		
+		Loops through current loaded configuration ``config.recentFiles`` and appends the 5 newest entries to 
+		``self.recentActions``.
+		
+		"""
+		
 		self.recentActions=[]
 		
 		for i in range(len(self.config.recentFiles)):
@@ -718,20 +788,28 @@ class pyfrp(QtGui.QMainWindow):
 		return self.recentMB		
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Object Bar handling
+	#secObjectBar: Object Bar handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Highlists the currently used Node of the objectBar
-	
+
 	def highlightCurrentObjectNode(self):
+		
+		"""Highlists the currently used Node of the objectBar.
+		"""
+		
 		self.objectBar.setCurrentItem(self.currNode)
 		return self.objectBar
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Checks if the current selected node is of certain type and returns respective error popups
-	
 	def checkSelectedNode(self,typ="any"):
+		
+		"""Checks if the current selected node is of certain type and returns respective error popups
+		
+		Keyword Args:
+			typ (str): Desired Node type. Use ``"any"`` if type doesn't matter.
+		
+		Returns:
+			bool: True if proper node is selected
+		
+		"""
 		
 		if self.objectBar.currentItem()==None:
 			QtGui.QMessageBox.critical(None, "Error","Nothing selected.",QtGui.QMessageBox.Ok | QtGui.QMessageBox.Default)
@@ -743,10 +821,13 @@ class pyfrp(QtGui.QMainWindow):
 		
 		return False
 				
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Adds Embryo to ObjectBar
-
 	def embryo2ObjectBar(self,embryo,parentNode):
+		
+		"""Adds Embryo to ObjectBar. 
+		
+	
+		
+		"""
 		
 		#Embryo Status
 		analyzed=str(int(embryo.isAnalyzed()))
@@ -971,13 +1052,20 @@ class pyfrp(QtGui.QMainWindow):
 		return currEmbryo
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Porperty Bar handling
+	#SecPropertyBar: Porperty Bar handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Returns Current Molecule
-	
+		
 	def showObjPropsInBar(self,obj,maxArraySize=3):	
+		
+		"""Shows property bar.
+		
+		Args:
+			obj (object): Object selected in objectBar.
+			
+		Keyword Args:
+			maxArraySize (int): Maximal length of array to still be displayed.
+				
+		"""
 		
 		if obj==None:
 			return self.propBar
@@ -995,12 +1083,10 @@ class pyfrp(QtGui.QMainWindow):
 			self.propBar.addItem(item+"="+str(vars(obj)[str(item)]))
 		
 		return self.propBar 
-		
-	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Updates Property bar
-		
+				
 	def updatePropBar(self):
+		
+		"""Updates Property bar."""
 		
 		#Clearing property list
 		self.propBar.clear()
@@ -1017,7 +1103,7 @@ class pyfrp(QtGui.QMainWindow):
 		return self.propBar 
 
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Molecule handling
+	#SecMolecule: Molecule handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1323,10 +1409,13 @@ class pyfrp(QtGui.QMainWindow):
 		
 		return self.currMolecule.embryos
 
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Checks if molecules or embryos have the same name
-
 	def checkObjNames(self):
+		
+		"""Checks if molecules or embryos have the same name.
+		
+		Returns:
+			bool: True if there is a molecule/embryo with the same name.
+		"""
 		
 		b=False
 		
@@ -1337,10 +1426,13 @@ class pyfrp(QtGui.QMainWindow):
 		
 		return b
 				
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Checks if molecules have the same name
-			
 	def checkMolNames(self):
+		
+		"""Checks if molecules have the same name.
+		
+		Returns:
+			bool: True if there is a molecule the same name.
+		"""
 		
 		b=False
 		
@@ -1351,11 +1443,14 @@ class pyfrp(QtGui.QMainWindow):
 				printWarning("Molecule with name " + name + " exists twice. This can lead to problems")
 		
 		return b
-	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Checks if embryos have the same name
 			
 	def checkEmbryoNames(self,mol=None):
+		
+		"""#Checks if embryos have the same name.
+		
+		Returns:
+			bool: True if there is a embryo the same name.
+		"""
 		
 		mol = pyfrp_misc_module.assignIfVal(mol,self.currMolecule,None)
 		
@@ -1371,7 +1466,7 @@ class pyfrp(QtGui.QMainWindow):
 	
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Wizards
+	#SecWizards: Wizards
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def LSM2EmbryoWizard(self):
@@ -1448,7 +1543,7 @@ class pyfrp(QtGui.QMainWindow):
 				
 		
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Embryo Menubar Methods
+	#SecEmbryo: Embryo Menubar Methods
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	def openROIManager(self):
@@ -1541,11 +1636,10 @@ class pyfrp(QtGui.QMainWindow):
 		self.updateROIsNodeChildren()
 		
 		return 1
-
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Updates all ROI Idxs
-		
+	
 	def updateROIIdxs(self):
+		
+		"""Updates all ROI Idxs."""
 		
 		currEmbryo=self.getCurrentEmbryo()
 	
@@ -1568,11 +1662,11 @@ class pyfrp(QtGui.QMainWindow):
 			self.initTask()
 			
 		return
-
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Open Geometry Editor for current embryo
-		
+	
 	def selectGeometry(self):
+		
+		"""Open Geometry Editor for current embryo."""
+		
 		currEmbryo=self.getCurrentEmbryo()
 		
 		if currEmbryo!=None:
@@ -1623,7 +1717,7 @@ class pyfrp(QtGui.QMainWindow):
 		return 
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Analysis handling
+	#SecAnalysis: Analysis handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1686,7 +1780,7 @@ class pyfrp(QtGui.QMainWindow):
 		self.adjustCanvas()
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Simulation handling
+	#SecSimulation: Simulation handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1732,9 +1826,16 @@ class pyfrp(QtGui.QMainWindow):
 		self.initTask()
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Edit Mesh Settings
+	#SecMesh: Mesh handling
+	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		
 	def editMesh(self):
+		
+		"""Edit Mesh Settings.
+		
+		Launches :py:class:`pyfrp.gui.pyfrp_gui_mesh_dialogs.meshSettingsDialog` and lets user define standard mesh properties.
+		
+		"""
 		currEmbryo=self.getCurrentEmbryo()
 		if currEmbryo!=None:
 			if currEmbryo.simulation==None:
@@ -1742,10 +1843,16 @@ class pyfrp(QtGui.QMainWindow):
 			ret=pyfrp_gui_mesh_dialogs.meshSettingsDialog(currEmbryo.simulation.mesh,self).exec_()
 		return
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Generate Mesh task/progressbar
-	
 	def generateMesh(self):
+		
+		"""Generate Mesh.
+		
+		Does this via submitting mesh generation to a seperate `QThread`. Meanwhile displays
+		:py:class:`pyfrp.gui.pyfrp_gui_mesh_dialogs.genMeshProgressDialog`.
+		
+		Prints out mesh statistics at the end.
+		
+		"""
 		
 		#Grab embryo 
 		currEmbryo=self.getCurrentEmbryo()
@@ -1774,10 +1881,14 @@ class pyfrp(QtGui.QMainWindow):
 		#Init and start
 		self.initTask()
 		
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Refine Mesh task/progressbar
-	
 	def refineMesh(self):
+		
+		"""Refine Mesh by tetrahedron splitting.
+		
+		Submits py:func:`pyfrp.subclasses.pyfrp_mesh.mesh.refine` to a seperate QThread. 
+		Meanwhile displays :py:class:`pyfrp.gui.pyfrp_gui_mesh_dialogs.refineMeshProgressDialog`.
+		
+		"""
 		
 		#Grab embryo 
 		currEmbryo=self.getCurrentEmbryo()
@@ -1800,10 +1911,15 @@ class pyfrp(QtGui.QMainWindow):
 		#Init and start
 		self.initTask()
 		
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#force Mesh task/progressbar
 	
 	def forceMeshDensity(self):
+		
+		"""Force Mesh to have given density globally.
+		
+		Submits py:func:`pyfrp.subclasses.pyfrp_mesh.mesh.refine` to a seperate QThread. 
+		Meanwhile displays :py:class:`pyfrp.gui.pyfrp_gui_mesh_dialogs.refineMeshProgressDialog`.
+		
+		"""
 		
 		#Grab embryo 
 		currEmbryo=self.getCurrentEmbryo()
@@ -1831,10 +1947,13 @@ class pyfrp(QtGui.QMainWindow):
 		#Init and start
 		self.initTask()
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#force Mesh in ROI
-	
 	def forceROIMeshDensity(self):
+		
+		"""Force Mesh to have given density in ROI.
+		
+		See also :py:class:`pyfrp.gui.pyfrp_gui_mesh_dialogs.refineROIMeshSettingsDialog`.
+		
+		"""
 		
 		#Grab embryo 
 		currEmbryo=self.getCurrentEmbryo()
@@ -1844,10 +1963,11 @@ class pyfrp(QtGui.QMainWindow):
 		#Get options
 		ret=pyfrp_gui_mesh_dialogs.refineROIMeshSettingsDialog(currEmbryo.simulation.mesh,self).exec_()
 		
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Refine Mesh task/progressbar
+
 	
 	def printMeshStats(self):
+		
+		"""Prints out mesh statistics."""
 		
 		#Grab embryo 
 		currEmbryo=self.getCurrentEmbryo()
@@ -1856,27 +1976,32 @@ class pyfrp(QtGui.QMainWindow):
 		
 		currEmbryo.simulation.mesh.printStats()
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Plot Mesh
 	
 	def plotMesh(self):
+		
+		"""Plots mesh of selected embryo.
+		"""
 		
 		#Grab embryo 
 		currEmbryo=self.getCurrentEmbryo()
 		if currEmbryo==None:
+			QtGui.QMessageBox.critical(None, "Error","No embryo selected.",QtGui.QMessageBox.Ok | QtGui.QMessageBox.Default)
 			return
 		
-		self.createVtkTab()
+		#try:
+		self.renderer = currEmbryo.simulation.mesh.plotMesh(renderWindow=1)
+		#except AttributeError:
+			#QtGui.QMessageBox.critical(None, "Error","Embryo has no simulation or mesh yet.",QtGui.QMessageBox.Ok | QtGui.QMessageBox.Default)
 		
-		self.renderer=currEmbryo.simulation.mesh.importVTKFile(sub=True)
+		self.createVtkTab()
 		
 		self.vtkCanvas.GetRenderWindow().AddRenderer(self.renderer)
 		self.vtkCanvas.GetRenderWindow().GetInteractor().Initialize()
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Plot Mesh Density
 	
 	def plotMeshDensity(self):
+		
+		"""Plots mesh density in x/y/z direction."""
 		
 		currEmbryo=self.getCurrentEmbryo()
 		if currEmbryo==None:
@@ -1885,6 +2010,43 @@ class pyfrp(QtGui.QMainWindow):
 		self.createPlotTab("meshDensity",plotName=currEmbryo.name+" mesh density",size=[2,2])
 		
 		currEmbryo.simulation.mesh.plotDensity(axes=self.axes)
+	
+	def addBoundaryLayerMeshAroundROI(self):
+		
+		"""Adds boundary layer around ROI.
+		
+		"""
+		
+		currEmbryo=self.getCurrentEmbryo()
+		if currEmbryo==None:
+			return
+		
+		dialog = pyfrp_gui_mesh_dialogs.boundaryLayerAroundROISettingsDialog(currEmbryo,self)
+		if dialog.exec_():
+			fnOut,roiUsed,segments,simplify,iterations,triangIterations,fixSurfaces,debug,volSizePx,thickness,volSizeLayer,cleanUp,approxBySpline,angleThresh,faces,onlyAbs = dialog.getVals()
+		
+		
+		#Genereate wait popup
+		self.progressDialog=pyfrp_gui_mesh_dialogs.boundaryLayerProgressDialog(None)
+		
+		#Make backup copy of embryo
+		self.originalObj=currEmbryo
+		self.backupObj=cpy.deepcopy(currEmbryo)
+		
+		self.statusBar().showMessage("Computing new mesh with required density " + currEmbryo.name)
+		
+		#Generate Qthread and pass analysis there
+		self.task=pyfrp_gui_basics.pyfrpThread()
+		
+		# For now don't submit to QThread and see how it works out.
+		self.worker=pyfrp_gui_basics.pyfrpWorker(currEmbryo.simulation.mesh.addBoundaryLayerAroundROI,roiUsed,fnOut=fnOut,segments=segments,simplify=simplify,iterations=iterations,triangIterations=triangIterations,
+			       fixSurfaces=fixSurfaces,debug=debug,volSizePx=volSizePx,volSizeLayer=volSizeLayer,thickness=thickness,cleanUp=cleanUp,
+			       approxBySpline=approxBySpline,angleThresh=angleThresh,faces=faces,onlyAbs=onlyAbs)
+		
+		#Init and start
+		self.initTask()
+		
+		
 		
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Plots simulation results of all ROIs of embryo
@@ -1918,13 +2080,18 @@ class pyfrp(QtGui.QMainWindow):
 		self.adjustCanvas()
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Pinning handling
+	#SecPinning: Pinning handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Default Pin
 	
 	def defaultPinEmbryo(self):
+		
+		"""Default Pinning.
+		
+		Lets the user selected his/her pinning options themself by launching 
+		:py:class:`pyfrp.gui.pyfrp_gui_pinning_dialogs.defaultPinningDialog`.
+		
+		
+		"""
 		
 		currEmbryo=self.getCurrentEmbryo()
 		
@@ -1935,10 +2102,15 @@ class pyfrp(QtGui.QMainWindow):
 		#Launch dialog
 		ret=pyfrp_gui_pinning_dialogs.defaultPinningDialog(currEmbryo,self).exec_()
 		
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Ideal Pin
-	
 	def idealPinEmbryo(self):
+		
+		"""Ideal Pinning.
+		
+		Lets the user select some options for ideal pinning via 
+		:py:class:`pyfrp.gui.pyfrp_gui_pinning_dialogs.idealPinningDialog`.
+		
+		
+		"""
 		
 		currEmbryo=self.getCurrentEmbryo()
 		
@@ -1950,7 +2122,7 @@ class pyfrp(QtGui.QMainWindow):
 		ret=pyfrp_gui_pinning_dialogs.idealPinningDialog(currEmbryo,self).exec_()
 		
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Fit handling
+	#SecFit: Fit handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2084,7 +2256,7 @@ class pyfrp(QtGui.QMainWindow):
 		self.adjustCanvas()
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Statistics handling
+	#SecStatistics: Statistics handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2254,10 +2426,12 @@ class pyfrp(QtGui.QMainWindow):
 		
 		return 
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Create plot tab
 	
 	def createPlotTab(self,plotType,plotName="",size=[1,1],titles=None,sup=None,proj=None,tight=False):
+		
+		"""Creates new plotting tab for matplotlib plots.
+		
+		"""
 		
 		#Grab embryo (might need to change this if whole molecule plots)
 		currEmbryo=self.getCurrentEmbryo()
@@ -2299,10 +2473,16 @@ class pyfrp(QtGui.QMainWindow):
 		
 		self.plotTabs.setCurrentWidget(self.currTab)
 			
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#What happens when tab is changed
-	
 	def currentTabChanged(self,value):
+		
+		"""Callback if current tab is changed.
+		
+		Makes sure that widgets still have proper size by calling :py:func:`adjustCanvas`.
+		
+		Args:
+			value (int): Index of new tab.
+		
+		"""
 			
 		self.currTab=self.plotTabs.widget(value)
 		if len(self.tabAxes)>0:
@@ -2315,12 +2495,15 @@ class pyfrp(QtGui.QMainWindow):
 			self.horizontalSplitter.refresh()
 			self.currTab.setHidden(True)
 			self.currTab.setVisible(True)
+			
 			self.adjustCanvas()	
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#What happens when tab is closed
-	
 	def currentTabClosed(self,value):
+		
+		"""Callback if the current tab is closed.
+		
+		Removes widgets from bookkeeping lists and creates new dummy tab if there is no tab left.
+		"""
 			
 		self.currTab=self.plotTabs.widget(value)
 		if len(self.tabAxes)>0:
@@ -2332,10 +2515,11 @@ class pyfrp(QtGui.QMainWindow):
 		if self.plotTabs.count()==0:
 			self.createDummpyTab()
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Creates dummy tab
-	
 	def createDummpyTab(self):
+		
+		"""Creates dummy tab and adds it to plot tabs."""
+		
+		
 		self.currTab=QtGui.QWidget()
 		self.firstTab=self.plotTabs.addTab(self.currTab,"PlotTab")
 		self.plotTabs.setTabsClosable(False)
@@ -2344,14 +2528,25 @@ class pyfrp(QtGui.QMainWindow):
 	#vtk handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Create tab with vtkcanvas inside
-	
-	def createVtkTab(self,plotName=""):
+	def createVtkTab(self,plotName="",addRenderer=False):
+		
+		"""Creates VTK tab for plotting.
+		
+		Creates new tab and adds it to plotTabs.
+		
+		Keyword Args:
+			plotName (str): Name of plot displayed on tab.
+			addRenderer (bool): Adds renderer.
+			
+		Returns:
+			vtk.QVTKRenderWindowInteractor
+		
+		"""
 		
 		#Grab embryo (might need to change this if whole molecule plots)
 		currEmbryo=self.getCurrentEmbryo()
 		if currEmbryo==None:
+			QtGui.QMessageBox.critical(None, "Error","No embryo selected.",QtGui.QMessageBox.Ok | QtGui.QMessageBox.Default)
 			return
 
 		#Create tab name
@@ -2364,32 +2559,43 @@ class pyfrp(QtGui.QMainWindow):
 				nmbr=str(int(nmbr)+1)
 				tabname=nme+"#"+nmbr
 		
-		#Add new Tab
+		# New empty widget
 		self.currTab=QtGui.QWidget()
-		#self.currTab.setStyleSheet("background-color: rgb(255,0,0); margin:5px; border:1px solid rgb(0, 255, 0); ")
 		
-		self.adjustCanvas()
-		self.createVtkCanvas()
+		# Create canvas
+		self.createVtkCanvas(addRenderer=addRenderer)
 		
-		#self.tabAxes.append(self.vtkCanvas)
-		#self.tabFigs.append(None)
+		# Add to bookkeeping lists
+		self.tabAxes.append(self.vtkCanvas)
+		self.tabFigs.append(None)
 		
+		# Add tab
 		self.plotTabs.addTab(self.currTab,tabname)
 		
 		#Check for dummy plot tab
 		if self.plotTabs.tabText(0)=="PlotTab":
-		
 			self.plotTabs.removeTab(self.plotTabs.currentIndex())
 			self.plotTabs.setTabsClosable(True)
 		
+		# Set as current tab
 		self.plotTabs.setCurrentWidget(self.currTab)
+		
+		# Adjust size
+		self.adjustCanvas()
 		
 		return self.vtkCanvas
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Create vtkcanvas
-	
-	def createVtkCanvas(self):
+	def createVtkCanvas(self,addRenderer=False):
+		
+		"""Create vtk canvas.
+		
+		Keyword Args:
+			addRenderer (bool): Adds renderer.
+		
+		Returns:
+			vtk.QVTKRenderWindowInteractor
+		
+		"""
 		
 		self.vtkCanvas = QVTKRenderWindowInteractor(self.currTab)
 		self.vtkCanvas.UpdateSize(int(self.currTab.width()),int(self.currTab.height()))
@@ -2399,19 +2605,28 @@ class pyfrp(QtGui.QMainWindow):
 		
 		self.currTab.setLayout(self.vboxVTKCanvas)
 		
+		if addRenderer:
+			self.renderer=vtk.vtkRenderer()
+			self.vtkCanvas.GetRenderWindow().AddRenderer(self.renderer)
+		
 		return self.vtkCanvas
 	
-	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	#Adjust canvas if slider/splitter changes
-	
 	def adjustCanvas(self):
+		
+		"""Adjust canvas if slider/splitter changes to currently maximum size. 
+		"""
 		
 		if hasattr(self,'currTab'):
 			h=int(self.horizontalSplitter.sizes()[1])
 			v=int(self.verticalSplitter.sizes()[0])	
 			self.currTab.resize(h,v)
+		else:
+			return
 		
-		if hasattr(self,'fig'):
+		if not hasattr(self,'fig'):
+			return 
+		
+		if self.fig!=None:
 		
 			h=float(self.horizontalSplitter.sizes()[1])/float(self.dpi)
 			v=float(self.verticalSplitter.sizes()[0])/float(self.dpi)
@@ -2426,15 +2641,16 @@ class pyfrp(QtGui.QMainWindow):
 			self.fig.set_size_inches(h,v,forward=False)
 			
 			self.canvas.draw()
+			return 
 		
-		elif hasattr(self,'vtkCanvas'):
+		elif self.fig==None:
 			
 			h=int(self.horizontalSplitter.sizes()[1])
 			v=int(self.verticalSplitter.sizes()[0])
 			
 			self.vtkCanvas.UpdateSize(h,v)
-	
-		
+			return
+				
 	def setPath(self,identifier="",path=""):
 		
 		"""Opens path setting dialog and afterwards sets path in path file.
@@ -2449,7 +2665,6 @@ class pyfrp(QtGui.QMainWindow):
 		if pathDialog.exec_():
 			identifier,path = pathDialog.getPath()
 		
-		print identifier, path
 		pyfrp_misc_module.setPath(identifier,path)
 		
 	def setGmshPath(self):
@@ -2504,7 +2719,7 @@ class pyfrp(QtGui.QMainWindow):
 			return
 		
 		self.config.setPathFile(fn)
-		
+			
 	
 	##---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	##Make slider plot

@@ -486,17 +486,10 @@ def readStlFile(fn,domain=None,volSizePx=20.):
 	
 	"""
 	
-	""" NOTE: Continue here: Need something to avoid double creation of edges. Use getEdgeByVertices. Also need to write getVertexByX. 
 	
-	Then need to fuse surfaces: Idea: 
-		- Find all surfaces with same norm vector. 
-		- Loop through them for i in range(end), for j in range(i,end). When has edge in common (need sth like hasEdgeInCommon as a lineLoop/surface method)
-			Then fuse them (might need method for this too, call in the end isClosed with fix=True)
-	
-	"""
 	
 	#Load file
-	mesh=meshstl.Mesh.from_file(fn)
+	mesh=meshstl.Mesh.from_file(fn,speedups=False)
 	
 	#New domain
 	if domain==None:

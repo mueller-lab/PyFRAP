@@ -36,6 +36,14 @@ pyfrp.gui.pyfrp_gui_basics module
     :undoc-members:
     :show-inheritance:
 
+pyfrp.gui.pyfrp_gui_builder module
+----------------------------------
+
+.. automodule:: pyfrp.gui.pyfrp_gui_builder
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyfrp.gui.pyfrp_gui_embryo_dialogs module
 -----------------------------------------
 

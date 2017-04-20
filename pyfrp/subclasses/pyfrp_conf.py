@@ -122,6 +122,7 @@ class configuration:
 	
 	def setPathFile(self,fn):
 		self.pathFile=fn
+		self.copyPathFileToDefaultLocation()
 		return self.pathFile
 	
 	def copyPathFileToDefaultLocation(self):

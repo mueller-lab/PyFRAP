@@ -725,8 +725,10 @@ class zebrafishDomeStage(geometry):
 		By default, zebrafish geometry is set to range from ``-outerRadius`` to ``0``. 
 		"""
 		
-		return -self.outerRadius,0
-	
+		z=[-self.outerRadius,0]
+		
+		return min(z),max(z)
+		
 	def getXYExtend(self):
 		
 		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getXYExtend`.
@@ -770,7 +772,7 @@ class zebrafishDomeStage(geometry):
 		Useful if geometry is used to be passed to openscad.
 		
 		Returns:
-			
+			solid.solidpython.openscad_object: Solid python object. 
 		
 		"""
 		
@@ -904,8 +906,8 @@ class cylinder(geometry):
 		
 		By default, cylinder geometry is set to range from ``-height`` to ``0``. 
 		"""
-		
-		return -self.height,0
+		z=[-self.height,0]
+		return min(z),max(z)
 	
 	def getXYExtend(self):
 		
@@ -932,11 +934,12 @@ class cylinder(geometry):
 		Useful if geometry is used to be passed to openscad.
 		
 		Returns:
-			
+			solid.solidpython.openscad_object: Solid python object. 
 		
 		"""
 		
-		cylinder=solid.translate([self.center[0],self.center[1],-self.height])(solid.cylinder(r=self.radius,h=self.height))
+		z=self.getZExtend()
+		cylinder=solid.translate([self.center[0],self.center[1],min(z)])(solid.cylinder(r=self.radius,h=abs(self.height)))
 		
 		return cylinder
 	
@@ -1101,10 +1104,12 @@ class xenopusBall(geometry):
 		
 		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getZExtend`.
 		
-		By default, ball geometry is set to range from ``-imagingRadius`` to ``0``. 
+		By default, ball geometry is set to range from ``-2*imagingRadius`` to ``0``. 
 		"""
 		
-		return -self.imagingRadius,0
+		z=[-2*self.imagingRadius,0]
+		
+		return min(z),max(z)
 	
 	def getXYExtend(self):
 		
@@ -1310,8 +1315,10 @@ class cone(geometry):
 		By default, cone geometry is set to range from ``-height`` to ``0``. 
 		"""
 		
-		return -self.height,0
-
+		z=[-self.height,0]
+		
+		return min(z),max(z)
+		
 	def getXYExtend(self):
 		
 		"""Overwrites :py:func:`pyfrp.subclasses.pyfrp_geometry.geometry.getXYExtend`.
@@ -1340,15 +1347,14 @@ class cone(geometry):
 		Useful if geometry is used to be passed to openscad.
 		
 		Returns:
-			
+			solid.solidpython.openscad_object: Solid python object. 
 		
 		"""
 		
-		cone=solid.translate([self.center[0],self.center[1],-self.height])(solid.cylinder(r1=self.lowerRadius,h=self.height,r2=self.upperRadius))
+		z=self.getZExtend()
+		cone=solid.translate([self.center[0],self.center[1],min(z)])(solid.cylinder(r1=self.lowerRadius,h=self.height,r2=self.upperRadius))
 		
 		return cone
-	
-	
 	
 class custom(geometry):
 	

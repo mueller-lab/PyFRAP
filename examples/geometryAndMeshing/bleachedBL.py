@@ -87,7 +87,7 @@ sim.mesh.addBoundaryLayerAroundROI(r,fnOut=fnOut,simplify=True,iterations=3,tria
 sim.mesh.plotMesh()
 
 # Save mesh
-if len(sys.argv)>0:
+if len(sys.argv)>1:
 	sim.mesh.saveMeshToImg(sys.argv[1])
 
 raw_input("Press to quit")

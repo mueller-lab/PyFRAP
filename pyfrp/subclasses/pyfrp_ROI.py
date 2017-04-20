@@ -2478,7 +2478,7 @@ class radialROI(ROI):
 		except AttributeError:
 			printError("genAsOpenscad: Cannot grab extend from geometry of type " + self.embryo.geometry.typ)
 			
-		openScadROI=solid.translate([self.center[0],self.center[1],ext[0]])(solid.cylinder(r=self.radius,h=ext[1]-ext[0]))
+		openScadROI=solid.translate([self.center[0],self.center[1],min(ext)])(solid.cylinder(r=self.radius,h=abs(max(ext)-min(ext))))
 		return openScadROI
 		
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2622,9 +2622,11 @@ class sliceROI(ROI):
 		except AttributeError:
 			printError("genAsOpenscad: Cannot grab extend from geometry of type " + self.embryo.geometry.typ)
 		
-		zmin,zmax=self.getOpenscadZExtend()
+		z=self.getOpenscadZExtend()
 		
-		openScadROI=solid.translate([ext[0],ext[2],zmin])(solid.cube([ext[1]-ext[0],ext[3]-ext[2],zmax-zmin]))
+		zmin,zmax=min(z),max(z)
+		
+		openScadROI=solid.translate([ext[0],ext[2],zmin])(solid.cube([ext[1]-ext[0],ext[3]-ext[2],abs(zmax-zmin)]))
 		return openScadROI
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2789,9 +2791,10 @@ class radialSliceROI(sliceROI,radialROI):
 		"""
 		
 			
-		zmin,zmax=self.getOpenscadZExtend()
+		z=self.getOpenscadZExtend()
 		
-		openScadROI=solid.translate([self.center[0],self.center[1],zmin])(solid.cylinder(r=self.radius,h=zmax-zmin))
+		zmin,zmax=min(z),max(z)
+		openScadROI=solid.translate([self.center[0],self.center[1],zmin])(solid.cylinder(r=self.radius,h=abs(zmax-zmin)))
 		
 		return openScadROI
 		
@@ -3013,7 +3016,8 @@ class squareROI(ROI):
 		except AttributeError:
 			printError("genAsOpenscad: Cannot grab extend from geometry of type " + self.embryo.geometry.typ)
 			
-		openScadROI=solid.translate([self.offset[0],self.offset[1],ext[0]])(solid.cube([self.sidelength,self.sidelength,ext[1]-ext[0]]))
+		openScadROI=solid.translate([self.offset[0],self.offset[1],min(ext)])(solid.cube([self.sidelength,self.sidelength,abs(max(ext)-min(ext))]))
+		
 		return openScadROI
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3172,9 +3176,9 @@ class squareSliceROI(squareROI,sliceROI):
 		
 		"""
 		
-		zmin,zmax=self.getOpenscadZExtend()
-		
-		openScadROI=solid.translate([self.offset[0],self.offset[1],zmin])(solid.cube([self.sidelength,self.sidelength,zmax-zmin]))
+		z=self.getOpenscadZExtend()
+		zmin,zmax=min(z),max(z)
+		openScadROI=solid.translate([self.offset[0],self.offset[1],zmin])(solid.cube([self.sidelength,self.sidelength,abs(zmax-zmin)]))
 		return openScadROI
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3399,7 +3403,7 @@ class rectangleROI(ROI):
 		except AttributeError:
 			printError("genAsOpenscad: Cannot greab extend from geometry of type " + self.embryo.geometry.typ)
 			
-		openScadROI=solid.translate([self.offset[0],self.offset[1],ext[0]])(solid.cube([self.sidelengthX,self.sidelengthY,ext[1]-ext[0]]))
+		openScadROI=solid.translate([self.offset[0],self.offset[1],min(ext)])(solid.cube([self.sidelengthX,self.sidelengthY,abs(max(ext)-min(ext))]))
 		return openScadROI
 	
 	
@@ -3560,9 +3564,9 @@ class rectangleSliceROI(rectangleROI,sliceROI):
 		"""
 		
 		
-		zmin,zmax=self.getOpenscadZExtend()
-		
-		openScadROI=solid.translate([self.offset[0],self.offset[1],zmin])(solid.cube([self.sidelengthX,self.sidelengthY,zmax-zmin]))
+		z=self.getOpenscadZExtend()
+		zmin,zmax=min(z),max(z)
+		openScadROI=solid.translate([self.offset[0],self.offset[1],zmin])(solid.cube([self.sidelengthX,self.sidelengthY,abs(zmax-zmin)]))
 		return openScadROI
 	
 	
@@ -3769,8 +3773,8 @@ class polyROI(ROI):
 			printError("genAsOpenscad: Cannot greab extend from geometry of type " + self.embryo.geometry.typ)
 		
 		poly=solid.polygon(self.corners)
-		extruded=solid.linear_extrude(height = ext[1]-ext[0], center = False)(poly)
-		openScadROI=solid.translate([0,0,ext[0]])(extruded)
+		extruded=solid.linear_extrude(height = abs(max(ext)-min(ext)), center = False)(poly)
+		openScadROI=solid.translate([0,0,min(ext)])(extruded)
 		return openScadROI
 	
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3938,10 +3942,10 @@ class polySliceROI(polyROI,sliceROI):
 		
 		"""
 		
-		zmin,zmax=self.getOpenscadZExtend()
-		
+		z=self.getOpenscadZExtend()
+		zmin,zmax=min(z),max(z)
 		poly=solid.polygon(self.corners)
-		extruded=solid.linear_extrude(height = zmax-zmin, center = False)(poly)
+		extruded=solid.linear_extrude(height = abs(zmax-zmin), center = False)(poly)
 		openScadROI=solid.translate([0,0,zmin])(extruded)
 		return openScadROI
 		

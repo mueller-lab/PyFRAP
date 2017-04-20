@@ -36,6 +36,7 @@ from PyQt4 import QtGui, QtCore
 
 #PyFRAP GUI classes
 import pyfrp_gui_basics
+import pyfrp_gui_builder
 
 #PyFRAP modules
 from pyfrp.modules.pyfrp_term_module import *
@@ -73,9 +74,6 @@ class meshSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		
 		#LineEdits
 		self.qleVolSizePx = QtGui.QLineEdit(str(self.mesh.volSizePx))
-		
-		self.doubleValid=QtGui.QDoubleValidator()
-		self.intValid=QtGui.QIntValidator()
 		
 		self.qleVolSizePx.setValidator(self.doubleValid)
 		
@@ -341,7 +339,7 @@ class forceMeshSettingsDialog(basicForceMeshSettingsDialog):
 		self.done(1)
 
 #===================================================================================================================================
-#Dialogs for forcing mesh density progress
+#Dialogs for refining single ROI by box mesh
 #===================================================================================================================================
 
 class refineROIMeshSettingsDialog(basicForceMeshSettingsDialog):
@@ -395,13 +393,171 @@ class refineROIMeshSettingsDialog(basicForceMeshSettingsDialog):
 			self.roiUsed.refineInMeshByField(factor=self.factor,addZ=self.addZ,findIdxs=self.findIdxs,debug=self.debug)
 		
 		self.done(1)
+
+
+#===================================================================================================================================
+#Dialogs for BL mesh
+#===================================================================================================================================
+
+class boundaryLayerAroundROISettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 	
+	def __init__(self,embryo,parent):
+		
+		super(boundaryLayerAroundROISettingsDialog,self).__init__(parent)
+	
+		# Set default variables
+		self.embryo=embryo
+		self.initDefaults()
+		
+		# Generate all widgets
+		self.lblSegments,self.qleSegments = pyfrp_gui_builder.genSettingQLE(self,"Segments",self.segments,callback=self.setSegments,validator=self.intValid)
+		self.lblIter,self.qleIter = pyfrp_gui_builder.genSettingQLE(self,"Iterations",self.iterations,callback=self.setIter,validator=self.intValid)
+		self.lblTriangIter,self.qleTriangIter = pyfrp_gui_builder.genSettingQLE(self,"triangIterations",self.triangIterations,callback=self.setTriangIter,validator=self.intValid)
+		self.lblVolSizePx,self.qleVolSizePx = pyfrp_gui_builder.genSettingQLE(self,"volSizePx",self.volSizePx,callback=self.setVolSizePx,validator=self.doubleValid)
+		self.lblVolSizeLayer,self.qleVolSizeLayer = pyfrp_gui_builder.genSettingQLE(self,"volSizeLayer",self.volSizeLayer,callback=self.setVolSizeLayer,validator=self.doubleValid)
+		self.lblThickness,self.qleThickness = pyfrp_gui_builder.genSettingQLE(self,"thickness",self.thickness,callback=self.setThickness,validator=self.doubleValid)
+		self.lblAngleThresh,self.qleAngleThresh = pyfrp_gui_builder.genSettingQLE(self,"angleThresh",self.angleThresh,callback=self.setAngleThresh,validator=self.doubleValid)
+		self.lblFaces,self.qleFaces = pyfrp_gui_builder.genSettingQLE(self,"Faces",self.faces,callback=self.setFaces,validator=None)
+		self.lblFnOut,self.btnFnOut = pyfrp_gui_builder.genSettingBtn(self,"fnOut","Change",callback=self.setFnOut)
+		
+		self.lblOnlyAbs,self.cbOnlyAbs = pyfrp_gui_builder.genSettingCB(self,"onlyAbs",self.onlyAbs,callback=self.checkOnlyAbs)
+		self.lblSimplify,self.cbSimplify = pyfrp_gui_builder.genSettingCB(self,"simplify",self.simplify,callback=self.checkSimplify)
+		self.lblFixSurf,self.cbFixSurf = pyfrp_gui_builder.genSettingCB(self,"fixSurfaces",self.fixSurfaces,callback=self.checkFixSurf)
+		self.lblApproxBySpline,self.cbApproxBySpline = pyfrp_gui_builder.genSettingCB(self,"approxBySpline",self.approxBySpline,callback=self.checkApproxBySpline)
+		self.lblDebug,self.cbDebug = pyfrp_gui_builder.genSettingCB(self,"debug",self.debug,callback=self.checkDebug)
+		self.lblCleanUp,self.cbCleanUp = pyfrp_gui_builder.genSettingCB(self,"cleanUp",self.cleanUp,callback=self.checkCleanUp)
+		
+		self.lblROI,self.comboROI = pyfrp_gui_builder.genSettingCombo(self,"ROI",pyfrp_misc_module.objAttrToList(self.embryo.ROIs,"name"),callback=self.setROI,idx=self.embryo.getROIIdx(self.roiUsed))
+		
+		
+		# Put them in list 
+		lbls1 = [self.lblROI,self.lblFaces,self.lblOnlyAbs,self.lblFnOut]
+		qles1 = [self.comboROI,self.qleFaces,self.cbOnlyAbs,self.btnFnOut]
+		lbls2 = [self.lblVolSizePx,self.lblVolSizeLayer,self.lblThickness]
+		qles2 = [self.qleVolSizePx,self.qleVolSizeLayer,self.qleThickness]
+		lbls3 = [self.lblSegments,self.lblIter,self.lblTriangIter]
+		qles3 = [self.qleSegments,self.qleIter,self.qleTriangIter]
+		lbls4 = [self.lblSimplify,self.lblFixSurf,self.lblApproxBySpline,self.lblAngleThresh]
+		qles4 = [self.cbSimplify,self.cbFixSurf,self.cbApproxBySpline,self.qleAngleThresh]
+		lbls5 = [self.lblDebug,self.lblCleanUp]
+		qles5 = [self.cbDebug,self.cbCleanUp]
+		
+		lbls=[lbls1,lbls2,lbls3,lbls4,lbls5]
+		qles=[qles1,qles2,qles3,qles4,qles5]
+		
+		# Add to Layout
+		nRows=self.grid.rowCount()
+		for i in range(len(lbls)):
+			for j in range(len(lbls[i])):
+				self.grid.addWidget(lbls[i][j],nRows+j+1,(2*i))
+				self.grid.addWidget(qles[i][j],nRows+j+1,(2*i+1))
+			
+		self.setWindowTitle("Boundary Layer Mesh around ROI settings")
+		
+		self.show()
+	
+	def initDefaults(self):
+		
+		"""Sets default parameters that are generally passed on."""
+		
+		self.segments=48
+		self.simplify=True
+		self.iterations=3
+		self.triangIterations=2
+		self.fixSurfaces=True
+		self.debug=False
+		self.volSizePx=self.embryo.simulation.mesh.getVolSizePx()
+		self.thickness=15.
+		self.volSizeLayer=self.volSizePx/2.
+		self.cleanUp=True
+		self.approxBySpline=True
+		self.angleThresh=0.95
+		self.faces=['x','y']
+		self.onlyAbs=True
+		self.fnOut=self.embryo.geometry.fnGeo.replace(".geo","_BL.geo")
+		
+		self.roiUsed=self.embryo.getROIByName("All Square")
+		if self.roiUsed==None:
+			self.roiUsed=self.embryo.ROIs[0]
+		
+	def setSegments(self):
+		self.segments=int(str(self.qleSegments.text()))
+	
+	def setIter(self):
+		self.iterations=int(str(self.qleIter.text()))
+	
+	def setTriangIter(self):
+		self.triangIterations=int(str(self.qleTriangIter.text()))
+	
+	def setVolSizePx(self):
+		self.volSizePx=float(str(self.qleVolSizePx.text()))
+	
+	def setVolSizeLayer(self):
+		self.volSizeLayer=float(str(self.qleVolSizeLayer.text()))
+	
+	def setThickness(self):
+		self.thickness=float(str(self.qleThickness.text()))
+	
+	def setAngleThresh(self):
+		self.angleThresh=float(str(self.qleAngleThresh.text()))
+	
+	def setFaces(self):
+		text==str(self.qleFaces.text())
+		if text=="all":
+			self.faces=text
+			return
+		
+		try:
+			self.faces=pyfrp_misc_module.str2list(text,dtype="float")[0]
+			return 
+		except ValueError:
+			try:
+				self.faces=pyfrp_misc_module.str2list(text,dtype="str")[0]
+				return
+			except:
+				pass
+		
+		printError("Wasn't able to set faces for input: " + text)
+	
+	def checkApproxBySpline(self,val):
+		self.approxBySpline=bool(2*val)
+	
+	def checkDebug(self,val):
+		self.debug=bool(2*val)
+	
+	def checkCleanUp(self,val):
+		self.cleanUp=bool(2*val)
+	
+	def checkSimplify(self,val):
+		self.simplify=bool(2*val)
+	
+	def checkOnlyAbs(self,val):
+		self.onlyAbs=bool(2*val)
+	
+	def checkFixSurf(self,val):
+		self.fixSurfaces=bool(2*val)
+	
+	def setROI(self):
+		self.roiUsed=self.embryo.ROIs[int(self.comboROI.currentIndex())]
+	
+	def setFnOut(self):
+		
+		fn=QtGui.QFileDialog.getSaveFileName(self, 'Path to boundary layer geo file', self.fnOut,"*.geo",)
+		self.fnOut=str(fn)
+		
+	def getVals(self):
+		return self.fnOut,self.roiUsed,self.segments,self.simplify,self.iterations,self.triangIterations,self.fixSurfaces,self.debug,self.volSizePx,self.thickness,self.volSizeLayer,self.cleanUp,self.approxBySpline,self.angleThresh,self.faces,self.onlyAbs
+		
+	def donePressed(self):
+		if self.roiUsed==None:
+			printWarning("No ROI selected. Please select ROI first.")
+		else:
+			self.done(1)	
 			
 #===================================================================================================================================
 #Dialogs for forcing mesh density progress
 #===================================================================================================================================
 
-	
 class forceMeshProgressDialog(pyfrp_gui_basics.waitDialog):
 	
 	def __init__(self,parent):
@@ -412,6 +568,19 @@ class forceMeshProgressDialog(pyfrp_gui_basics.waitDialog):
 		
 		#Window title
 		self.setWindowTitle('Mesh density enforcing')
+		    
+		self.show()	
+
+class boundaryLayerProgressDialog(pyfrp_gui_basics.waitDialog):
+	
+	def __init__(self,parent):
+		super(boundaryLayerProgressDialog,self).__init__(parent)
+		
+		#Labels
+		self.lblName.setText("Boundary layer meshing in progress...")
+		
+		#Window title
+		self.setWindowTitle('Boundary layer meshing')
 		    
 		self.show()	
 
