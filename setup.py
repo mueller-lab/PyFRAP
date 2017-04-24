@@ -509,7 +509,7 @@ class OverrideInstall(install):
 		except OSError:
 			log.info('Was not able to create directory pyfrp/executables')
 	
-	def addPathToWinPATHs(path):
+	def addPathToWinPATHs(self,path):
 	
 		"""Adds a path to Windows' PATH list. 
 		
