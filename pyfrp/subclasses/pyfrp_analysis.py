@@ -874,8 +874,7 @@ class analysis:
 		from an image should always lead to positive pixel values. Thus the offset is 
 		computed by
 		
-		.. math:: offset = max\{ o_{\mathrm{min},\mathrm{data}},o_{\mathrm{min},\mathrm{flatten}}
-		   ,o_{\mathrm{min},\mathrm{pre}},o_{\mathrm{min},\mathrm{bkgd}}\}
+		.. math:: offset = max\{ o_{\mathrm{min},\mathrm{data}},o_{\mathrm{min},\mathrm{flatten}},o_{\mathrm{min},\mathrm{pre}},o_{\mathrm{min},\mathrm{bkgd}}\}
 		
 		where :math:`o_{\mathrm{min},d}` is the minimum pixel values of all images in dataset 
 		:math:`d`.

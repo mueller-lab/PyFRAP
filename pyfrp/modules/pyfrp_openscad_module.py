@@ -56,7 +56,7 @@ import os
 #Module functions
 #===========================================================================================================================================================================
 
-def runOpenscad(fn,fnOut=None):
+def runOpenscad(fn,fnOut=None,debug=False):
 	
 	"""Runs openscad to convert scad file to stl file.
 	
@@ -79,7 +79,11 @@ def runOpenscad(fn,fnOut=None):
 	if fnOut==None:
 		fnOut=fn.replace(".scad",".stl")
 	
-	cmd="openscad -o " + fnOut+" "+fn
+	cmd=openscadBin+" -o " + fnOut+" "+fn
+	
+	if debug:
+		printNote("Running: "+cmd)
+	
 	os.system(cmd)
 	
 	return fnOut
