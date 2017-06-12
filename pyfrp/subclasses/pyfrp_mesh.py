@@ -245,8 +245,12 @@ class mesh(object):
 			
 		"""
 		
-		dim=self.simulation.embryo.geometry.getDim()
-		
+		try:
+			dim=self.simulation.embryo.geometry.getDim()
+		except AttributeError:
+			printWarning("Was not able to receive geometry's dimension. Will assume dim=3.")
+			dim=3 
+			
 		if dim==3:
 			self.mesh=fipy.GmshImporter3D(fn)
 		elif dim==2:
@@ -569,7 +573,11 @@ class mesh(object):
 		else:
 			grid=pyfrp_vtk_module.meshToUnstructeredGrid(self.mesh)
 			renderer = pyfrp_vtk_module.unstructedGridToWireframe(grid,bkgdColor=bkgd,color=color,renderer=renderer)
-		
+			renderer, renderWindow, renderWindowInteractor = pyfrp_vtk_module.makeVTKCanvas(offScreen=False,bkgd=bkgd,renderer=renderer)
+			
+			#rendererWindow=renderer.GetRenderWindow()
+			#print rendererWindow
+			
 		# Create renderWindow
 		if renderWindow==None:
 			renderer, renderWindow, renderWindowInteractor = pyfrp_vtk_module.makeVTKCanvas(offScreen=False,bkgd=bkgd,renderer=renderer)
@@ -578,11 +586,13 @@ class mesh(object):
 			# Errors.
 			##renderWindow.OffScreenRenderingOn() 
 				
-			#Start
-			renderWindow.GetInteractor().Initialize()
-			renderWindow.GetInteractor().Start()
-		
-		return renderer
+		#Start
+		renderWindow.GetInteractor().Initialize()
+		renderWindow.GetInteractor().Start()
+			
+			#print rendererWindow
+			
+		return renderWindow
 	
 	def saveMeshToPS(self,fnOut,fnVTK="",renderer=None):
 		
@@ -666,16 +676,17 @@ class mesh(object):
 		
 		"""
 		
+		from pyfrp.modules import pyfrp_vtk_module
+		
 		#Plot again if necessary
 		if renderer==None:
 			if show:
 				rendererWindow=self.plotMesh(fnVTK=fnVTK)
+				print "before save"
 				renderer=rendererWindow.GetRenderers().GetFirstRenderer()
 			else:
 				renderer=self.importVTKFile(fnVTK=fnVTK)
-				printWarning("Currently this option leads to segmentation faults. Should be fixed in further version.")
-					
-	
+				
 		return pyfrp_vtk_module.saveRendererToImg(renderer,fnOut,magnification=magnification)
 	
 	def printStats(self,tetLenghts=False):

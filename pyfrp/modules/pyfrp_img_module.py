@@ -894,8 +894,11 @@ def gaussianFilter(img,sigma=2.,debug=False,axes=None):
 	orgImg=img.copy()
 	
 	#Apply gaussian filter
-	img = skifilt.gaussian_filter(img,sigma)
-	
+	try:
+		img = skifilt.gaussian_filter(img,sigma)
+	except AttributeError:
+		img = skifilt.gaussian(img,sigma)
+		
 	#Debugging plots
 	if debug:
 		

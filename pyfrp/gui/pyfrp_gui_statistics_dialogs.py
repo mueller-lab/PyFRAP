@@ -61,7 +61,6 @@ class fitSelector(pyfrp_gui_basics.listSelectorDialog):
 		
 		self.singleFit=singleFit
 		
-		
 		pyfrp_gui_basics.listSelectorDialog.__init__(self,parent,[],leftTitle="Available Fits",rightTitle="Selected Fits")
 		
 		
@@ -74,26 +73,31 @@ class fitSelector(pyfrp_gui_basics.listSelectorDialog):
 	
 	def initLeftList(self):
 		
-		for emb in self.molecule.embryos:
-			#if emb.isFitted():s
+		"""Sets up left list of selector."""
+		
+		for emb in self.molecule.embryos:	
+			
 			self.currEmbryoNode=QtGui.QTreeWidgetItem(self.leftList,[emb.name])
 				
 			for fit in emb.fits:
 				if fit.isFitted():
-					QtGui.QTreeWidgetItem(self.currEmbryoNode,[fit.name])
+					if fit not in self.molecule.selFits:
+						QtGui.QTreeWidgetItem(self.currEmbryoNode,[fit.name])
 			
 			self.leftList.expandItem(self.currEmbryoNode)
-
+			
 	def initRightList(self):
+		
+		"""Sets up right list of selector."""
 		
 		for fit in self.molecule.selFits:
 			
 			if fit.embryo not in self.embryosInRightList:
-				self.currEmbryoNode=QtGui.QTreeWidgetItem(self.leftList,[fit.embryo.name])
+				self.currEmbryoNode=QtGui.QTreeWidgetItem(self.rightList,[fit.embryo.name])
 				self.embryosInRightList.append(fit.embryo)
 				
 				QtGui.QTreeWidgetItem(self.currEmbryoNode,[fit.name])
-				fitsInRightList.append(fit)
+				self.fitsInRightList.append(fit)
 	
 	def addItem(self):
 		
@@ -126,6 +130,12 @@ class fitSelector(pyfrp_gui_basics.listSelectorDialog):
 					self.fitsInRightList.append(self.currFit)
 					newNode=QtGui.QTreeWidgetItem(self.currTargetEmbryoNode,[self.currFit.name])
 					self.rightList.expandItem(self.currTargetEmbryoNode)
+					
+					# Remove in left list
+					#self.leftList.removeItemWidget(self.currFitNode,0)
+					ind=self.currEmbryoNode.indexOfChild(self.leftList.currentItem())
+					self.currEmbryoNode.takeChild(ind)
+					#self.currEmbryoNode.takeChild()
 				
 			else:
 				
@@ -140,14 +150,27 @@ class fitSelector(pyfrp_gui_basics.listSelectorDialog):
 		
 
 	def removeItem(self):
+		
+		"""Removes item from right list."""
+		
+		# Get selection
 		self.getRightSelections()
+		
+		# Check selection
 		if self.rightList.currentItem()==None or self.rightList.currentItem().parent()==None:
 			QtGui.QMessageBox.critical(None, "Error","No fit selected.",QtGui.QMessageBox.Ok | QtGui.QMessageBox.Default)
 			return
 		else:
+			
+			# Remove
 			ind=self.currEmbryoNode.indexOfChild(self.rightList.currentItem())
 			self.currEmbryoNode.takeChild(ind)
 			self.fitsInRightList.remove(self.currFit)
+			
+			# Add to left list
+			self.getLeftInd(embryoName=self.currFit.embryo.name)
+			QtGui.QTreeWidgetItem(self.currTargetEmbryoNode,[self.currFit.name])
+			
 	
 	def getLeftSelections(self):
 		
@@ -199,20 +222,20 @@ class fitSelector(pyfrp_gui_basics.listSelectorDialog):
 						
 	def getLeftInd(self,embryoName=None,fitName=None):	
 		if embryoName!=None:
-			self.currTargetEmbryoNode=self.leftList.findItems(embryoName,Qt.MatchExactly,0)
+			self.currTargetEmbryoNode=self.leftList.findItems(embryoName,QtCore.Qt.MatchExactly,0)
 			self.currTargetEmbryoNode=self.currTargetEmbryoNode[0]
 		if fitName!=None:
-			self.currTargetFit_node=self.leftList.findItems(fitName,Qt.MatchExactly,0)
+			self.currTargetFit_node=self.leftList.findItems(fitName,QtCore.Qt.MatchExactly,0)
 			for fit in self.currEmbryo.fits:
 				if fit.name==fitName:
 					self.currTargetFit=fit
 				
 	def getRightInd(self,embryoName=None,fitName=None):	
 		if embryoName!=None:
-			self.currTargetEmbryoNode=self.rightList.findItems(embryoName,Qt.MatchExactly,0)
+			self.currTargetEmbryoNode=self.rightList.findItems(embryoName,QtCore.Qt.MatchExactly,0)
 			self.currTargetEmbryoNode=self.currTargetEmbryoNode[0]
 		if fitName!=None:
-			self.currTargetFit_node=self.rightList.findItems(fitName,Qt.MatchExactly,0)
+			self.currTargetFit_node=self.rightList.findItems(fitName,QtCore.Qt.MatchExactly,0)
 			for fit in self.currEmbryo.fits:
 				if fit.name==fitName:
 					self.currTargetFit=fit

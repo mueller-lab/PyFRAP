@@ -34,6 +34,7 @@ to assess overall measurement statistics.
 
 #Numpy
 import numpy as np
+import scipy
 
 #===========================================================================================================================================================================
 #Module Functions
@@ -584,11 +585,157 @@ def computeAkaikeWeights(AICs):
 	
 	return weights
 
-
+def wilcoxonTest(x,y,zero_method='wilcox', correction=False,printOut=True):
+	
+	"""Performs wilcoxon test between two groups.
+	
+	See also https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.wilcoxon.html
+	
+	Args:
+		x (list): First group.
+		y (list): Second group.
 		
+	Keyword Args:
+		zero_method (str): Treatment of zeros.
+		correction (bool): Apply continuety correction.
+		printOut (bool): Print out results.
 	
+	Returns:
+		tuple: Tuple containing:
+		
+			* stat (float): Sum of ranks.
+			* val (float): p-Value.
+			
+	"""
 	
+	stat,pval=scipy.stats.wilcoxon(x, y=y, zero_method=zero_method, correction=correction)
 	
+	if printOut:
+		print "Results of Wilcoxon-Test:"
+		print "p-Value: ", pval
+		print "Wilcoxon-Statistics:", stat
+	
+	return stat,pval
+
+def mannWhitneyUTest(x,y,printOut=True):
+	
+	"""Performs Mann-Whitney-U test between two groups.
+	
+	See also https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.mannwhitneyu.html#scipy.stats.mannwhitneyu
+	
+	Args:
+		x (list): First group.
+		y (list): Second group.
+		
+	Keyword Args:
+		printOut (bool): Print out results.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* stat (float): Mann-Whitney statistics.
+			* val (float): p-Value.
+			
+	"""
+	
+	stat,pval=scipy.stats.mannwhitneyu(x, y)
+	
+	if printOut:
+		print "Results of Mann-Whitney-U-Test:"
+		print "p-Value: ", pval
+		print "U-Statistics:", stat
+	
+	return stat,pval
+
+def tTestStandard(x,y,printOut=True):
+	
+	"""Performs standard t-test between two groups.
+	
+	See also https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.ttest_ind.html#scipy.stats.ttest_ind
+	
+	Args:
+		x (list): First group.
+		y (list): Second group.
+		
+	Keyword Args:
+		printOut (bool): Print out results.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* stat (float): Test statistics.
+			* val (float): p-Value.
+			
+	"""
+	
+	stat,pval=scipy.stats.ttest_ind(x, y, equal_var=True)
+	
+	if printOut:
+		print "Results of Standard t-Test:"
+		print "p-Value: ", pval
+		print "Statistics:", stat
+		
+	return stat,pval
+	
+def tTestWelch(x,y,printOut=True):
+	
+	"""Performs Welch's t-test between two groups.
+	
+	See also https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.ttest_ind.html#scipy.stats.ttest_ind
+	
+	Args:
+		x (list): First group.
+		y (list): Second group.
+		
+	Keyword Args:
+		printOut (bool): Print out results.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* stat (float): Test statistics.
+			* val (float): p-Value.
+			
+	"""
+	
+	stat,pval=scipy.stats.ttest_ind(x, y, equal_var=False)
+	
+	if printOut:
+		print "Results of Welch's t-Test:"
+		print "p-Value: ", pval
+		print "Statistics:", stat	
+	
+	return stat,pval
+	
+def shapiroTest(x,printOut=True):
+	
+	"""Performs shapiro test to test group for normality.
+	
+	See also https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.shapiro.html#scipy.stats.shapiro
+	
+	Args:
+		x (list): Data.
+		
+	Keyword Args:
+		printOut (bool): Print out results.
+	
+	Returns:
+		tuple: Tuple containing:
+		
+			* stat (float): Test statistic.
+			* val (float): p-Value.
+			
+	"""
+
+	stat,pval=scipy.stats.sharipo(x)
+	
+	if printOut:
+		print "Results of Sharipo-Test:"
+		print "p-Value: ", pval
+		print "Statistics:", stat
+	
+	return stat,pval
+
 	
 	
 	

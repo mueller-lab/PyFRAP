@@ -96,14 +96,17 @@ def makeVTKCanvas(offScreen=False,bkgd=[1,1,1],renderer=None):
 
 	return renderer, renderWindow, renderWindowInteractor
 
-def renderVTK(renderer):
+def renderVTK(renderer,start=True):
 	
 	"""Renders everything contained in renderWindow
 	and starts Interactor.
 	
 	Args:
 		renderer (vtk.vtkRenderer): A renderer.
-		
+	
+	Keyword Args:
+		start (bool): Start interactor.
+	
 	Returns:
 		vtk.vtkRenderer: Renderer.
 	
@@ -213,7 +216,7 @@ def drawVTKSphere(center,radius,color=[0,0,0],renderer=None):
 		
 	return actor
 
-def drawVTKLine(p1,p2,color=[0,0,0],renderer=None):
+def drawVTKLine(p1,p2,color=[0,0,0],linewidth=1,renderer=None):
 	
 	"""Draws VTK line object going from point 1 to point 2 into renderer.
 	
@@ -234,7 +237,7 @@ def drawVTKLine(p1,p2,color=[0,0,0],renderer=None):
 	
 	line=getVTKLine(p1,p2)
 	
-	actor=getVTKActor(color)
+	actor=getVTKActor(color,linewidth=linewidth)
 	actor.SetMapper(getVTKPolyDataMapper(getVTKOutput(line)))
 	
 	if renderer!=None:
@@ -261,7 +264,7 @@ def getVTKLine(p1,p2):
 	
 	return line
 
-def drawVTKArc(pStart,pCenter,pEnd,color=[0,0,0],renderer=None,res=32):
+def drawVTKArc(pStart,pCenter,pEnd,color=[0,0,0],renderer=None,res=32,linewidth=1):
 	
 	"""Draws VTK arc object defined through 3 points into renderer.
 	
@@ -271,7 +274,8 @@ def drawVTKArc(pStart,pCenter,pEnd,color=[0,0,0],renderer=None,res=32):
 		pStart (numpy.ndarray): Coordinate of start point.
 		pCenter (numpy.ndarray): Coordinate of center point.
 		pEnd (numpy.ndarray): Coordinate of end point.
-	
+		linewidth (float): Line width.
+		
 	Keyword Args:
 		color (list): Color of sphere in normed RGB values.
 		renderer (vtk.vtkRenderer): Renderer to draw in.
@@ -284,7 +288,7 @@ def drawVTKArc(pStart,pCenter,pEnd,color=[0,0,0],renderer=None,res=32):
 	
 	arc=getVTKArc(pStart,pCenter,pEnd,res=res)
 	
-	actor=getVTKActor(color)
+	actor=getVTKActor(color,linewidth=linewidth)
 	actor.SetMapper(getVTKPolyDataMapper(getVTKOutput(arc)))
 	
 	if renderer!=None:
@@ -300,7 +304,8 @@ def getVTKArc(pStart,pCenter,pEnd,res=32):
 		pStart (numpy.ndarray): Coordinate of start point.
 		pCenter (numpy.ndarray): Coordinate of center point.
 		pEnd (numpy.ndarray): Coordinate of end point.
-	
+		
+		
 	Keyword Args:
 		res (int): Resolution of arc.
 		
@@ -317,7 +322,7 @@ def getVTKArc(pStart,pCenter,pEnd,res=32):
 	
 	return arc
 
-def drawVTKPolyLine(pts,closed=False,color=[0,0,0],renderer=None):
+def drawVTKPolyLine(pts,closed=False,color=[0,0,0],renderer=None,linewidth=1):
 	
 	"""Draws VTK polyLine object defined through points into renderer.
 	
@@ -325,6 +330,7 @@ def drawVTKPolyLine(pts,closed=False,color=[0,0,0],renderer=None):
 	
 	Args:
 		pts (list): Coordinates of points.
+		linewidth (float): Line width.
 	
 	Keyword Args:
 		color (list): Color of sphere in normed RGB values.
@@ -338,7 +344,7 @@ def drawVTKPolyLine(pts,closed=False,color=[0,0,0],renderer=None):
 	
 	poly=getVTKPolyLine(pts,closed=closed)
 	
-	actor=getVTKActor(color)
+	actor=getVTKActor(color,linewidth=linewidth)
 	actor.SetMapper(getVTKPolyDataMapper(poly))
 	
 	if renderer!=None:
@@ -346,12 +352,13 @@ def drawVTKPolyLine(pts,closed=False,color=[0,0,0],renderer=None):
 	
 	return actor
 
-def getVTKPolyLine(pts,closed=False):
+def getVTKPolyLine(pts,closed=False,linewidth=1):
 	
 	"""Returns VTK polyLine object defined through points.
 	
 	Args:
 		pts (list): Coordinates of points.
+		linewidth (float): Line width.
 		
 	Keyword Args:
 		closed (bool): Close line.
@@ -381,7 +388,7 @@ def getVTKPolyLine(pts,closed=False):
 	
 	return polygon
 	
-def getVTKActor(color):
+def getVTKActor(color,linewidth=1):
 	
 	"""Returns VTK actor object and colors it.
 	
@@ -389,7 +396,8 @@ def getVTKActor(color):
 	
 	Args:
 		color (list): Color of sphere in normed RGB values.
-	
+		linewidth (float): Line width.
+		
 	Returns:
 		vtk.vtkActor: VTK actor.
 	
@@ -399,6 +407,7 @@ def getVTKActor(color):
 	
 	actor = vtk.vtkActor()
 	actor.GetProperty().SetColor(color[0],color[1],color[2])
+	actor.GetProperty().SetLineWidth(linewidth)
 	
 	return actor
 	

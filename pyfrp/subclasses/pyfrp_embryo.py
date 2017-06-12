@@ -1169,6 +1169,97 @@ class embryo:
 		
 		return self.ROIs
 	
+	def genMinimalROIs(self,center,radius,rimFactor=0.66,masterROI=None,bleachedROI=None,rimROI=None,sliceHeightPx=None,clean=True):
+		
+		"""Creates a minimal standard set of ROI objects and adds them to ``ROIs`` list.
+		
+		The set of ROIs covers the generally most useful ROIs used for FRAP experiments, providing already all the settings
+		that PyFRAP uses for rim computation etc.
+		
+		ROIs contain:
+		
+			* Slice: ROI covering all pixels and mesh nodes inside recorded field of view. :py:class:`pyfrp.subclasses.pyfrp_ROI.radialSliceROI`
+			* Slice rim: ROI covering all pixels that are not used for rim concentration computation. :py:class:`pyfrp.subclasses.pyfrp_ROI.radialSliceROI`
+			* Rim: ROI covering all pixels that are used for rim concentration computation. :py:class:`pyfrp.subclasses.pyfrp_ROI.customROI`
+			* Bleached Square: ROI covering all pixels and mesh nodes inside bleached region and imaging slice. :py:class:`pyfrp.subclasses.pyfrp_ROI.squareSliceROI`
+			
+		.. note:: Will automatically set ``Slice`` as ``masterROI``.
+		
+		.. note:: If ``masterROI`` is given, will use this ROI instead of *Slice* as master ROI via :py:func:`setMasterROIIdx`. Will not create *Slice* at all. 
+		   If ``masterROI`` is not in ``ROIs`` list yet, it will be automatically added to the list. 
+		
+		.. note:: If ``bleachedROI`` is given, will use this ROI instead of *Bleached Square*. Will generate copy of ``bleachedROI`` to generate *All Square* type 
+		   ROI.
+		
+		.. note:: If ``rimROI`` is given, *Slice rim* is not created, and ``rimROI`` is used instead. 
+		
+		.. note:: If ``sliceHeightPx`` is given, will create ROIs *Slice*, *Out*, *Bleached Square* and *Rim* at this height, otherwise will use value stored in ``embryo.sliceHeightPx``.
+		
+		Args:	
+			center (list): Center of circle defining imaging slice.
+			radius (float): Radius of circle defining imaging slice.
+			
+		Keyword Args:	
+			rimFactor (float): Factor describing percentage of imaging slice excluded from rim computation.
+			sliceHeightPx (float): Height of slice ROI in px.
+			clean (bool): Will remove all ROIs from embryo object before creating new ones.
+			masterROI (pyfrp.subclasses.pyfrp_ROI.ROI): ROI that is supposed to be used as a masterROI.
+			bleachedROI (pyfrp.subclasses.pyfrp_ROI.ROI): ROI that is supposed to be used to indicate the bleached region.
+			rimROI (pyfrp.subclasses.pyfrp_ROI.ROI): ROI that is substracted from *Slice*. Should lie withing *Slice*.
+			
+		Returns:
+			list: Updated list of ROIs.
+		
+
+		"""
+		
+		#Clean up if necessary
+		if clean:
+			self.ROIs=[]
+			
+		#Add masterROI and bleachedROI to ROIs list if they are given (necessary such that getFreeROIId works)
+		if masterROI!=None and masterROI not in self.ROIs:
+			self.ROIs.append(masterROI)
+		if bleachedROI!=None and bleachedROI not in self.ROIs:
+			self.ROIs.append(bleachedROI)
+		if rimROI!=None and rimROI not in self.ROIs:
+			self.ROIs.append(rimROI)
+		
+		#Check if sliceHeight is given
+		if sliceHeightPx==None:
+			sliceHeightPx=self.sliceHeightPx
+					
+		#Create Slice
+		if masterROI!=None:
+			sl=masterROI
+			self.setMasterROIIdx(self.getROIIdx(sl))
+			if sl.getName()!="Slice":
+				printWarning("masterROI is not named Slice, this might lead to problems.")
+				
+		else:
+			sl=self.newRadialSliceROI("Slice",self.getFreeROIId(),center,radius,sliceHeightPx,self.sliceWidthPx,self.sliceBottom,color='g',asMaster=True)
+		
+		#Create Rim
+		if rimROI!=None:
+			sl2=rimROI
+		else:
+			sl2=self.newRadialSliceROI("Slice rim",self.getFreeROIId(),center,rimFactor*radius,sliceHeightPx,self.sliceWidthPx,self.sliceBottom,color='y')
+		 
+		rim=self.newCustomROI("Rim",self.getFreeROIId(),color='m')
+		rim.addROI(sl,1)
+		rim.addROI(sl2,-1)
+		rim.setUseForRim(True)
+		
+		#Create Bleached Square
+		if bleachedROI!=None:
+			squ=bleachedROI
+			if squ.getName()!="Bleached Square":
+				printWarning("Bleached ROI is not named Bleached Square, this might lead to problems.")
+		else:	
+			squ=self.newSquareSliceROI("Bleached Square",self.getFreeROIId(),self.offsetBleachedPx,self.sideLengthBleachedPx,sliceHeightPx,self.sliceWidthPx,self.sliceBottom,color='b')
+		
+		return self.ROIs
+	
 	def getROIs(self):
 		
 		"""Returns ``ROIs`` list."""

@@ -50,6 +50,8 @@ from pyfrp.modules.pyfrp_term_module import *
 from pyfrp.modules import pyfrp_misc_module
 from pyfrp.modules import pyfrp_IO_module
 from pyfrp.modules import pyfrp_plot_module
+from pyfrp.modules import pyfrp_stats_module
+
 
 #PyFRAP GUIs
 from pyfrp.gui import pyfrp_gui_molecule_dialogs
@@ -544,7 +546,6 @@ class pyfrp(QtGui.QMainWindow):
 		self.mbFitting.addAction(performFitButton)
 		self.mbFitting.addAction(printFitButton)
 		
-		
 		self.plotFittingMB=self.mbFitting.addMenu('&Plotting')
 		self.plotFittingMB.addAction(plotFitButton)
 		
@@ -564,9 +565,40 @@ class pyfrp(QtGui.QMainWindow):
 		summarizeMoleculeButton = QtGui.QAction('Summarize Molecule', self)
 		self.connect(summarizeMoleculeButton, QtCore.SIGNAL('triggered()'), self.summarizeMolecule)
 		
+		tTest  = QtGui.QAction('Perform standard t-test', self)
+		self.connect(tTest, QtCore.SIGNAL('triggered()'), self.performtTest)
+		
+		tTestWelch  = QtGui.QAction('Perform Welchs t-test', self)
+		self.connect(tTestWelch, QtCore.SIGNAL('triggered()'), self.performtTestWelch)
+		
+		wilcoxonTest  = QtGui.QAction('Perform Wilcoxon test', self)
+		self.connect(wilcoxonTest, QtCore.SIGNAL('triggered()'), self.performWilcoxon)
+		
+		mannWhitneyUTest  = QtGui.QAction('Perform Mann-Whitney-U test', self)
+		self.connect(mannWhitneyUTest, QtCore.SIGNAL('triggered()'), self.performMannWhitneyUTest)
+		
+		shapiroTest  = QtGui.QAction('Perform Shaprio test', self)
+		self.connect(shapiroTest, QtCore.SIGNAL('triggered()'), self.performShapiroTest)
+		
+		AIC  = QtGui.QAction('Perform Akaike Information Criterion', self)
+		self.connect(AIC, QtCore.SIGNAL('triggered()'), self.performAIC)
+		
+			
 		self.mbStatistics.addAction(selectFitsButton)
 		self.mbStatistics.addAction(selectCrucialParametersButton)
 		self.mbStatistics.addAction(summarizeMoleculeButton)
+		
+		self.statisticsTestMB=self.mbStatistics.addMenu('&Tests')
+		self.statisticsTestMB.addAction(tTest)
+		self.statisticsTestMB.addAction(tTestWelch)
+		self.statisticsTestMB.addAction(wilcoxonTest)
+		self.statisticsTestMB.addAction(mannWhitneyUTest)
+		self.statisticsTestMB.addAction(shapiroTest)
+		
+		self.statisticsComparisonMB=self.mbStatistics.addMenu('&Model comparison')
+		self.statisticsComparisonMB.addAction(AIC)
+		
+		
 	
 	#def initPlottingMenubar(self):
 		
@@ -2306,13 +2338,122 @@ class pyfrp(QtGui.QMainWindow):
 			QtGui.QMessageBox.critical(None, "Error","No molecule selected.",QtGui.QMessageBox.Ok | QtGui.QMessageBox.Default)
 			return
 	
-		if len(self.currMolecule.selFits)==0:
-			self.selectFits()
+		#if len(self.currMolecule.selFits)==0:
+		self.selectFits()
 		
 		self.selectCrucialParameters()
 		
 		self.currMolecule.sumUpResults()
+	
+	def selMolecules(self,n=2,nmin=2):
 		
+		"""Opens listSelectorDialog and lets user select n molecules.
+		
+		Keyword Args:
+			n (int): Number of molecules that should be selected
+			
+		
+		Returns:
+			list: List of molecules.
+		
+		"""
+	
+		names=[]
+		for mol in self.molecules:
+			names.append(mol.name)
+		
+		selDialog=pyfrp_gui_basics.listSelectorDialog(self,names,leftTitle="Available",rightTitle="Selected",itemsRight=[])
+		
+		selectedMols=[]
+		
+		if selDialog.exec_():
+			selected = selDialog.getSelection()
+			
+			for mol in self.molecules:
+				if mol.name in selected:
+					selectedMols.append(mol)
+		
+		
+		
+		if len(selected)>n:
+			printWarning("More than "+str(n)+ " molecules selected. Will only use the first and second molecule.")
+			selectedMols=selectedMols[0:n]
+		
+		if len(selected)<nmin:
+			printError("Less than "+str(nmin)+ " molecules selected.")
+			return []
+		
+		return selectedMols
+	
+	def performtTest(self):
+		
+		"""Lets user select two molecules and then performs standard t-test on both of them."""
+		
+		selected=self.selMolecules()
+		
+		opt1=selected[0].getDOptMus()
+		opt2=selected[1].getDOptMus()
+		
+		stat,pval=pyfrp_stats_module.tTestStandard(opt1,opt2)
+		
+	def performtTestWelch(self):
+		
+		"""Lets user select two molecules and then performs Welch's t-test on both of them."""
+		
+		selected=self.selMolecules()
+		
+		opt1=selected[0].getDOptMus()
+		opt2=selected[1].getDOptMus()
+		
+		stat,pval=pyfrp_stats_module.tTestWelch(opt1,opt2)
+		
+	def performWilcoxon(self):
+		
+		"""Lets user select two molecules and then performs Wilcoxon on both of them."""
+		
+		selected=self.selMolecules()
+		
+		opt1=selected[0].getDOptMus()
+		opt2=selected[1].getDOptMus()
+		
+		stat,pval=pyfrp_stats_module.wilcoxonTest(opt1,opt2)
+		
+	def performMannWhitneyUTest(self):
+		
+		"""Lets user select two molecules and then performs Mann-Whitney-U test on both of them."""
+		
+		selected=self.selMolecules()
+		
+		opt1=selected[0].getDOptMus()
+		opt2=selected[1].getDOptMus()
+		
+		stat,pval=pyfrp_stats_module.mannWhitneyUTest(opt1,opt2)	
+		
+	def performShapiroTest(self):
+		
+		"""Lets user select multiple molecules and then performs shapiro test on both of them."""
+		
+		selected=self.selMolecules(n=1,nmin=1)
+		
+		opt1=selected[0].getDOptMus()
+		
+		stat,pval=pyfrp_stats_module.shapiroTest(opt1)	
+	
+	def performAIC(self):
+		
+		"""Peforms Akaike-Information-Criterion for model comparison."""
+		
+		currEmbryo=self.getCurrentEmbryo()
+		if currEmbryo==None:
+			QtGui.QMessageBox.critical(None, "Error","Nothing selected.",QtGui.QMessageBox.Ok | QtGui.QMessageBox.Default)
+			return
+		
+		AICs, deltaAICs, weights, acc ,ks,ns= currEmbryo.compareFitsByCorrAIC(thresh=0.2)
+				
+		#fitNames = pyfrp_misc_module.objAttrToList(currEmbryo.fits,'name')
+		
+		#header, table = printTable([fitNames,AICs,deltaAICs,weights,ks,ns],["fitNames","AICs","deltaAICs","weights","k","n"],col=True)
+	
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	#Task handling
 	#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2720,6 +2861,8 @@ class pyfrp(QtGui.QMainWindow):
 		
 		self.config.setPathFile(fn)
 			
+	
+	
 	
 	##---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	##Make slider plot

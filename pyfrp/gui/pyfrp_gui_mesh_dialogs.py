@@ -112,7 +112,7 @@ class meshSettingsDialog(pyfrp_gui_basics.basicSettingsDialog):
 		
 	def setFnMesh(self):
 		
-		fn = str(QtGui.QFileDialog.getExistingFile(self, "Select Mesh File",  self.parent.lastopen,"*.mol",))
+		fn = str(QtGui.QFileDialog.getExistingFile(self, "Select Mesh File",  self.parent.lastopen,"*.msh",))
 		if fn=='':
 			return
 		

@@ -117,7 +117,7 @@ class domain:
 		self.annYOffset=3.
 		self.annZOffset=3.
 		
-	def addVertex(self,x,Id=None,volSize=None):
+	def addVertex(self,x,Id=None,volSize=None,checkExist=False):
 		
 		"""Adds new :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.vertex` instance
 		at point ``x`` and appends it to ``vertices`` list.
@@ -125,17 +125,26 @@ class domain:
 		.. note:: ``volSize`` does not have any effect on the geometry itself but is simply 
 		   stored in the vertex object for further usage.
 		
+		If ``checkExist=True``, checks if a vertex at same location already exists. If so, will return 
+		that vertex instead.
+		
 		Args:
 			x (numpy.ndarray): Coordinate of vertex.
 			
 		Keyword Args:
 			Id (int): ID of vertex.
 			volSize (float): Element size at vertex.
+			checkExist (bool): Checks if a vertex at same location already exists.
 		
 		Returns:
 			pyfrp.modules.pyfrp_gmsh_geometry.vertex: New vertex instance.
 		
 		"""
+		
+		if checkExist:
+			for v in self.vertices:
+				if (v.x==x).all():
+					return v
 		
 		newId=self.getNewId(self.vertices,Id)
 		
@@ -220,7 +229,7 @@ class domain:
 		
 		return e
 	
-	def addCircleByParameters(self,center,radius,z,volSize,plane="z",genLoop=False,genSurface=False):
+	def addCircleByParameters(self,center,radius,z,volSize,plane="z",genLoop=False,genSurface=False,checkExist=True):
 		
 		"""Adds circle to domain by given center and radius.
 		
@@ -254,6 +263,7 @@ class domain:
 			plane (str): Plane in which circle is placed.
 			genLoop (bool): Create lineLoop.
 			genSurface (bool): Create ruledSurface.
+			checkExist (bool): Checks if a vertex at same location already exists.
 			
 		Returns:
 			tuple: Tuple containing:
@@ -275,10 +285,10 @@ class domain:
 		
 		# Add vertices
 		vcenter=self.addVertex(xcenter,volSize=volSize)
-		v1=self.addVertex(x1,volSize=volSize)
-		v2=self.addVertex(x2,volSize=volSize)
-		v3=self.addVertex(x3,volSize=volSize)
-		v4=self.addVertex(x4,volSize=volSize)
+		v1=self.addVertex(x1,volSize=volSize,checkExist=checkExist)
+		v2=self.addVertex(x2,volSize=volSize,checkExist=checkExist)
+		v3=self.addVertex(x3,volSize=volSize,checkExist=checkExist)
+		v4=self.addVertex(x4,volSize=volSize,checkExist=checkExist)
 		
 		# Add Arcs
 		a1=self.addArc(v1,vcenter,v2)
@@ -640,7 +650,109 @@ class domain:
 		
 		return self.addPrismByParameters(coords,volSize,height=height,z=offset[2],plane="z",genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol)
 	
-	def addCylinderByParameters(self,center,radius,z,height,volSize,plane="z",genLoops=True,genSurfaces=True,genVol=True):
+	def addBallByParameters(self,center,radius,z,volSize,genLoops=True,genSurfaces=True,genSurfaceLoop=True,genVol=True,checkExist=True):
+		
+		"""Adds ball to domain by given center and radius.
+		
+		Will create.
+		
+			* 3 new circles, see :py:func:`pyfrp.modules.pyfrp_gmsh_geometry.domain.addCircleByParameters`.
+			
+		If selected, will create:
+			
+			* 8 :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.lineLoop` objects around the 8 surfaces.
+			* 8 corresponding :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.ruledSurface` objects.
+			* 1 :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop`.
+			* 1 corresponding :py:class:`pyfrp.modules.pyfrp_gmsh_geometry.volume`.
+		
+		For example:
+		
+		>>> center=[256,50]
+		>>> radius=100
+		>>> Z=0
+		>>> volSize=20
+		
+		>>> d=pyfrp_gmsh_geometry.domain()
+		>>> d.addBallByParameters(center,radius,Z,volSize,genLoops=True,genSurfaces=True,genVol=True,checkExist=True)
+		>>> d.draw()
+		
+		would return:
+		
+		.. image:: ../imgs/pyfrp_gmsh_geometry/addBallByParameters.png
+		
+		Args:
+			center (numpy.ndarray): Center of cylinder.
+			radius (float): Radius of the cylinder.
+			z (float): Height at which cylinder is placed.
+			volSize (float): Mesh size of vertices.
+		
+		Keyword Args:
+			genLoops (bool): Generate line loops.
+			genSurfaces (bool): Generate surfaces.
+			genSurfaceLoop (bool): Generate surface loop.
+			genVol (bool): Generate volume.
+			checkExist (bool): Checks if a vertex at same location already exists.
+			
+		Returns:
+			tuple: Tuple containing:
+			
+				* vertices (list): List of vertices.
+				* arcs (list): List of arcs.
+				* loops (list): List of loops.
+				* surfaces (list): List of surfaces.
+				* surfaceLoop (pyfrp.modules.pyfrp_gmsh_geometry.surfaceLoop): Generated surface loop.
+				* vol (pyfrp.modules.pyfrp_gmsh_geometry.volume): Generated volume.
+		
+		"""
+	
+		# Add 3 circles
+		v1,a1,ll1,s1=self.addCircleByParameters(center,radius,z,volSize,genLoop=False)
+		v2,a2,ll2,s2=self.addCircleByParameters([z,center[0]],radius,center[1],volSize,genLoop=False,plane='x')
+		v3,a3,ll3,s3=self.addCircleByParameters([center[1],z],radius,center[0],volSize,genLoop=False,plane='y')
+		vertices=v1+v2+v3
+		arcs=a1+a2+a3
+		
+		# Define line loops
+		ll=[]
+		ll.append([a1[0],a2[0],a3[0]])
+		ll.append([a1[1],a3[0],a2[3]])
+		ll.append([a1[2],a2[3],a3[1]])
+		ll.append([a1[3],a3[1],a2[0]])
+
+		ll.append([a1[0],a2[1],a3[3]])
+		ll.append([a1[1],a3[3],a2[2]])
+		ll.append([a1[2],a2[2],a3[2]])
+		ll.append([a1[3],a3[2],a2[1]])
+
+		# Generate line loops
+		lineLoops=[]
+		if genLoops:
+			for l in ll:
+				lnew=self.addLineLoop(edgeIDs=pyfrp_misc_module.objAttrToList(l,'Id'))
+				lnew.fix()
+				lineLoops.append(lnew)
+			
+		# Generate surfaces
+		surfaces=[]
+		if genSurfaces:
+			for l in lineLoops:
+				surfaces.append(self.addRuledSurface(lineLoopID=l.Id))
+			
+		# Make surface loop
+		if genSurfaceLoop:
+			surfaceLoop=self.addSurfaceLoop(surfaceIDs=pyfrp_misc_module.objAttrToList(surfaces,'Id'))
+		else:
+			surfaceLoop=None
+		
+		# Make volume
+		if genVol:	
+			vol=self.addVolume(surfaceLoopID=surfaceLoop.Id)
+		else:
+			vol=None
+		
+		return vertices,arcs,lineLoops,surfaces,surfaceLoop,vol
+			
+	def addCylinderByParameters(self,center,radius,z,height,volSize,plane="z",genLoops=True,genSurfaces=True,genSurfaceLoop=True,genVol=True,checkExist=True):
 		
 		"""Adds cylinder to domain by given center and radius and height.
 		
@@ -679,7 +791,9 @@ class domain:
 			plane (str): Plane in which cylinder is placed.
 			genLoops (bool): Generate line loops.
 			genSurfaces (bool): Generate surfaces.
-			genVol (bool): Generate surface loop and corresponding volume.
+			genSurfaceLoop (bool): Generate surface loop.
+			genVol (bool): Generate volume.
+			checkExist (bool): Checks if a vertex at same location already exists.
 			
 		Returns:
 			tuple: Tuple containing:
@@ -730,11 +844,14 @@ class domain:
 				surfaceIds.append(surfaces[-1].Id)
 				
 		# Generate surface loop and volume
-		if genVol:
+		if genSurfaceLoop:
 			surfaceLoop=self.addSurfaceLoop(surfaceIDs=surfaceIds)
+		else:	
+			surfaceLoop=None
+		
+		if genVol:
 			vol=self.addVolume(surfaceLoopID=surfaceLoop.Id)
 		else:
-			surfaceLoop=None
 			vol=None
 		
 		return [vertices1,vertices2],[arcs1,arcs2],lines,loops,surfaces,surfaceLoop,vol
@@ -1300,7 +1417,7 @@ class domain:
 				return v,i
 		return False,False
 		
-	def draw(self,ax=None,color='k',ann=None,drawSurfaces=False,surfaceColor='b',alpha=0.2,backend='mpl',asSphere=True,size=5,annElements=[True,True,True]):
+	def draw(self,ax=None,color='k',ann=None,drawSurfaces=False,surfaceColor='b',alpha=0.2,backend='mpl',asSphere=True,size=5,annElements=[True,True,True],linewidth=1):
 		
 		"""Draws complete domain.
 		
@@ -1331,6 +1448,7 @@ class domain:
 			asSphere (bool): Draws vertex as sphere (only in vtk mode).
 			size (float): Size of vertex (only in vtk mode).
 			annElements (list): Only annotate some element types.
+			linewidth (float): Line width.
 			
 		Returns:
 			matplotlib.axes: Updated axes.
@@ -1343,13 +1461,13 @@ class domain:
 		for v in self.vertices:
 			ax=v.draw(ax=ax,color=color,ann=ann*annElements[0],backend=backend,size=size,asSphere=asSphere,render=False)
 		for e in self.edges:
-			ax=e.draw(ax=ax,color=color,ann=ann*annElements[1],backend=backend,render=False)
+			ax=e.draw(ax=ax,color=color,ann=ann*annElements[1],backend=backend,render=False,linewidth=linewidth)
 		if drawSurfaces:
 			for s in self.ruledSurfaces:
 				ax=s.draw(ax=ax,color=surfaceColor,alpha=alpha,backend=backend,ann=ann*annElements[2])
 		
 		if backend=="vtk":
-			ax=pyfrp_vtk_module.renderVTK(ax)
+			ax=pyfrp_vtk_module.renderVTK(ax,start=False)
 		
 		return ax
 		
@@ -2454,7 +2572,7 @@ class vertex(gmshElement):
 			ann=False
 		
 		if ax==None:
-			ax,renderWindow,renderWindowInteractor=pyfrp_vtk_module.makeVTKCanvas()	
+			ax,renderWindow,renderWindowInteractor=pyfrp_vtk_module.makeVTKCanvas()
 
 		pyfrp_vtk_module.drawVTKPoint(self.x,asSphere=asSphere,color=color,size=size,renderer=ax)
 		
@@ -2463,7 +2581,7 @@ class vertex(gmshElement):
 			pyfrp_vtk_module.drawVTKText("p"+str(self.Id),[self.x[0]+self.domain.annXOffset, self.x[1]+self.domain.annYOffset, self.x[2]+self.domain.annZOffset],renderer=ax)
 		
 		if render:
-			ax=pyfrp_vtk_module.renderVTK(ax)
+			ax=pyfrp_vtk_module.renderVTK(ax,start=False)
 		
 		return ax
 		
@@ -2753,7 +2871,7 @@ class line(edge):
 		
 		return (self.v1.x+self.v2.x)/2.
 	
-	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False,drawVertices=False):
+	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False,drawVertices=False,linewidth=1):
 			
 		"""Draws line.
 		
@@ -2787,9 +2905,9 @@ class line(edge):
 		"""
 		
 		if backend=="mpl":
-			ax=self.drawMPL(ax=ax,color=color,ann=ann)
+			ax=self.drawMPL(ax=ax,color=color,ann=ann,linewidth=linewidth)
 		if backend=="vtk":
-			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render)
+			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render,linewidth=linewidth)
 		
 		if drawVertices:
 			ax=self.v1.draw(ax=ax,color=color,ann=ann,backend=backend,render=render,asSphere=False)
@@ -2797,7 +2915,7 @@ class line(edge):
 			
 		return ax
 			
-	def drawMPL(self,ax=None,color=None,ann=None):
+	def drawMPL(self,ax=None,color=None,ann=None,linewidth=1):
 		
 		"""Draws line into matplotlib axes.
 		
@@ -2822,7 +2940,7 @@ class line(edge):
 		if ax==None:
 			fig,axes = pyfrp_plot_module.makeGeometryPlot()
 			ax=axes[0]
-		ax.plot([self.v1.x[0],self.v2.x[0]],[self.v1.x[1],self.v2.x[1]],zs=[self.v1.x[2],self.v2.x[2]],color=color,linestyle='-')
+		ax.plot([self.v1.x[0],self.v2.x[0]],[self.v1.x[1],self.v2.x[1]],zs=[self.v1.x[2],self.v2.x[2]],color=color,linestyle='-',linewidth=linewidth)
 		if ann:
 			m=self.getMiddle()
 			ax.text(m[0]+self.domain.annXOffset, m[1]+self.domain.annYOffset, m[2]+self.domain.annZOffset, "l"+str(self.Id), None)
@@ -2831,7 +2949,7 @@ class line(edge):
 		
 		return ax
 	
-	def drawVTK(self,ax=None,color=None,ann=None,render=False):
+	def drawVTK(self,ax=None,color=None,ann=None,render=False,linewidth=1):
 		
 		"""Draws line into VTK renderer.
 		
@@ -2859,7 +2977,7 @@ class line(edge):
 		if ax==None:
 			ax,renderWindow,renderWindowInteractor=pyfrp_vtk_module.makeVTKCanvas()
 			
-		pyfrp_vtk_module.drawVTKLine(self.v1.x,self.v2.x,color=color,renderer=ax)
+		pyfrp_vtk_module.drawVTKLine(self.v1.x,self.v2.x,color=color,renderer=ax,linewidth=linewidth)
 		
 		if ann:
 			printWarning("Annotations don't properly work with backend=vtk .")
@@ -2867,7 +2985,7 @@ class line(edge):
 			pyfrp_vtk_module.drawVTKText("p"+str(self.Id),[m[0]+self.domain.annXOffset, m[1]+self.domain.annYOffset, m[2]+self.domain.annZOffset],renderer=ax)
 		
 		if render:
-			ax=pyfrp_vtk_module.renderVTK(ax)
+			ax=pyfrp_vtk_module.renderVTK(ax,start=False)
 		
 		return ax
 		
@@ -3166,7 +3284,7 @@ class arc(edge):
 		
 		return self.vcenter.x
 	
-	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False,drawVertices=True):
+	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False,drawVertices=True,linewidth=1):
 		
 		"""Draws arc.
 		
@@ -3200,9 +3318,9 @@ class arc(edge):
 		"""
 		
 		if backend=="mpl":
-			ax=self.drawMPL(ax=ax,color=color,ann=ann)
+			ax=self.drawMPL(ax=ax,color=color,ann=ann,linewidth=linewidth)
 		if backend=="vtk":
-			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render)
+			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render,linewidth=linewidth)
 		
 		if drawVertices:
 			ax=self.vcenter.draw(ax=ax,color=color,ann=ann,backend=backend,render=render,asSphere=False)
@@ -3211,7 +3329,7 @@ class arc(edge):
 			
 		return ax
 		
-	def drawMPL(self,ax=None,color=None,ann=None,render=False):
+	def drawMPL(self,ax=None,color=None,ann=None,render=False,linewidth=1):
 		
 		"""Draws arc into matplotlib axes.
 		
@@ -3239,7 +3357,7 @@ class arc(edge):
 			
 		x,y,z=self.getPlotVec()
 		
-		ax.plot(x,y,zs=z,color=color,linestyle='-')
+		ax.plot(x,y,zs=z,color=color,linestyle='-',linewidth=linewidth)
 		
 		if ann:
 			x,y,z=self.getPointOnArc(self.angle/2.)
@@ -3249,7 +3367,7 @@ class arc(edge):
 		
 		return ax
 	
-	def drawVTK(self,ax=None,color=None,ann=None,render=False):
+	def drawVTK(self,ax=None,color=None,ann=None,render=False,linewidth=1):
 		
 		"""Draws arc into VTK renderer.
 		
@@ -3277,7 +3395,7 @@ class arc(edge):
 		if ax==None:
 			ax,renderWindow,renderWindowInteractor=pyfrp_vtk_module.makeVTKCanvas()	
 		
-		pyfrp_vtk_module.drawVTKArc(self.vstart.x,self.vcenter.x,self.vend.x,color=color,renderer=ax)
+		pyfrp_vtk_module.drawVTKArc(self.vstart.x,self.vcenter.x,self.vend.x,color=color,renderer=ax,linewidth=linewidth)
 		
 		if ann:
 			printWarning("Annotations don't properly work with backend=vtk .")
@@ -3285,7 +3403,7 @@ class arc(edge):
 			pyfrp_vtk_module.drawVTKText("p"+str(self.Id),[m[0]+self.domain.annXOffset, m[1]+self.domain.annYOffset, m[2]+self.domain.annZOffset],renderer=ax)
 		
 		if render:
-			ax=pyfrp_vtk_module.renderVTK(ax)
+			ax=pyfrp_vtk_module.renderVTK(ax,start=False)
 		
 		return ax
 	
@@ -3436,7 +3554,7 @@ class bSpline(edge):
 	
 		return self.vertices[int(np.floor(len(self.vertices)/2.))].x
 	
-	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False,drawVertices=False):
+	def draw(self,ax=None,color=None,ann=None,backend="mpl",render=False,drawVertices=False,linewidth=1):
 			
 		"""Draws spline.
 		
@@ -3472,9 +3590,9 @@ class bSpline(edge):
 		printWarning("Spline drawing currently just draws lines inbetween interpolation points.")
 		
 		if backend=="mpl":
-			ax=self.drawMPL(ax=ax,color=color,ann=ann)
+			ax=self.drawMPL(ax=ax,color=color,ann=ann,linewidth=linewidth)
 		if backend=="vtk":
-			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render)
+			ax=self.drawVTK(color=color,ann=ann,ax=ax,render=render,linewidth=linewidth)
 		
 		if drawVertices:
 			for v in self.vertices:
@@ -3482,7 +3600,7 @@ class bSpline(edge):
 				
 		return ax
 			
-	def drawMPL(self,ax=None,color=None,ann=None):
+	def drawMPL(self,ax=None,color=None,ann=None,linewidth=1):
 		
 		"""Draws spline into matplotlib axes.
 		
@@ -3509,7 +3627,7 @@ class bSpline(edge):
 			ax=axes[0]
 		
 		for i in range(len(self.vertices)-1):
-			ax.plot([self.vertices[i].x[0],self.vertices[i+1].x[0]],[self.vertices[i].x[1],self.vertices[i+1].x[1]],zs=[self.vertices[i].x[2],self.vertices[i+1].x[2]],color=color,linestyle='-')
+			ax.plot([self.vertices[i].x[0],self.vertices[i+1].x[0]],[self.vertices[i].x[1],self.vertices[i+1].x[1]],zs=[self.vertices[i].x[2],self.vertices[i+1].x[2]],color=color,linestyle='-',linewidth=linewidth)
 		
 		if ann:
 			m=self.getMiddle()
@@ -3519,7 +3637,7 @@ class bSpline(edge):
 		
 		return ax
 	
-	def drawVTK(self,ax=None,color=None,ann=None,render=False):
+	def drawVTK(self,ax=None,color=None,ann=None,render=False,linewidth=1):
 		
 		"""Draws spline into VTK renderer.
 		
@@ -3548,7 +3666,7 @@ class bSpline(edge):
 				
 			ax,renderWindow,renderWindowInteractor=pyfrp_vtk_module.makeVTKCanvas()
 		
-		pyfrp_vtk_module.drawVTKPolyLine(pyfrp_misc_module.objAttrToList(self.vertices,'x'),color=color,renderer=ax)
+		pyfrp_vtk_module.drawVTKPolyLine(pyfrp_misc_module.objAttrToList(self.vertices,'x'),color=color,renderer=ax,linewidth=linewidth)
 		
 		if ann:
 			printWarning("Annotations don't properly work with backend=vtk .")
@@ -3556,7 +3674,7 @@ class bSpline(edge):
 			pyfrp_vtk_module.drawVTKText("p"+str(self.Id),[m[0]+self.domain.annXOffset, m[1]+self.domain.annYOffset, m[2]+self.domain.annZOffset],renderer=ax)
 		
 		if render:
-			ax=pyfrp_vtk_module.renderVTK(ax)
+			ax=pyfrp_vtk_module.renderVTK(ax,start=False)
 		
 		return ax
 		
@@ -3731,7 +3849,7 @@ class lineLoop(gmshElement):
 		
 		return self.orientations
 	
-	def draw(self,ax=None,color='k',ann=None,backend='mpl',drawVertices=False):
+	def draw(self,ax=None,color='k',ann=None,backend='mpl',drawVertices=False,linewidth=1):
 		
 		"""Draws complete line loop.
 		
@@ -3764,7 +3882,7 @@ class lineLoop(gmshElement):
 		"""
 		
 		for e in self.edges:
-			ax=e.draw(ax=ax,color=color,ann=ann,backend=backend,drawVertices=drawVertices)
+			ax=e.draw(ax=ax,color=color,ann=ann,backend=backend,drawVertices=drawVertices,linewidth=linewidth)
 		
 		return ax
 	
@@ -4266,6 +4384,7 @@ class lineLoop(gmshElement):
 		"""
 		
 		return self.getEdges()
+
 	
 class ruledSurface(gmshElement):
 	
@@ -4290,6 +4409,10 @@ class ruledSurface(gmshElement):
 		
 		#Get lineLoop
 		self.lineLoop=self.domain.getLineLoopById(loopID)[0]
+		
+		#Check if there is a line loop
+		if self.lineLoop==False:
+			return False,[]
 		
 		#Check length
 		if len(self.lineLoop.edges)<=4:
@@ -4630,7 +4753,7 @@ class ruledSurface(gmshElement):
 		
 		return True
 	
-	def draw(self,ax=None,color='b',edgeColor='k',drawLoop=True,ann=None,alpha=0.2,backend='mpl'):
+	def draw(self,ax=None,color='b',edgeColor='k',drawLoop=True,ann=None,alpha=0.2,backend='mpl',linewidth=1):
 		
 		"""Draws surface and fills it with color.
 		
@@ -4664,7 +4787,7 @@ class ruledSurface(gmshElement):
 			ax=axes[0]
 		
 		if drawLoop:
-			ax=self.lineLoop.draw(ax=ax,color=edgeColor,ann=False)
+			ax=self.lineLoop.draw(ax=ax,color=edgeColor,ann=False,linewidth=linewidth)
 		
 		for e in self.lineLoop.edges:
 			if e in self.domain.arcs:

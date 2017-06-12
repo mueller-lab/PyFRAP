@@ -348,11 +348,32 @@ class molecule:
 		return False
 	
 	def setName(self,n):
+		
+		"""Sets molecule's name.
+		
+		Args:
+			n (str): New name.
+		
+		Returns:
+			str: Name.
+			
+		"""
+		
 		self.name=n
 		return self.name
 	
 	def getName(self):
+	
+		"""Returns molecule's name.
+		
+		Returns:
+			str: Name.
+			
+		"""
+		
 		return self.name
+	
+	
 	
 	def sumUpResults(self,sameSettings=False):
 		
@@ -418,3 +439,38 @@ class molecule:
 		printObjAttr('degrOptSterr',self)
 		printObjAttr('Rsq',self)
 		printObjAttr('MeanRsq',self)
+		
+	def getFitParm(self,parm):
+		
+		"""Collects all values of parameter from all selected fits of molecule.
+		
+		Args:
+			parm (str): Name of parameter.
+			
+		Returns:
+			list: List of values.
+			
+		"""	
+		
+		ps=[]
+		for fit in self.selFits:
+			
+			try:
+				ps.append(getattr(fit,parm))
+			except AttributeError:
+				printError("Fit " +fit.name + "does not have an attribute with name = ", parm )
+			
+		return ps	
+		
+	def getDOptMus(self):	
+		
+		"""Collects all values of DOptMu from all selected fits of molecule.
+	
+		Returns:
+			list: List of diffusion rates.
+			
+		"""	
+		
+		return self.getFitParm("DOptMu")
+	
+	

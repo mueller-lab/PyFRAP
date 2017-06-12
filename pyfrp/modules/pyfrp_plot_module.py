@@ -872,7 +872,7 @@ def set3DAxesEqual(ax):
 	
 	return ax
 
-def getPubParms():
+def getPubParms(fontSize=10,labelFontSize=10,tickFontSize=10,legendFontSize=10):
 	
 	"""Returns dictionary with good parameters for nice 
 	publication figures.
@@ -881,27 +881,35 @@ def getPubParms():
 	
 	.. note:: Use this if you want to include LaTeX symbols in the figure.
 	
+	Keyword Args:
+		fontSize (int): Font size.
+		labelFontSize (int): Font size.
+		tickFontSize (int): Font size.
+		legendFontSize (int): Font size.
+		
 	Returns:
 		dict: Parameter dictionary.
 	
 	"""
 	
 	params = {'backend': 'ps',
-		'axes.labelsize': 10,
-		'text.fontsize': 10,
-		'legend.fontsize': 10,
-		'xtick.labelsize': 10,
-		'ytick.labelsize': 10,
+		'axes.labelsize': labelFontSize,
+		'font.size': fontSize,
+		'legend.fontsize': legendFontSize,
+		'xtick.labelsize': tickFontSize,
+		'ytick.labelsize': tickFontSize,
 		'text.usetex': True,
 		'font.family': 'sans-serif',
 		'font.sans-serif': 'Bitstream Vera Sans, Lucida Grande, Verdana, Geneva, Lucid, Arial, Helvetica, Avant Garde, sans-serif',
 		#'ytick.direction': 'out',
 		'text.latex.preamble': [r'\usepackage{helvet}', r'\usepackage{sansmath}',r'\usepackage{siunitx}'] , #r'\sansmath',    
+		'ytick.direction' : 'out',
+		'xtick.direction' : 'out'
 		}
 		
 	return params
 
-def turnAxesForPub(ax,adjustFigSize=True,figWidthPt=180.4,figHeightPt=None,ptPerInches=72.27):
+def turnAxesForPub(ax,adjustFigSize=True,figWidthPt=180.4,figHeightPt=None,ptPerInches=72.27,fontSize=10,labelFontSize=10,tickFontSize=10,legendFontSize=10):
 	
 	"""Turns axes nice for publication.
 	
@@ -915,13 +923,17 @@ def turnAxesForPub(ax,adjustFigSize=True,figWidthPt=180.4,figHeightPt=None,ptPer
 		figWidthPt (float): Width of the figure in pt.
 		figHeightPt (float): Height of the figure in pt.
 		ptPerInches (float): Resolution in pt/inches.
-			
+		fontSize (int): Font size.
+		labelFontSize (int): Font size.
+		tickFontSize (int): Font size.
+		legendFontSize (int): Font size.
+		
 	Returns:
 		matplotlib.axes: Modified matplotlib axes.
 		
 	"""
 
-	params=getPubParms()
+	params=getPubParms(fontSize=fontSize,labelFontSize=labelFontSize,tickFontSize=tickFontSize,legendFontSize=legendFontSize)
 	plt.rcParams.update(params)
 	
 	ax=setPubAxis(ax)
@@ -948,6 +960,9 @@ def setPubAxis(ax):
 	ax.spines['right'].set_color('none')
 	ax.xaxis.set_ticks_position('bottom')
 	ax.yaxis.set_ticks_position('left')
+	
+	ax.spines["left"].axis.axes.tick_params(direction="outward") 
+	ax.spines["bottom"].axis.axes.tick_params(direction="outward") 
 	
 	return ax
 		

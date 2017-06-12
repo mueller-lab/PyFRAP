@@ -438,15 +438,18 @@ class simulation(object):
 			printWarning("IC is not generated yet. Run simulation first.")
 			return None	
 		
-	def showICimg(self,ax=None,typ='contour',colorbar=True,scale=True):
+	def showICimg(self,ax=None,typ='contour',colorbar=True,scale=True,nlevels=25,vmin=None,vmax=None):
 		
-		"""Plots image used for initial 2D.
+		"""Plots image used for initial condition either as contour or surface plot.
 		
 		.. image:: ../imgs/pyfrp_simulation/showICimg.png
 		
 		Keyword Args:
 			ax (matplotlib.axes): Axes used for plotting.
 			scale (bool): Equal axis.
+			vmin (float): Overall minimum value to be displayed in plot.
+			vmax (float): Overall maximum value to be displayed in plot.
+			nlevels (int): Number of contour levels to display.
 			
 		Returns:
 			matplotlib.axes: Axes used for plotting.
@@ -459,6 +462,13 @@ class simulation(object):
 			return ax
 		
 		if self.ICimg!=None:
+			
+			if vmin==None:
+				vmin=min(self.ICimg.flatten())
+			if vmax==None:
+				vmax=max(self.ICimg.flatten())
+			
+			levels=np.linspace(vmin,1.01*vmax,nlevels)
 			
 			if ax==None:
 				if typ=='surface':
@@ -474,11 +484,11 @@ class simulation(object):
 				X,Y=np.meshgrid(np.arange(res),np.arange(res))
 			
 			if typ=='contour':
-				plt_ICs=ax.contourf(X,Y,self.ICimg)
+				plt_ICs=ax.contourf(X,Y,self.ICimg,levels=levels,vmin=vmin,vmax=vmax)
 				if scale:
 					plt.axis('equal')
 			elif typ=='surface':
-				plt_ICs=ax.plot_surface(X,Y,self.ICimg,cmap='jet')
+				plt_ICs=ax.plot_surface(X,Y,self.ICimg,cmap='jet',vmin=vmin,vmax=vmax)
 				
 			if colorbar:
 				cb=plt.colorbar(plt_ICs,orientation='horizontal',pad=0.05,shrink=0.9)
