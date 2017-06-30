@@ -96,14 +96,14 @@ class FRAPBoundarySelector():
 		
 	"""
 	
-	def __init__(self,embryo=None,fn=None):
+	def __init__(self,embryo=None,fn=None,img=None):
 		
 		#Passing embryo to class
 		self.embryo=embryo	
 		self.fn=fn
 		
 		#Img
-		self.img=None
+		self.img=img
 		
 		#Plot resolution
 		self.dpi = 100
@@ -134,8 +134,8 @@ class FRAPBoundarySelector():
 		If not, prints error message and closes down widget.
 		"""
 		
-		if self.fn==None and self.embryo==None:
-			printError("No Embryo or fn defined. Going to exit.")
+		if self.fn==None and self.embryo==None and self.img==None:
+			printError("No Embryo, image or fn defined. Going to exit.")
 			plt.close(self.fig)
 			return
 	
@@ -364,7 +364,9 @@ class FRAPBoundarySelector():
 			self.img=pyfrp_img_module.loadImg(self.fn,'uint16')
 			self.ax.set_xlim([0, self.img.shape[0]])
 			self.ax.set_ylim([0, self.img.shape[1]])
-			
+		
+		
+		
 		self.showImg(self.img)
 	
 	def showImg(self,img):

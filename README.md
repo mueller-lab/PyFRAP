@@ -41,7 +41,7 @@ PyFRAP depends on
 - colorama>=0.2.5
 - meshio>=1.2.1
 - wget>=3.2
-- gmsh (compiled with TetGen Algorithm)
+- gmsh (compiled with TetGen Algorithm) MUST BE Version 2.14.0!
 
 ## Getting Started
 

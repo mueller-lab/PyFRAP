@@ -308,7 +308,7 @@ class domain:
 		
 		return [vcenter,v1,v2,v3,v4],[a1,a2,a3,a4],loop,surface
 	
-	def addPolygonByParameters(self,coords,volSize,z=0.,plane="z"):
+	def addPolygonByParameters(self,coords,volSize,z=0.,plane="z",genLoop=False,genSurface=False):
 		
 		"""Adds polygon to domain by given vertex coordinates.
 		
@@ -389,7 +389,7 @@ class domain:
 		else:
 			surface=None
 		
-		return vertices,lines
+		return vertices,lines,loop,surface
 	
 	def addRectangleByParameters(self,offset,sidelengthX,sidelengthY,z,volSize,plane="z"):
 		
@@ -490,7 +490,7 @@ class domain:
 		
 		return self.addRectangleByParameters(offset,sidelength,sidelength,z,volSize,plane=plane)
 	
-	def addPrismByParameters(self,coords,volSize,height=1.,z=0.,plane="z",genLoops=True,genSurfaces=True,genVol=True):
+	def addPrismByParameters(self,coords,volSize,height=1.,z=0.,plane="z",genLoops=True,genSurfaces=True,genSurfaceLoop=True,genVol=True):
 		
 		r"""Adds prism to domain by given vertex coordinates.
 		
@@ -537,7 +537,8 @@ class domain:
 			height (float): Height of prism.
 			genLoops (bool): Generate line loops.
 			genSurfaces (bool): Generate surfaces.
-			genVol (bool): Generate surface loop and corresponding volume.
+			genSurfaceLoop (bool): Generate surface loop.
+			genVol (bool): Generate corresponding volume.
 			
 		Returns:
 			tuple: Tuple containing:
@@ -557,7 +558,7 @@ class domain:
 				printError("addPrismByParameters: You gave a list of 3-dimensional vertex coordinates. However,the number of coordinates is odd, will not be able to continue.")
 				return
 				
-			vertices,lines,ltemp,stemp = self.addPolygonByParameters(coords,volSize,z=0.,plane="z")
+			vertices,lines,ltemp,stemp = self.addPolygonByParameters(coords,volSize,z=0.,plane="z",genSurface=genSurface,genLoop=genLoop)
 			vertices1=vertices[:len(vertices)/2]
 			vertices2=vertices[len(vertices)/2:]
 			lines1=lines[:len(lines)/2]
@@ -591,17 +592,21 @@ class domain:
 			for loop in loops:
 				surfaces.append(self.addRuledSurface(lineLoopID=loop.Id))
 				
-		# Generate surface loop and volume
-		if genVol:
-			surfaceLoop=self.addSurfaceLoop(surfaceIDs=pyfrp_misc_module.objAttrToList(self.ruledSurfaces,"Id"))
-			vol=self.addVolume(surfaceLoopID=surfaceLoop.Id)
+		# Make surface loop
+		if genSurfaceLoop:
+			surfaceLoop=self.addSurfaceLoop(surfaceIDs=pyfrp_misc_module.objAttrToList(surfaces,'Id'))
 		else:
 			surfaceLoop=None
-			vol=None		
+		
+		# Make volume
+		if genVol:	
+			vol=self.addVolume(surfaceLoopID=surfaceLoop.Id)
+		else:
+			vol=None	
 		
 		return [vertices1,vertices2],[lines1,lines2,lines3],loops,surfaces,surfaceLoop,vol
 	
-	def addCuboidByParameters(self,offset,sidelengthX,sidelengthY,height,volSize,plane="z",genLoops=True,genSurfaces=True,genVol=True):
+	def addCuboidByParameters(self,offset,sidelengthX,sidelengthY,height,volSize,plane="z",genLoops=True,genSurfaces=True,genSurfaceLoop=True,genVol=True):
 		
 		"""Adds Cuboid to domain by given offset, sidelengths in x- and y-direction and height.
 		
@@ -630,7 +635,8 @@ class domain:
 			plane (str): Plane in which prism is placed.
 			genLoops (bool): Generate line loops.
 			genSurfaces (bool): Generate surfaces.
-			genVol (bool): Generate surface loop and corresponding volume.
+			genSurfaceLoop (bool): Generate surface loop.
+			genVol (bool): Generate corresponding volume.
 			
 		Returns:
 			tuple: Tuple containing:
@@ -648,7 +654,7 @@ class domain:
 		coords=[[offset[0],offset[1]],[offset[0]+sidelengthX,offset[1]],
 		[offset[0]+sidelengthX,offset[1]+sidelengthY],[offset[0],offset[1]+sidelengthY]]
 		
-		return self.addPrismByParameters(coords,volSize,height=height,z=offset[2],plane="z",genLoops=genLoops,genSurfaces=genSurfaces,genVol=genVol)
+		return self.addPrismByParameters(coords,volSize,height=height,z=offset[2],plane="z",genLoops=genLoops,genSurfaces=genSurfaces,genSurfaceLoop=genSurfaceLoop,genVol=genVol)
 	
 	def addBallByParameters(self,center,radius,z,volSize,genLoops=True,genSurfaces=True,genSurfaceLoop=True,genVol=True,checkExist=True):
 		

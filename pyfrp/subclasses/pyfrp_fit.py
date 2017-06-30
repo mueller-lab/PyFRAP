@@ -1343,4 +1343,26 @@ class fit:
 		axes=pyfrp_fit_module.plotFitLikehoodProfiles(self,epsPerc=0.1,steps=100,debug=debug)
 		
 		return axes
+	
+	def setOpts(self,opts):
+		
+		"""Sets a list of options.
+		
+		Options are given as a dictionary and then subsequentially set.
+		
+		Args:
+			opts (dict): Options.
+			
+			
+		
+		"""
+		
+		for opt in opts:
+			try:
+				setattr(self,opt,opts[opt])
+			except AttributeError:
+				printError("Cannot set fit option " + opt +". Option does not exist.")
+				
+				
+		
 		

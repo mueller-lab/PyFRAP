@@ -476,7 +476,7 @@ class boundaryLayerAroundROISettingsDialog(pyfrp_gui_basics.basicSettingsDialog)
 		self.onlyAbs=True
 		self.fnOut=self.embryo.geometry.fnGeo.replace(".geo","_BL.geo")
 		
-		self.roiUsed=self.embryo.getROIByName("All Square")
+		self.roiUsed=self.embryo.getROIByName("All Bleached Square")
 		if self.roiUsed==None:
 			self.roiUsed=self.embryo.ROIs[0]
 		

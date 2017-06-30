@@ -1327,9 +1327,9 @@ def radialImgHist(img,center,maxR=None,nbins=10):
 	# Compute binY
 	for i in range(len(bins)-1):
 		ind=np.where((bins[i]<=r) * (r<bins[i+1]))[0]
-		histY.append(sum(ind))
-		binY.append(np.mean(z[ind]))
-
+		histY.append(np.nansum(ind))
+		binY.append(np.nanmean(z[ind]))
+				
 	# Bin centers
 	binMid=bins[:-1]+np.diff(bins)
 	
