@@ -2271,7 +2271,7 @@ class embryo:
 				mesh=False
 		return img,mesh
 	
-	def quickAnalysis(self,maxDExpPx=None,timeScale='log',runIdxs=True,runAnalysis=True,runSimulation=True,runPin=True,runFit=True):
+	def quickAnalysis(self,maxDExpPx=None,timeScale='log',runIdxs=True,runAnalysis=True,runSimulation=True,runPin=True,runFit=True,bkgdName='Bleached Square',normName='Slice',useMin=False,useMax=False,sepSim=True,switchThresh=0.95):
 			
 		"""Performs complete FRAP analysis of embryo object including:
 		
@@ -2290,8 +2290,13 @@ class embryo:
 			runSimulation (bool): Run simulation.
 			runPin (bool): Run pinning.
 			runFit (bool): Run fitting.
+			bkgdName (str): Name of ROI used for background computation.
+			normName (str): Name of ROI used for norming computation.
+			useMin (bool): Use minimum value for background computation.
+			useMax (bool): Use maximum value for norm value computation.
+			sepSim (bool): Use seperate pinning values for simulation vectors.
 			
-		
+			
 		"""
 		
 		if runIdxs:
@@ -2313,7 +2318,7 @@ class embryo:
 
 		#Pin Concentrations
 		if runPin:
-			bkgdVal,normVal,bkgdValSim,normValSim=self.computeIdealFRAPPinVals(debug=True,useMin=False,useMax=False,switchThresh=0.95)
+			bkgdVal,normVal,bkgdValSim,normValSim=self.computeIdealFRAPPinVals(debug=True,useMin=False,useMax=False,switchThresh=0.95,bkgdName=bkgdName,normName=normName)
 			self.pinAllROIs(bkgdVal=bkgdVal,normVal=normVal,bkgdValSim=bkgdValSim,normValSim=normValSim,debug=False)
 
 		#Run all fits

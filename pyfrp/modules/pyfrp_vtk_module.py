@@ -56,7 +56,7 @@ from pyfrp.modules import pyfrp_idx_module
 #Module Functions
 #===========================================================================================================================================================================
 
-def makeVTKCanvas(offScreen=False,bkgd=[1,1,1],renderer=None):
+def makeVTKCanvas(offScreen=False,bkgd=[1,1,1],renderer=None,makeWindow=True):
 	
 	"""Creates a vtk renderer and includes it into a renderer window.
 	
@@ -81,19 +81,28 @@ def makeVTKCanvas(offScreen=False,bkgd=[1,1,1],renderer=None):
 	
 	if renderer==None:
 		renderer = vtk.vtkRenderer()
-	renderWindow = vtk.vtkRenderWindow()
-	
+	if makeWindow:	
+		renderWindow = vtk.vtkRenderWindow()
+	else:
+		renderWindow=None
+		
 	# This seems to be the key to have a renderer without displaying. However it returns floating 
 	# Errors.
-	if offScreen:
+	if offScreen and makeWindow:
 		renderWindow.OffScreenRenderingOn() 
 	
-	renderWindow.AddRenderer(renderer)
+	if makeWindow:
+		renderWindow.AddRenderer(renderer)
+	
+	# Set Background
 	renderer.SetBackground(bkgd[0], bkgd[1], bkgd[2]) 
 	
-	renderWindowInteractor = vtk.vtkRenderWindowInteractor()
-	renderWindowInteractor.SetRenderWindow(renderWindow)
-
+	if makeWindow:
+		renderWindowInteractor = vtk.vtkRenderWindowInteractor()
+		renderWindowInteractor.SetRenderWindow(renderWindow)
+	else:
+		renderWindowInteractor=None
+	
 	return renderer, renderWindow, renderWindowInteractor
 
 def renderVTK(renderer,start=True):

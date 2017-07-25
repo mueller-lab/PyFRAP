@@ -682,7 +682,6 @@ class mesh(object):
 		if renderer==None:
 			if show:
 				rendererWindow=self.plotMesh(fnVTK=fnVTK)
-				print "before save"
 				renderer=rendererWindow.GetRenderers().GetFirstRenderer()
 			else:
 				renderer=self.importVTKFile(fnVTK=fnVTK)
