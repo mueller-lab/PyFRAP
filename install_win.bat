@@ -25,5 +25,5 @@ pip install fipy
 REM Install PyFRAP
 python setup.py install --gmsh --fiji
 
-REM Set environment variables
-SET PATH=%PATH%;"%cd%\executables\gmsh\gmsh.exe"
+REM Set environment variables (NOTE, setx seems to be dangerous. Use with caution!)
+REM SETX PATH=%PATH%;"%cd%\executables\gmsh"

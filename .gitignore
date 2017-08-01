@@ -15,11 +15,12 @@ dist/
 *.egg-info
 
 # Don't push shell scripts
-*.sh
+cleanRebuild.sh
+copyToGor.sh
+rebuildDocs.sh
 
 # Don't push meshfiles
 *.msh
-
 
 # Don't push some python scripts
 replaceInCode.py

@@ -148,6 +148,8 @@ class basicCanvasDialog(QtGui.QDialog):
 			self.ax.set_ylim(ylim)
 		
 		self.canvas.draw()
+		#self.plotFrame.adjustSize()
+		
 		return 
 		
 	def showImg(self,img):

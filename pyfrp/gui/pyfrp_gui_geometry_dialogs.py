@@ -231,6 +231,7 @@ class geometryDialog(pyfrp_gui_basics.basicCanvasDialog):
 		self.ax=self.fig.add_subplot(111,projection='3d')
 		
 		self.canvas.draw()
+		self.plotFrame.adjustSize()
 		return self.fig
 	
 	def updateAllROI(self):
