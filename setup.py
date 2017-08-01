@@ -99,7 +99,6 @@ class OverrideInstall(install):
 		else:
 			self.fijiDownloaded=False
 		
-		
 		#Run setuptools install
 		install.run(self) 
 		

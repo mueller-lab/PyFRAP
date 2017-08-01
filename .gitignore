@@ -17,6 +17,10 @@ dist/
 # Don't push shell scripts
 *.sh
 
+# Don't push meshfiles
+*.msh
+
+
 # Don't push some python scripts
 replaceInCode.py
 

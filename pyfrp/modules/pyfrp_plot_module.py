@@ -894,9 +894,10 @@ def getPubParms(fontSize=10,labelFontSize=10,tickFontSize=10,legendFontSize=10):
 	
 	"""
 	
+	
 	params = {'backend': 'ps',
-		'axes.labelsize': labelFontSize,
 		'font.size': fontSize,
+		'axes.labelsize': labelFontSize,
 		'legend.fontsize': legendFontSize,
 		'xtick.labelsize': tickFontSize,
 		'ytick.labelsize': tickFontSize,
