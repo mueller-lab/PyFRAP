@@ -29,6 +29,5 @@ pip install wget
 
 # 
 #git clone https://github.com/alexblaessle/PyFRAP.git
-#cd PyFRAP-master
-
+cd PyFRAP-master
 python setup.py install --gmsh --fiji

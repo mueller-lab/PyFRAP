@@ -16,6 +16,7 @@ sudo pip install numpy-stl
 sudo pip install wget
 
 # Clone PyFRAP and install
+cd PyFRAP-master
 sudo python setup.py install --gmsh --fiji
 
  
