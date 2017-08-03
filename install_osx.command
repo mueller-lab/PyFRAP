@@ -27,7 +27,10 @@ pip install numpy-stl
 pip install solidpython
 pip install wget
 
-# 
-#git clone https://github.com/alexblaessle/PyFRAP.git
-cd PyFRAP-master
+# CD into directory where PyFRAP lives
+DIR=$(dirname "${0}")
+cd $DIR
+pwd
+
+# Install
 python setup.py install --gmsh --fiji
