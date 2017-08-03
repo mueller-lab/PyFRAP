@@ -18,6 +18,7 @@ dist/
 cleanRebuild.sh
 copyToGor.sh
 rebuildDocs.sh
+runTests.sh
 
 # Don't push meshfiles
 *.msh

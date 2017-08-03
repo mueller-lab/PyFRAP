@@ -1,9 +1,5 @@
 #! /bin/bash
 
-# Make folder 
-mkdir -v $1
-cd $1
-
 # Install everything that is in apt
 sudo apt-get install -y git
 sudo apt-get install -y python-numpy
@@ -20,8 +16,6 @@ sudo pip install numpy-stl
 sudo pip install wget
 
 # Clone PyFRAP and install
-git clone https://github.com/alexblaessle/PyFRAP.git
-cd PyFRAP
 sudo python setup.py install --gmsh --fiji
 
  
