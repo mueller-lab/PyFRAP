@@ -1,7 +1,13 @@
-# PyFRAP
-PyFRAP: A Python based FRAP analysis tool box
+# PyFRAP: A Python based FRAP analysis tool box. 
+
+Fluorescence recovery after photobleaching (FRAP) is a common way to assess molecular diffusion. PyFRAP is a novel simulation-based analysis software
+that makes use of PDE simulations to analyze FRAP experiments in 3D geometries. It uses the first post-bleach image as initial condition, making assumptions 
+about the underlying initial conditions obsolete. PyFRAP can fit different reaction-diffusion models to FRAP data, providing quantitative information about
+effective diffusion.
 
 ## Features
+
+PyFRAP comes with a full image analysis and simulation toolbox. In particular, PyFRAP can
 
 - Import FRAP datasets from timelapse experiments and analyze image data with various options such as
 	+ various filters
@@ -15,11 +21,15 @@ PyFRAP: A Python based FRAP analysis tool box
 
 ## Installation
 
-If you have Python2.7 already installed, simply 
+PyFRAP can be installed in different ways. We provide different installation scripts that allow an easy installation of PyFRAP in combination with Anaconda, including all necessary
+Python packages and external softwares. Installation
+instructions can be found [here](https://github.com/alexblaessle/PyFRAP/wiki/Installation#short).
+
+If you familiar with Python and git, you can install PyFRAP via 
 
 	git clone https://github.com/alexblaessle/PyFRAP
 	
-and install via:
+and:
 
 	python setup.py install --user
 	
@@ -39,19 +49,18 @@ PyFRAP depends on
 - PyQT4>4.10.4
 - vtk>=5.8.0
 - colorama>=0.2.5
-- meshio>=1.2.1
 - wget>=3.2
 - gmsh (compiled with TetGen Algorithm) MUST BE Version 2.14.0!
+
+Note that the installation described [here](https://github.com/alexblaessle/PyFRAP/wiki/Installation#short) install all necessary requirements.
 
 ## Getting Started
 
 ### Running PyFRAP GUI
 
-PyFRAP comes with comprehensive GUI. To start the GUI, simply go to pyfrp/ and doubleclick on 
+PyFRAP comes with comprehensive GUI. It can easily be started by clicking on *runPyFRAP.bat* (Windows), *runPyFRAP.command* (OSX) or *runPyFRAP.sh* (Linux). 
 
-	PyFRAP.py
-	
-or run
+If you are using a terminal, *cd* to your PyFRAP directory and type
 
 	python pyfrp/PyFRAP.py
 
@@ -64,9 +73,13 @@ Note that in the latter method PyFRAP's stdout might get redirected to the pytho
 
 ### Running PyFRAP from the command line
 
+PyFRAP is a complete python packages and can be imported via
+
 ```python
 	import pyfrp
 ```
+
+Note that PyFRAP has three main submodules: *pyfrp.modules*, *pyfrp.subclasses* and *pyfrp.gui*. If you do not want to use any GUI elements, we recommend only important the modules you need.
 
 ### Using PyFRAP GUI to analyze a FRAP experiments
 
@@ -74,7 +87,7 @@ Check out the PyFRAP wiki's [First Steps Section](https://github.com/alexblaessl
 
 ## API
 
-The API of PyFRAP can be found [here](http://pyfrap.readthedocs.org/en/latest/) .
+PyFRAP is fully documented, allowing easy creation of scripts and extensions of the PyFRAP toolbox. The API of PyFRAP can be found [here](http://pyfrap.readthedocs.org/en/latest/) .
 
 ## Documentation
 
