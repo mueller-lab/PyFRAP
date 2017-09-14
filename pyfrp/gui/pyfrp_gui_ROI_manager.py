@@ -1811,3 +1811,55 @@ class indexThread(pyfrp_gui_basics.pyfrpThread):
 	def runTask(self,debug=False):
 		self.embryo.computeROIIdxs(signal=self.progressSignal,debug=True)
 
+#===================================================================================================================================
+#Dialogs for wizard selection
+#===================================================================================================================================
+	
+class wizardSelector(QtGui.QDialog):
+	
+	"""Dialog to select if either use default ROIs, Wizard, or ROI manager."""
+	
+	def __init__(self,parent):
+		
+		super(wizardSelector,self).__init__(parent)
+		
+		#Passing parent GUI
+		self.parent=parent
+		
+		self.mode=None
+		
+		#Buttons
+		self.btnUseDefault=QtGui.QPushButton('Create default ROIs')
+		self.btnUseDefault.connect(self.btnUseDefault, QtCore.SIGNAL('clicked()'), self.setUseDefault)
+		
+		self.btnUseWizard=QtGui.QPushButton('Use ROI Wizard')
+		self.btnUseWizard.connect(self.btnUseWizard, QtCore.SIGNAL('clicked()'), self.setUseWizard)
+		
+		self.btnUseManager=QtGui.QPushButton('Use ROI Manager')
+		self.btnUseManager.connect(self.btnUseManager, QtCore.SIGNAL('clicked()'), self.setUseManager)
+			
+		self.vbox = QtGui.QVBoxLayout()
+		self.vbox.addWidget(self.btnUseDefault)
+		self.vbox.addWidget(self.btnUseWizard)
+		self.vbox.addWidget(self.btnUseManager)
+		
+	
+		self.setLayout(self.vbox)    
+			
+		self.setWindowTitle('Select Wizard Steps')    
+		self.show()
+		
+	def setUseDefault(self):
+		self.mode=0
+		self.done(1)
+		
+	def setUseWizard(self):
+		self.mode=1
+		self.done(1)
+	
+	def setUseManager(self):
+		self.mode=2
+		self.done(1)
+	
+	def getMode(self):
+		return self.mode

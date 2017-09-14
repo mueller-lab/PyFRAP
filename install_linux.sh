@@ -15,6 +15,9 @@ sudo pip install solidpython
 sudo pip install numpy-stl
 sudo pip install wget
 
+# Install openscad
+sudo apt-get install openscad
+
 # Clone PyFRAP and install
 cd PyFRAP-master
 sudo python setup.py install --gmsh --fiji
