@@ -23,7 +23,7 @@ conda install -y colorama
 conda install -y -c guyer fipy
 
 # Install extra packages using 
-pip install numpy-stl
+pip install numpy-stl==2.2.0
 pip install solidpython
 pip install wget
 
