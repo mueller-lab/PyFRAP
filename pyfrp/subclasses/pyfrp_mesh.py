@@ -158,7 +158,7 @@ class mesh(object):
 		
 		
 		self.fromFile=True
-		self.volSizePx=20
+		self.volSizePx=20.
 		self.fnMesh=""
 		
 	def genMesh(self,fnOut=None,debug=False):
