@@ -1924,23 +1924,27 @@ class pyfrp(QtGui.QMainWindow):
 		self.editMesh()
 		
 		#Genereate wait popup
-		self.progressDialog=pyfrp_gui_mesh_dialogs.genMeshProgressDialog(None)
+		#self.progressDialog=pyfrp_gui_mesh_dialogs.genMeshProgressDialog(None)
 		
-		#Make backup copy of embryo
-		self.originalObj=currEmbryo
-		self.backupObj=cpy.deepcopy(currEmbryo)
+		##Make backup copy of embryo
+		#self.originalObj=currEmbryo
+		#self.backupObj=cpy.deepcopy(currEmbryo)
 		
-		self.statusBar().showMessage("Generating Mesh " + currEmbryo.name)
+		#self.statusBar().showMessage("Generating Mesh " + currEmbryo.name)
 		
-		#Generate Qthread and pass analysis there
-		self.task=pyfrp_gui_basics.pyfrpThread()
-		self.worker=pyfrp_gui_basics.pyfrpWorker(currEmbryo.simulation.mesh.genMesh)
+		##Generate Qthread and pass analysis there
+		#self.task=pyfrp_gui_basics.pyfrpThread()
+		#self.worker=pyfrp_gui_basics.pyfrpWorker(currEmbryo.simulation.mesh.genMesh)
+		printNote("Generating Mesh... This can take a few seconds...")
+		currEmbryo.simulation.mesh.genMesh()
+		
+		
 		
 		#Print out mesh stats
 		self.printMeshStats()
 		
 		#Init and start
-		self.initTask()
+		#self.initTask()
 		
 	def refineMesh(self):
 		
