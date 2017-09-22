@@ -1,6 +1,6 @@
 # PyFRAP: A Python based FRAP analysis tool box. 
 
-Fluorescence Recovery After Photobleaching (FRAP) is a common way to assess molecular diffusion. PyFRAP is a novel simulation-based analysis software
+Fluorescence Recovery After Photobleaching (FRAP) is a common technique to assess molecular diffusion. PyFRAP is a novel simulation-based analysis software
 that makes use of PDE simulations to analyze FRAP experiments in 3D geometries. It uses the first post-bleach image as initial condition, making assumptions 
 about the underlying initial conditions obsolete. PyFRAP can fit different reaction-diffusion models to FRAP data, providing quantitative information about
 effective diffusion.
@@ -91,7 +91,7 @@ PyFRAP is fully documented, allowing easy creation of scripts and extensions of 
 
 ## Documentation
 
-To learn more about PyFRAP, check out the PyFRAP [https://github.com/mueller-lab/PyFRAP/wiki](wiki)
+To learn more about PyFRAP, check out the PyFRAP [Wiki](https://github.com/mueller-lab/PyFRAP/wiki).
 
 
 
