@@ -11,7 +11,7 @@ PyFRAP comes with a full image analysis and simulation toolbox. In particular, P
 
 - Import FRAP datasets from timelapse experiments and analyze image data with various options such as
 	+ image filters
-	+ background substraction
+	+ background subtraction
 	+ illumination correction
 - Simulate the FRAP experiment with exact interpolated initial conditions
 - Fit simulated experiment to analyzed data and extract diffusion coefficient
