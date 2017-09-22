@@ -1,0 +1,39 @@
+TODO:
+	
+	- Data structure:
+		- We might want to move away from saving to pickle files. IDEA: 
+			- molecule files do not save anymore list of embryos but just list of path to embryo files.
+			- whenever embryo is needed, molecule calls getEmbryo and thus loading file. This also happens
+			  user clicks on gui on embryo
+			- Could also include a loadAll option. 
+	- GUI integration:
+		- mesh merging
+		- Simulation visualization
+		- Geometry visualization
+		- Multiple plotting functions
+		- Embryo slicing
+		- Simulation to image export
+		- In general when plot command is called, ask if plotting should be done in current axis.
+		- Add plot modifier from PyFDAP
+		- Add additional plotting functions
+		- Move all plotting functionalities in GUI to Plotting MB
+		- In showObjPropsInBar, if array is longer than maxLength, write sth like "array/list of shape"
+		- Get embryo/molecule compression saving running again.
+		- Include 2D geometries, e.g. allow dim setting for custom geometries.
+	- Path management. Check at installation if there is a installation of gmsh and fiji in executables folder. If so, set path to those.
+	- Might want to move away from Fiji and use python OME instead. Might just grab code from quantDorsal project
+	- Might be faster in analysis if we load all files at first, put them in common numpy array, apply all image manupulation steps
+	  and finally grab ROIs via c=imgs[idxs,:]
+	- pyfrp_gmsh_geometry.ruledSurface should store more than a single lineLoop but rather have a lineLoops list.
+	- Need to add pyfrp_gmsh_geometry.planeSurface class.
+	- Speed-up via trillionos
+	- simulation.showIC via vtk
+	- In GUI, when selecting fnFlatten, we need to make sure that we add slash
+		
+Additions:
+
+Changes:
+
+Bugfixes:
+	
+	
