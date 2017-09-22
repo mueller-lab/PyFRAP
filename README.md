@@ -23,7 +23,7 @@ PyFRAP comes with a full image analysis and simulation toolbox. In particular, P
 
 PyFRAP can be installed in different ways. We provide installation scripts that allow an easy installation of PyFRAP in combination with Anaconda, including all necessary
 Python packages and external softwares. Installation
-instructions can be found [here](wiki/Installation#short).
+instructions can be found [here](https://github.com/mueller-lab/PyFRAP/wiki/Installation#short).
 
 If you are familiar with Python and git, you can install PyFRAP via 
 
@@ -35,7 +35,7 @@ and:
 	
 We highly recommend installing with the *--user* option, since PyFRAP needs to read/write data files in the installation folder. In some cases, this
 might lead to file permission issues.
-For a full installation documentation, have a look at the [wiki](wiki/Installation).
+For a full installation documentation, have a look at the [wiki](https://github.com/mueller-lab/PyFRAP/wiki/Installation).
 
 ### Requirements
 
@@ -52,7 +52,7 @@ PyFRAP depends on
 - wget>=3.2
 - gmsh (compiled with TetGen Algorithm) MUST BE Version 2.14.0!
 
-Note that the installation described [here](wiki/Installation#short) installs all necessary requirements.
+Note that the installation described [here](https://github.com/mueller-lab/PyFRAP/wiki/Installation#short) installs all necessary requirements.
 
 ## Getting Started
 
@@ -83,7 +83,7 @@ Note that PyFRAP has three main submodules: *pyfrp.modules*, *pyfrp.subclasses* 
 
 ### Using the PyFRAP GUI to analyze a FRAP experiment
 
-Check out the PyFRAP wiki's [First Steps Section](wiki/FirstSteps).
+Check out the PyFRAP wiki's [First Steps Section](https://github.com/mueller-lab/PyFRAP/wiki/FirstSteps).
 
 ## API
 
@@ -91,7 +91,7 @@ PyFRAP is fully documented, allowing easy creation of scripts and extensions of 
 
 ## Documentation
 
-To learn more about PyFRAP, check out the PyFRAP [wiki](wiki)
+To learn more about PyFRAP, check out the PyFRAP [https://github.com/mueller-lab/PyFRAP/wiki](wiki)
 
 
 
