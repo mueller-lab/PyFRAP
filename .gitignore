@@ -19,6 +19,7 @@ cleanRebuild.sh
 copyToGor.sh
 rebuildDocs.sh
 runTests.sh
+updateZipFile.sh
 
 # Don't push meshfiles
 *.msh
@@ -65,6 +66,11 @@ PyFRAP.wiki/
 
 # Don't push commit note document
 pyfrp/latest_commit.txt
+
+# Don't push .zip files
+*zip
+
+
 
 
 
