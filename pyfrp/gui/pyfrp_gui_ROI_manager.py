@@ -1561,7 +1561,86 @@ class defaultROIsDialog(pyfrp_gui_basics.basicCanvasDialog):
 		#Remove last artist
 		elif event.button==3:
 			self.removeArtist()
+	
+	def updateCenterQles(self,center):
+		
+		"""Updates the two center Qles with new center."""
+		
+		self.qleCenterX.setText(str(center[0]))
+		self.qleCenterY.setText(str(center[1]))
+	
+	def updateRadiusQle(self,radius):
+		
+		"""Updates radius Qle with given radius."""
+		
+		self.qleRadius.setText(str(radius))
+	
+	def keyPressed(self,event):
+		
+		"""Directs all key press events to the respective functions."""
+		
+		if event.key=='left':
+			self.moveLeft()
+		elif event.key=='right':
+			self.moveRight()
+		elif event.key=='up':
+			self.moveUp()
+		elif event.key=='down':
+			self.moveDown()
+		elif event.key=='ctrl+up':
+			self.increaseRadius()
+		elif event.key=='ctrl+down':
+			self.decreaseRadius()
 			
+	def moveLeft(self):
+		
+		"""Moves center 1 px to the left."""
+		
+		if len(self.artists)>0:
+			self.updateCenterQles([self.center[0]-1,self.center[1]])
+			self.setCenter()
+		
+		
+	def moveRight(self):
+		
+		"""Moves center 1 px to the right."""
+		
+		if len(self.artists)>0:
+			self.updateCenterQles([self.center[0]+1,self.center[1]])
+			self.setCenter()
+	
+	def moveUp(self):
+		
+		"""Moves center 1 px up."""
+		
+		if len(self.artists)>0:
+			self.updateCenterQles([self.center[0],self.center[1]+1])
+			self.setCenter()
+	
+	def moveDown(self):
+		
+		"""Moves center 1 px down."""
+		
+		if len(self.artists)>0:
+			self.updateCenterQles([self.center[0],self.center[1]-1])
+			self.setCenter()
+			
+	def increaseRadius(self):
+		
+		"""Increases radius by 1 px."""
+		
+		if len(self.artists)>1:
+			self.updateRadiusQle(self.radius+1)
+			self.setRadius()
+			
+	def decreaseRadius(self):
+		
+		"""Decreases radius by 1 px."""
+		
+		if len(self.artists)>1:
+			self.updateRadiusQle(self.radius-1)
+			self.setRadius()
+	
 	def donePressed(self):
 		self.embryo.genDefaultROIs(self.center,self.radius)
 		self.done(1)
