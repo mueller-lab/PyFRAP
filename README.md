@@ -5,6 +5,8 @@ that makes use of PDE simulations to analyze FRAP experiments in 3D geometries. 
 about the underlying initial conditions obsolete. PyFRAP can fit different reaction-diffusion models to FRAP data, providing quantitative information about
 effective diffusion.
 
+![FRAP_explanation](https://github.com/mueller-lab/PyFRAP/wiki/img/home/frap.png "FRAP explanation")
+
 ## Features
 
 PyFRAP comes with a full image analysis and simulation toolbox. In particular, PyFRAP can
@@ -27,7 +29,7 @@ instructions can be found [here](https://github.com/mueller-lab/PyFRAP/wiki/Inst
 
 If you are familiar with Python and git, you can install PyFRAP via 
 
-	git clone https://github.com/alexblaessle/PyFRAP
+	git clone https://github.com/mueller-lab/PyFRAP
 	
 and:
 
