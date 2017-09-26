@@ -1,16 +1,12 @@
-# PyFRAP: A Python based FRAP analysis tool box. 
+# PyFRAP: A Python based FRAP analysis tool box 
 
-Fluorescence Recovery After Photobleaching (FRAP) is a common technique to assess molecular diffusion. PyFRAP is a novel simulation-based analysis software
-that makes use of PDE simulations to analyze FRAP experiments in 3D geometries. It uses the first post-bleach image as initial condition, making assumptions 
-about the underlying initial conditions obsolete. PyFRAP can fit different reaction-diffusion models to FRAP data, providing quantitative information about
-effective diffusion.
+Fluorescence Recovery After Photobleaching (FRAP) is a common technique to assess molecular diffusion. PyFRAP is a novel simulation-based analysis software that makes use of PDE simulations to analyze FRAP experiments in 3D geometries. It uses the first post-bleach image as initial condition, making assumptions about the underlying initial conditions obsolete. PyFRAP can fit different reaction-diffusion models to FRAP data, providing quantitative information about effective diffusion.
 
 ![FRAP_explanation](https://github.com/mueller-lab/PyFRAP/wiki/img/home/frap.png "FRAP explanation")
 
 ## Features
 
 PyFRAP comes with a full image analysis and simulation toolbox. In particular, PyFRAP can
-
 - Import FRAP datasets from timelapse experiments and analyze image data with various options such as
 	+ image filters
 	+ background subtraction
@@ -23,9 +19,7 @@ PyFRAP comes with a full image analysis and simulation toolbox. In particular, P
 
 ## Installation
 
-PyFRAP can be installed in different ways. We provide installation scripts that allow an easy installation of PyFRAP in combination with Anaconda, including all necessary
-Python packages and external softwares. Installation
-instructions can be found [here](https://github.com/mueller-lab/PyFRAP/wiki/Installation#short).
+PyFRAP can be installed in different ways. We provide installation scripts that allow an easy installation of PyFRAP in combination with Anaconda, including all necessary Python packages and external softwares. Installation instructions can be found [here](https://github.com/mueller-lab/PyFRAP/wiki/Installation#short).
 
 If you are familiar with Python and git, you can install PyFRAP via 
 
@@ -35,14 +29,11 @@ and:
 
 	python setup.py install --user
 	
-We highly recommend installing with the *--user* option, since PyFRAP needs to read/write data files in the installation folder. In some cases, this
-might lead to file permission issues.
-For a full installation documentation, have a look at the [wiki](https://github.com/mueller-lab/PyFRAP/wiki/Installation).
+We highly recommend installing with the *--user* option, since PyFRAP needs to read/write data files in the installation folder. In some cases, this might lead to file permission issues. For a full installation documentation, have a look at the [wiki](https://github.com/mueller-lab/PyFRAP/wiki/Installation).
 
 ### Requirements
 
 PyFRAP depends on 
-
 - numpy>=1.8.2
 - matplotlib>=1.4.3
 - scipy>=0.13.3
@@ -94,8 +85,3 @@ PyFRAP is fully documented, allowing easy creation of scripts and extensions of 
 ## Documentation
 
 To learn more about PyFRAP, check out the PyFRAP [Wiki](https://github.com/mueller-lab/PyFRAP/wiki).
-
-
-
-
-
