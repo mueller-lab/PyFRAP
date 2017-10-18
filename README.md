@@ -52,11 +52,11 @@ PyFRAP depends on
 - wget>=3.2
 - gmsh (compiled with TetGen Algorithm) MUST BE Version 2.14.0!
 
-Note that the installation described [here](https://github.com/alexblaessle/PyFRAP/wiki/Installation#short) installs all necessary requirements.
+Note that the installation described [here](https://github.com/alexblaessle/PyFRAP/wiki/Installation#short) installs all necessary packages.
 
 ## Getting Started
 
-### Running PyFRAP GUI
+### Running the PyFRAP GUI
 
 PyFRAP comes with a comprehensive GUI. It can easily be started by clicking on *runPyFRAP.bat* (Windows), *runPyFRAP.command* (OSX) or *runPyFRAP.sh* (Linux). 
 
