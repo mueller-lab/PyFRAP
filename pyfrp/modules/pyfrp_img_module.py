@@ -54,6 +54,10 @@ import time
 import os
 import platform
 
+#Bioformats
+#import javabridge
+import bioformats
+
 #PyFRAP modules
 import pyfrp_misc_module
 import pyfrp_plot_module
@@ -1863,7 +1867,205 @@ def extractCZI(folder,fijiBin=None,macroPath=None,debug=False,batch=True):
 		
 	
 	return runFijiMacro(macroPath,folder,fijiBin=fijiBin,debug=debug,batch=batch)
+
+def readBioFormatsMeta(fn):
 	
+	"""Reads meta data out of bioformats format.
+	
+	.. note:: Changes system default encoding to UTF8.
+	
+	Args:
+		fn (str): Path to file.
+	
+	Returns:
+		OMEXML: meta data of all data.
+	
+	"""
+	
+	#Change system encoding to UTF 8
+	reload(sys)  
+	sys.setdefaultencoding('UTF8')
+
+	#Load and convert to utf8
+	meta=bioformats.get_omexml_metadata(path=fn)
+	meta=meta.decode().encode('utf-8')
+	
+	meta2 = bioformats.OMEXML(meta)
+	
+	return meta2
+	
+
+def readBioFormats(fn,debug=True,series=0,channel='all'):
+	
+	"""Reads bioformats image file.
+	
+	.. note:: ``series='all'`` returns all datasets.
+	
+	.. note:: ``channel='all'`` returns all channels.
+	
+	Args:
+		fn (str): Path to file.
+	
+	Keyword Args:
+		debug (bool): Show debugging output.
+		series (int): Image series to be used. 
+		channel (int): Channel to extract.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* images (list): List of datasets
+			* meta (OMEXML): meta data of all data.
+			* fnsLoaded (list): List of filenames that were loaded.
+	
+	"""
+	
+	#javabridge.start_vm(class_path=bioformats.JARS)
+	
+	meta=readBioFormatsMeta(fn)
+	
+	#Empty list to put datasets in	
+	images=[]
+	fnsLoaded=[]
+	
+	#Open with reader class
+	with bioformats.ImageReader(fn) as reader:
+		
+		#Loop through all images
+		for i in range(meta.image_count):
+			
+			channels=[]
+			
+			#Check if there is a corrupt zstack for this particular dataset
+			problematicStacks=checkProblematicStacks(reader,meta,i,debug=debug)
+			
+			#Loop through all channels
+			for j in range(meta.image(i).Pixels.SizeC):
+				
+				zStacks=[]
+				
+				#Loop through all zStacks
+				for k in range(meta.image(i).Pixels.SizeZ):
+					
+					for t in range(meta.image(i).Pixels.SizeT):
+					
+						#Check if corrupted
+						if k not in problematicStacks:
+							img=reader.read(series=i, c=j, z=k,t=t, rescale=False)
+							zStacks.append(img)
+					
+				#Append to channels
+				channels.append(zStacks)
+			
+			#Append to list of datasets and converts it to numpy array
+			images.append(np.asarray(channels))
+			fnsLoaded.append(fn)
+	
+	# Select correct series
+	if series!='all':
+		images=images[series]
+	
+	# Select correct channel
+	if channel!='all':
+		images=images[channel]
+		
+	#Kill java VM
+	#javabridge.kill_vm()
+	
+	return images,meta,fnsLoaded
+
+def checkProblematicStacks(reader,meta,imageIdx,debug=True):
+	
+	"""Finds stacks that are somehow corrupted.
+	
+	Does this by trying to read them via ``bioformats.reader.read``, and in case of 
+	exceptions just adds them to a list of problematic stacks.
+	
+	Args:
+		reader (bioformats.reader): A reader object.
+		meta (OMEXML): Bioformats meta data object.
+		imageIdx (int): Index of series to check.
+		
+	Keyword Args:
+		debug (bool): Print debugging messages.
+	
+	Returns:
+		list: List of indices of zstacks that are corrupted.
+	
+	"""
+		
+	problematicStacks=[]
+	
+	#Loop through all channels and zstacks
+	for j in range(meta.image(imageIdx).Pixels.SizeC):
+		for k in range(meta.image(imageIdx).Pixels.SizeZ):
+			try:
+				img=reader.read(series=imageIdx, c=j, z=k, rescale=False)
+			except:
+				if debug:
+					printWarning("Loading failed.")
+					print "Cannot load Image ", imageIdx,"/",meta.image_count
+					print "channel = ",j, "/",meta.image(imageIdx).Pixels.SizeC
+					print "zStack = ",k,"/",meta.image(imageIdx).Pixels.SizeZ
+				problematicStacks.append(k)
+	
+	return list(np.unique(problematicStacks)) 
+	
+
+def extractBioFormats(fn,fnOut,debug=True,series=0,channel='all',enc="uint16",scale=True,maxVal=None,outputformat='tif'):
+	
+	"""Reads bioformats image file.
+	
+	.. note:: ``series='all'`` returns all datasets.
+	
+	.. note:: ``channel='all'`` returns all channels.
+	
+	Args:
+		fn (str): Path to file.
+		fnOut (str): Path to folder where images are saved. 
+	
+	Keyword Args:
+		debug (bool): Show debugging output.
+		series (int): Image series to be used. 
+		channel (int): Channel to extract.
+		enc (str): Encoding of image.
+		scale (bool): Scale image.
+		maxVal (int): Maximum value to which image is scaled.
+		
+	Returns:
+		tuple: Tuple containing:
+		
+			* images (list): List of datasets
+			* meta (OMEXML): meta data of all data.
+			* fnsLoaded (list): List of filenames that were loaded.
+	
+	"""
+	
+	# Read files
+	#try:
+	images,meta,fnsLoaded=readBioFormats(fn,debug=debug,series=series,channel=channel)
+	#except:
+		#printError('Was not able to extract images in file '+fn)
+		#return -1
+	
+	# Save to images
+	try:
+		for j,img in enumerate(images):
+			
+			# Build output filename
+			enum="_t"+(len(str(len(images)))-len(str(j)))*"0"+str(j)
+			fnImg=fnOut+os.path.splitext(os.path.basename(fn))[0]+enum+'.'+outputformat
+			
+			# Write image
+			saveImg(img,fnImg,enc=enc,scale=scale,maxVal=maxVal)
+			
+			if debug:
+				print "Saved ",fnImg
+	except:
+		printError("Was not able to save images to " + fnOut)
+		return -1
+	
+	return 1
 	
 def runFijiMacro(macroPath,macroArgs,fijiBin=None,debug=False,batch=True):
 	
@@ -1941,169 +2143,3 @@ def getImgSmoothness(arr):
 
 	return dmax/dbar,dmax
 	
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Functions that still need testing
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#Show all processing possibilities for image (Flip/Norm/Gauss)
-
-#def show_process_poss(img,fn_pre,dataEnc):
-	
-	##Create figure and axes
-	#fig,axes1 = pyfrp_plot_module.makeSubplot([2,4],tight=False)
-	
-	##Run all possibilities with quad_red=False
-	#img1=processImg(img,fn_pre,dataEnc,quad_red=False,flip_before_process=True,norm_by_pre=False,gaussian=False,gaussianSigma=2.,dataOffset=1.,axes=[axes1[0],axes1[4]],debug=False)
-	#img2=processImg(img,fn_pre,dataEnc,quad_red=False,flip_before_process=True,norm_by_pre=True,gaussian=False,gaussianSigma=2.,dataOffset=1.,axes=[axes1[1],axes1[5]],debug=False)
-	#img3=processImg(img,fn_pre,dataEnc,quad_red=False,flip_before_process=True,norm_by_pre=False,gaussian=True,gaussianSigma=2.,dataOffset=1.,axes=[axes1[2],axes1[6]],debug=False)
-	#img4=processImg(img,fn_pre,dataEnc,quad_red=False,flip_before_process=True,norm_by_pre=True,gaussian=True,gaussianSigma=2.,dataOffset=1.,axes=[axes1[3],axes1[7]],debug=False)
-	
-	##Create figure and axes
-	#fig,axes2 = pyfrp_plot_module.makeSubplot([2,4],tight=False)
-	
-	##Run all possibilities with quad_red=True and flip_before_process=True
-	#img5=processImg(img,fn_pre,dataEnc,quad_red=True,flip_before_process=True,norm_by_pre=False,gaussian=False,gaussianSigma=2.,dataOffset=1.,axes=[axes2[0],axes2[4]],debug=False)
-	#img6=processImg(img,fn_pre,dataEnc,quad_red=True,flip_before_process=True,norm_by_pre=True,gaussian=False,gaussianSigma=2.,dataOffset=1.,axes=[axes2[1],axes2[5]],debug=False)
-	#img7=processImg(img,fn_pre,dataEnc,quad_red=True,flip_before_process=True,norm_by_pre=False,gaussian=True,gaussianSigma=2.,dataOffset=1.,axes=[axes2[2],axes2[6]],debug=False)
-	#img8=processImg(img,fn_pre,dataEnc,quad_red=True,flip_before_process=True,norm_by_pre=True,gaussian=True,gaussianSigma=2.,dataOffset=1.,axes=[axes2[3],axes2[7]],debug=False)
-	
-	##Create figure and axes
-	#fig,axes3 = pyfrp_plot_module.makeSubplot([2,4],tight=False)
-	
-	##Run all possibilities with quad_red=True and flip_before_process=False
-	#img9=processImg(img,fn_pre,dataEnc,quad_red=True,flip_before_process=False,norm_by_pre=False,gaussian=False,gaussianSigma=2.,dataOffset=1.,axes=[axes3[0],axes3[4]],debug=False)
-	#img10=processImg(img,fn_pre,dataEnc,quad_red=True,flip_before_process=False,norm_by_pre=True,gaussian=False,gaussianSigma=2.,dataOffset=1.,axes=[axes3[1],axes3[5]],debug=False)
-	#img11=processImg(img,fn_pre,dataEnc,quad_red=True,flip_before_process=False,norm_by_pre=False,gaussian=True,gaussianSigma=2.,dataOffset=1.,axes=[axes3[2],axes3[6]],debug=False)
-	#img12=processImg(img,fn_pre,dataEnc,quad_red=True,flip_before_process=False,norm_by_pre=True,gaussian=True,gaussianSigma=2.,dataOffset=1.,axes=[axes3[3],axes3[7]],debug=False)
-	
-	##Adjust display ranges
-	#imgs_norm=[img2,img4,img6,img8,img10,img12]
-	#imgs=[img1,img3,img5,img7,img9,img11]
-	
-	#axes_norm=[axes1[1],axes1[3],axes2[1],axes2[3],axes3[1],axes3[3]]
-	#axes_org=[axes1[0],axes1[2],axes2[0],axes2[2],axes3[0],axes3[2]]
-	
-	#min_norm,max_norm=get_common_range(imgs_norm)
-	#min_org,max_org=get_common_range(imgs)
-	
-	#pyfrp_plot_module.adjust_imshow_range(axes_org,vmin=min_org,vmax=max_org)
-	#pyfrp_plot_module.adjust_imshow_range(axes_norm,vmin=min_norm,vmax=max_norm)
-	
-	#print "done"
-	#raw_input()
-
-##-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-##Crop concentration of rim from pre image
-
-#def cropConcRimFromPre(embryo):
-	
-	##Open image file
-	#fnImg=embryo.fn_preimage
-	#fnImg=str(fnImg)
-	
-	##Reading in image
-	#im = skimage.io.imread(fnImg).astype(embryo.dataEnc)
-	
-	##Getting img values
-	#imgVals=im.real
-	
-	##Get indices of domains
-	#ind_circ_x,ind_circ_y,ind_sq_x,ind_sq_y,ind_slice_x,ind_slice_y, ind_rim_x,ind_rim_y=get_ind_regions(embryo.offset_bleached_px,embryo.side_length_bleached_px,embryo.radius_embr_px,embryo.center_embr_px,embryo.rim,embryo.add_rim_from_radius,imgVals,0)
-	
-	#num_in_slice=np.shape(ind_slice_x)[0]
-	
-	##Calculate concentration in slice
-	#c_slice,c_rim=analyze_conc_slice(ind_slice_x,ind_slice_y,imgVals,n0,ind_rim_x,ind_rim_y,0,embryo.add_rim_img)
-	
-	##Save to embryo object
-	#embryo.conc_rim=c_slice
-	
-	#return embryo
-
-##-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-##Smooth out image via sliding window
-
-#def slidingWin(embryo):
-	
-	##Check if overlap options is turned on
-	#if embryo.slide_overlap==0:
-		
-		##Check if slide_win_width is a divisor of data_res_px, if not, adjust it
-		#if mod(embryo.data_res_px,embryo.slide_win_width)!=0:
-			#if embryo.debug_analysis==1:
-				#print "Sliding window size is not divisor of img size, going to correct that"
-			
-			#d=float("inf")
-			
-			##Getting all divisors of data_res_px
-			#for i in range(1,int(embryo.data_res_px/2+1)):
-				
-				##Check if divisor
-				#if mod(embryo.data_res_px,i)==0:
-					
-					##Compute distance to slide_win_width
-					#d_new=abs(embryo.slide_win_width-i)
-					#if d_new<d:
-						##Divisor that lies closer to slide_win_width
-						#i_new=i
-						#d=d_new
-					#else:
-						##Won't get better, so break
-						#break
-			
-			#if embryo.debug_analysis==1:
-				#print "Old slide_win_width:", embryo.slide_win_width, "New slide_win_width", i_new
-			
-			##Set new slide_win_width
-			#embryo.slide_win_width=i_new
-		
-		##Calculate number of slide_steps
-		#slide_steps=int(embryo.data_res_px/embryo.slide_win_width)
-		
-	#elif embryo.slide_overlap==1:
-		##Calculate number of slide_steps
-		#slide_steps=int(embryo.data_res_px-(embryo.slide_win_width-1))
-	
-	##Slide matrix
-	#slides=zeros((slide_steps,slide_steps))
-	
-	#if embryo.slide_img=="post":
-		#slide_img=embryo.im_reg_ICs
-	#elif embryo.slide_img=="pre":	
-		#fnImg=embryo.fn_preimage
-		#fnImg=str(fnImg)
-		#im = skimage.io.imread(fnImg).astype(embryo.dataEnc)
-		
-		#slide_img=im.real
-		#slide_img=slide_img.astype('float')
-	
-	
-	##Go through all slides and crop current slide from img and calculate mean
-	#for i in range(slide_steps):
-		#for j in range(slide_steps):
-			#if embryo.slide_overlap==0:
-				#curr_win=slide_img[embryo.slide_win_width*i:embryo.slide_win_width*(i+1),embryo.slide_win_width*j:embryo.slide_win_width*(j+1)]
-			#elif embryo.slide_overlap==1:
-				#curr_win=slide_img[i:i+embryo.slide_win_width,j:embryo.slide_win_width+j]
-				
-			#slides[i,j]=mean(curr_win)
-			
-	##Some debugging plots
-	#if embryo.debug_analysis==1:
-	
-		#fig=plt.figure()
-		#fig.show()
-		#cflevels=linspace(slide_img.min(),slide_img.max(),10)
-		#ax=fig.add_subplot(121)
-		#ax.contourf(slide_img,levels=cflevels)
-		#ax=fig.add_subplot(122)
-		#ax.contourf(slides,levels=cflevels)
-		
-		#plt.draw()
-		#raw_input()
-	
-	#embryo.slides=slides
-			
-	#return embryo			

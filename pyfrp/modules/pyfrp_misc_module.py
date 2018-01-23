@@ -1302,7 +1302,7 @@ def txtLineReplace(filePath, pattern, subst):
 	shutil.move(absPath, filePath)
 	return
 	
-def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True,recoverIdent=['recover','post'],bleachIdent=['bleach'],preIdent=['pre'],colorPrefix='_c00',cleanUp=True):
+def buildEmbryoWizard(fn,ftype,name,nChannel=0,enc="uint16",fnDest=None,createEmbryo=True,recoverIdent=['recover','post'],bleachIdent=['bleach'],preIdent=['pre'],cleanUp=True,colorPrefix='_c00'):
 	
 	"""Creates embryo object ready for analysis from microscope data.
 	
@@ -1323,7 +1323,6 @@ def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True,rec
 		recoverIdent (list): List of identifiers for recovery data
 		bleachIdent (list): List of identifiers for bleach data
 		preIdent (list): List of identifiers for pre-bleach data
-		colorPrefix (str): Defines how to detect if multichannel or not
 		cleanUp (bool): Clean up .tif files from other channels afterwards.
 	
 		
@@ -1332,28 +1331,37 @@ def buildEmbryoWizard(fn,ftype,name,nChannel=1,fnDest=None,createEmbryo=True,rec
 
 	"""
 	
+	# Fix path
 	fn=slashToFn(fixPath(fn))
 	
+	# Make sure that input directory exists
 	if not os.path.isdir(fn):
 		printError(fn+ " does not exist.")
 		return -1
 	
-	l=getSortedFileList(fn,ftype)
+	# Get all files of right type
+	l=glob.glob(fn+'/*'+ftype)
 	if len(l)==0:
 		printError(fn+ "does not contain images of type " + ftype)
 		return -1
 	
-	r=pyfrp_img_module.extractMicroscope(fn,ftype)
-	
+	# Extract images using Bioformats
+	for f in l:
+		r=pyfrp_img_module.extractBioFormats(f,fn,debug=True,series=0,channel=nChannel,enc=enc,outputformat='tif')
 	if r==-1:
 		return -1
 	
+	# Check for output directory
 	if fnDest==None:
 		fnDest=fn
-	
 	fnDest=slashToFn(fixPath(fnDest))
 	
+	# Create folder structure
 	makeEmbryoFolderStruct(fnDest)
+	
+	
+	
+	# Sort image files in structure
 	sortImageFiles(fn,fnDest,ftype,nChannel=nChannel,recoverIdent=recoverIdent,bleachIdent=bleachIdent,preIdent=preIdent,colorPrefix=colorPrefix,cleanUp=cleanUp)
 	
 	if createEmbryo:
@@ -1391,7 +1399,9 @@ def sortImageFiles(fn,fnDest,ftype,recoverIdent=['recover','post'],bleachIdent=[
 
 	"""
 	
-	recoverMulti,preMulti,bleachMulti=checkDataMultiChannel(fn,recoverIdent=recoverIdent,bleachIdent=bleachIdent,preIdent=preIdent,colorPrefix=colorPrefix)
+	#recoverMulti,preMulti,bleachMulti=checkDataMultiChannel(fn,recoverIdent=recoverIdent,bleachIdent=bleachIdent,preIdent=preIdent,colorPrefix=colorPrefix)
+	recoverMulti,preMulti,bleachMulti=False,False,False
+	
 	
 	moveImageFiles(fn,'recover','tif',recoverIdent,recoverMulti,fnDest=fnDest,debug=debug,colorPrefix=colorPrefix)
 	moveImageFiles(fn,'pre','tif',preIdent,preMulti,fnDest=fnDest,debug=debug,colorPrefix=colorPrefix)

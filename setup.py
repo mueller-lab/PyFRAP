@@ -824,7 +824,7 @@ if os.environ.get('READTHEDOCS', None) == 'True':
 	print "Installing on RTD, will not overwrite install command."
 	
 	setup(name='pyfrp',
-		version='1.0',
+		version='1.1.4',
 		description='PyFRAP: A Python based FRAP analysis tool box',
 		url='https://github.com/alexblaessle/PyFRAP',
 		author='Alexander Blaessle',
@@ -838,21 +838,26 @@ if os.environ.get('READTHEDOCS', None) == 'True':
 		#package_data = {'pyfrp':['meshfiles','configurations']},
 		include_package_data=True,
 		classifiers= [
+			'Development Status :: 4 - Beta',
 			'Operating System :: OS Independent',
 			'Programming Language :: Python :: 2.7',
-			'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
-			'Intended Audience :: Science/Research'
+			'Topic :: Scientific/Engineering :: Bio-Informatics',
+			'Intended Audience :: Science/Research',
+			'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',\
+			'Programming Language :: Python :: 2.7',
 			],
+		install_requires=['pyopenssl','ndg-httpsclient','pyasn1','ez_setup','numpy','scipy','matplotlib','scikit-image','FiPy','colorama','numpy-stl','solidpython','wget','python-bioformats'],	
 		platforms=['ALL'],
 		keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
 			],
 		zip_safe=False
 		)
 
+
 else:
 
 	setup(name='pyfrp',
-		version='1.0',
+		version='1.1.4',
 		description='PyFRAP: A Python based FRAP analysis tool box',
 		url='https://github.com/alexblaessle/PyFRAP',
 		author='Alexander Blaessle',
@@ -866,11 +871,15 @@ else:
 		#package_data = {'pyfrp':['meshfiles','configurations']},
 		include_package_data=True,
 		classifiers= [
+			'Development Status :: 4 - Beta',
 			'Operating System :: OS Independent',
 			'Programming Language :: Python :: 2.7',
-			'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
-			'Intended Audience :: Science/Research'
+			'Topic :: Scientific/Engineering :: Bio-Informatics',
+			'Intended Audience :: Science/Research',
+			'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',\
+			'Programming Language :: Python :: 2.7',
 			],
+		install_requires=['pyopenssl','ndg-httpsclient','pyasn1','ez_setup','numpy','scipy','matplotlib','scikit-image','FiPy','colorama','numpy-stl','solidpython','wget','python-bioformats'],	
 		platforms=['ALL'],
 		keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
 			],

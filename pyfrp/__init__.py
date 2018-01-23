@@ -18,17 +18,21 @@ from . import subclasses
 
 #PyFRAP GUI classes
 
-#Only import if not RTD. RTD is currently having problems 
+#Only import if not RTD or not selected. RTD is currently having problems 
 #with importing GUI classes. Will need to have fix for this 
 #at some point
 
 import os
+import sys
+
 if os.environ.get('READTHEDOCS', None) == 'True':
 	pass
 else:
-	from . import gui
+	#from . import gui
 	from .gui.pyfrp_app import main
-
-__version__ = '1.0'
+	
+	
+	
+__version__ = '1.1'
 __author__ = u"Alexander Blaessle"
 __license__ = "GNU GPL v3"

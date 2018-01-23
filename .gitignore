@@ -20,6 +20,7 @@ copyToGor.sh
 rebuildDocs.sh
 runTests.sh
 updateZipFile.sh
+uploadToPyPi.sh
 
 # Don't push meshfiles
 *.msh

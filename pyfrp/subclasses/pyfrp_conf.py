@@ -34,7 +34,7 @@
 
 #PyFRAP modules
 from pyfrp.modules import pyfrp_IO_module
-from pyfrp.modules import pyfrp_term_module
+from pyfrp.modules.pyfrp_term_module import *
 from pyfrp.modules import pyfrp_misc_module
 
 #OS
@@ -133,7 +133,8 @@ class configuration:
 		shutil.copy(defaultFile,defaultFile+".backup")
 		try:
 			shutil.copy(self.pathFile,defaultFile)
-		except AttributeError:
+		except:
+			printWarning('Was not able to copy '+self.pathFile+' to '+ defaultFile)
 			pass
 			
 	def backupPathFile(self):	
