@@ -122,6 +122,8 @@ class OverrideInstall(install):
 		#Overwrite file permissions
 		for filepath in self.get_outputs():
 			
+			log.info("Copying files.")
+			
 			if platform.system() not in ["Windows"]:
 			
 				if "meshfiles" in filepath or "configurations" in filepath or "executables" in filepath:
@@ -140,6 +142,8 @@ class OverrideInstall(install):
 						
 					if folderpath.endswith("configurations"):
 						self.makeAdditionalDataFolders(folderpath,"macros",uid,gid,mode)
+			
+			log.info("Adding executables to path file")
 			
 			#Add gmsh into paths.default if download was successful
 			if self.pathFile == os.path.basename(filepath):

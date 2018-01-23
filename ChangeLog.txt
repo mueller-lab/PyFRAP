@@ -1,4 +1,4 @@
-Replaced Fiji with bioformats. 
+Replaced Fiji with bioformats/Added to pip. 
 
 PyFRAP so far relied in Fiji to access microscope image formats such as czi. 
 This was now replaced by bioformats. For this, we added several functions to
@@ -12,6 +12,9 @@ bioformats support, we from now on always need to start the javabridge.
 
 Added numpy-stl, solidpython, wget to requirements.txt
 
+Added PyFRAP to pip. Now pyfrap can be installed via
+
+pip install pyfrp
 
 TODO:
 	
