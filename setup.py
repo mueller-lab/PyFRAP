@@ -177,7 +177,7 @@ class OverrideInstall(install):
 			
 			except: 
 				if not self.silent:
-					os.log("Was not able to retrieve UID via os.getlogin, using os.getuid instead.")
+					log("Was not able to retrieve UID via os.getlogin, using os.getuid instead.")
 				uid=os.getuid()
 				gid=os.getgid()
 				

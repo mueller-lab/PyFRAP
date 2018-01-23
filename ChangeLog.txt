@@ -1,20 +1,8 @@
-Replaced Fiji with bioformats/Added to pip. 
+Bugfix of os.getlogin in setup.py
 
-PyFRAP so far relied in Fiji to access microscope image formats such as czi. 
-This was now replaced by bioformats. For this, we added several functions to
-the pyfrp_img_module and pyfrp_misc_module. We also added python-bioformats to
-the requirements.txt. Note that for bioformats to run, we need to start a javabridge
-to be started. The PyFRAP main GUI does this automatically. However, only one
-instance of this javabridge can run at the same time. PyFRAP automatically kills
-the bridge again if it is closes properly, however, in case of a crash we might 
-need to find a workaround. More important: If a PyFRAP script is run that requires 
-bioformats support, we from now on always need to start the javabridge.
-
-Added numpy-stl, solidpython, wget to requirements.txt
-
-Added PyFRAP to pip. Now pyfrap can be installed via
-
-pip install pyfrp
+In newer Ubuntu versions, os.getlogin returns an error.
+Added exception for this case and alternative way to 
+retrieve UID/GID via os.getuid. 
 
 TODO:
 	
@@ -53,9 +41,8 @@ Additions:
 	- ``pyfrp.modules.pyfrp_img_module.extractBioFormats``: Reads any kind of OME bioformat file and saves it to .tif files.
 	
 Changes:
-	- ``pyfrp.gui.pyfrp_app``: Now loads/kills the javabridge necessary for bioformats to work.
-	- ``pyfrp.modules.pyfrp_misc_module.buildEmbryoWizard`` now uses the new bioformats functions.
+	
 	
 Bugfixes:
-	
+	- os.getlogin replaced by os.getuid in setup.py
 	
