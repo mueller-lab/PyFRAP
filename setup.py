@@ -103,7 +103,8 @@ class OverrideInstall(install):
 		install.run(self) 
 		
 		#Print log info
-		log.info("Overriding setuptools mode of scripts ...")
+		if not self.silent:
+			log.info("Overriding setuptools mode of scripts ...")
 		
 		#Add Data and edit file permissions
 		self.addData()
@@ -117,14 +118,15 @@ class OverrideInstall(install):
 		Also makes sure that gmsh/Fiji bin ins properly linked.
 		"""
 		
-		log.info("in add data")
+		if not self.silent:
+			log.info("in add data")
 		
 		uid,gid,mode=self.getPermDetails()
 		
 		#Overwrite file permissions
 		for filepath in self.get_outputs():
 			
-			log.info("Copying files.")
+			#log.info("Copying files.")
 			
 			if platform.system() not in ["Windows"]:
 			
@@ -145,7 +147,7 @@ class OverrideInstall(install):
 					if folderpath.endswith("configurations"):
 						self.makeAdditionalDataFolders(folderpath,"macros",uid,gid,mode)
 			
-			log.info("Adding executables to path file")
+			#log.info("Adding executables to path file")
 			
 			#Add gmsh into paths.default if download was successful
 			if self.pathFile == os.path.basename(filepath):
@@ -168,10 +170,17 @@ class OverrideInstall(install):
 		if platform.system() not in ["Windows"]:
 			import pwd
 			
-			#Grab user ID and group ID of actual user
-			uid=pwd.getpwnam(os.getlogin())[2]
-			gid=pwd.getpwnam(os.getlogin())[3]
+			#Grab user ID and group ID of actual use
+			try:
+				uid=pwd.getpwnam(os.getlogin())[2]
+				gid=pwd.getpwnam(os.getlogin())[3]
 			
+			except: 
+				if not self.silent:
+					os.log("Was not able to retrieve UID via os.getlogin, using os.getuid instead.")
+				uid=os.getuid()
+				gid=os.getgid()
+				
 			#Mode for files (everyone can read/write/execute. This is somewhat an overkill, but 0666 seems somehow not to work.)
 			mode=0777
 			
