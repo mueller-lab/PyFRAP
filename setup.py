@@ -117,6 +117,8 @@ class OverrideInstall(install):
 		Also makes sure that gmsh/Fiji bin ins properly linked.
 		"""
 		
+		log.info("in add data")
+		
 		uid,gid,mode=self.getPermDetails()
 		
 		#Overwrite file permissions
