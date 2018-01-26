@@ -21,6 +21,7 @@ rebuildDocs.sh
 runTests.sh
 updateZipFile.sh
 uploadToPyPi.sh
+replaceWikiUser.py
 
 # Don't push meshfiles
 *.msh

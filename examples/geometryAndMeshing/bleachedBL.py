@@ -2,6 +2,8 @@
 
 Draws mesh and saves it if filename is given.
 
+USAGE: python bleachedBL.py outputFilePath
+
 """
 
 #Import necessary modules

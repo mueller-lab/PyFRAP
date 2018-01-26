@@ -1151,6 +1151,41 @@ def addPathToWinPATHs(path):
 	else:
 		printError(path + " does not exist.")
 		return False
+
+def addToPATHs(fn):
+	
+	"""Adds a path to PATH list. 
+	
+	.. note:: Only adds path if file/folder exits.
+	
+	Args:
+		fn (str): Path to be added.
+		
+	Returns:
+		bool: True if successful.
+	"""
+	
+	# Make sure it does not end on a .
+	if fn.endswith('.'):
+		fn=fn[:-1]
+	
+	# Check if folder actually exists
+	if not os.path.isdir(fn):
+		printError("gmshBin as defined in path file doesn't exist.")
+		return False
+	
+	# Check if it is already in path
+	if fn in os.environ['PATH']:
+		printNote("gmshBin already in PATH, not going to add it another time.")
+		return True
+	
+	# Append to path
+	if platform.system() not in ["Windows"]:
+		os.environ['PATH']=os.environ['PATH']+":"+fn
+	else:
+		os.environ['PATH']=os.environ['PATH']+";"+fn
+	
+	return True
 	
 def getPath(identifier,fnPath=None,defaultOutput=""):
 	
