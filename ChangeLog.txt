@@ -1,19 +1,8 @@
-pyplot backend fix for OSX/bugfix in conf
+Removed broken config file.
 
-
-Fixed bug in pyfrp_conf.configuration. 
-shutil.copy does not like it when src
-and dst file are the same. However, if the
-path to the pathfile doesn't change, this is
-the case. Needed exception to fix that.
-
-Added matplotlib backend check in __init__.py
-for each module. In newer OSX versions, there 
-seems to be a problem for python versions that 
-are not installed as framework. This causes 
-pyplot imports to crash. PyFRAP now checks 
-on import if OS is OSX and sets backend to qt4agg,
-which should always work since PyFRAP relies on qt4.
+The lastConfiguartion.conf file 
+was of an old version and caused newer 
+pyfrap versions to crash.
 
 TODO:
 	
