@@ -396,7 +396,12 @@ def getGmshBin(fnPath=None):
 	"""Returns path to Gmsh binary defined in *path* file.	
 	""" 
 	
-	return pyfrp_misc_module.getPath("gmshBin",fnPath=fnPath)
+	gmshBin=pyfrp_misc_module.getPath("gmshBin",fnPath=fnPath)
+	
+	# Just in case, replace backslashes with slashes
+	gmshBin=gmshBin.replace('\\','/')
+	
+	return gmshBin
 
 def addGmshToPATHs(fnPath=None):
 	

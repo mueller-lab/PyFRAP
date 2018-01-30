@@ -1,8 +1,8 @@
-Removed broken config file.
 
-The lastConfiguartion.conf file 
-was of an old version and caused newer 
-pyfrap versions to crash.
+
+
+Replace backslashes in gmshBin path to slashes so os.system call and 
+PATH export works properly in pyfrp_gmsh_module.getGmshBin().
 
 TODO:
 	
