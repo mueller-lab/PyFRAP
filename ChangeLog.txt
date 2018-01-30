@@ -1,12 +1,19 @@
-Temporary openscad path export/setup.py fix
+pyplot backend fix for OSX/bugfix in conf
 
-Added temporarily path management also for openscad.
-Now users do not need to set the openscad PATH environment
-variable anymore, but PyFRAP rather sets the variable when 
-it needs it during the session.
 
-Fixed bugs in setup.py: Now path to Gmsh executable is set 
-properly for Windows install.
+Fixed bug in pyfrp_conf.configuration. 
+shutil.copy does not like it when src
+and dst file are the same. However, if the
+path to the pathfile doesn't change, this is
+the case. Needed exception to fix that.
+
+Added matplotlib backend check in __init__.py
+for each module. In newer OSX versions, there 
+seems to be a problem for python versions that 
+are not installed as framework. This causes 
+pyplot imports to crash. PyFRAP now checks 
+on import if OS is OSX and sets backend to qt4agg,
+which should always work since PyFRAP relies on qt4.
 
 TODO:
 	
@@ -39,11 +46,8 @@ TODO:
 	- In GUI, when selecting fnFlatten, we need to make sure that we add slash
 		
 Additions:
-	- Added pyfrp_openscad_module.addOpenscadToPATHs.
+
 	
 Changes:
-	- Updated setup.py API with new command line arguments.
-	
+
 Bugfixes:
-	- Fixed bugs in setup.py
-	

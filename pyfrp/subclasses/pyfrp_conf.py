@@ -141,7 +141,11 @@ class configuration:
 		
 		defaultFile=pyfrp_misc_module.getConfDir()+"paths"
 		
-		shutil.copy(defaultFile,self.pathFile)
+		try:
+			shutil.copy(defaultFile,self.pathFile)
+		except:
+			printWarning('Was not able to copy '+self.pathFile+' to '+ defaultFile)
+			pass
 	
 	def getRecentFiles(self,r):
 		return self.recentFiles

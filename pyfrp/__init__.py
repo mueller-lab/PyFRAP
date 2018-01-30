@@ -4,11 +4,18 @@
 PyFRAP: A Python based FRAP analysis tool box
 """
 
-#Numpy/Scipy
-#import numpy as np
+import os
+import sys
+import platform
 
-#Matplotlib
-#import matplotlib.pyplot as plt
+# Here we check if OS is OSX. If som we change matplotlib backend
+# (We have to do this to make sure that pyplot import works in non-framework
+# installations)
+# This might cause warnings if pyplot is already imported.
+	
+if platform.system() in ["Darwin"]:
+	import matplotlib 
+	matplotlib.use('qt4agg')
 
 #Basic PyFRAP modules
 from . import modules
@@ -22,9 +29,6 @@ from . import subclasses
 #with importing GUI classes. Will need to have fix for this 
 #at some point
 
-import os
-import sys
-
 if os.environ.get('READTHEDOCS', None) == 'True':
 	pass
 else:
@@ -32,6 +36,7 @@ else:
 	from .gui.pyfrp_app import main
 	
 	
+		
 	
 __version__ = '1.1'
 __author__ = u"Alexander Blaessle"
