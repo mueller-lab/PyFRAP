@@ -56,7 +56,7 @@ import os
 #Module functions
 #===========================================================================================================================================================================
 
-def runOpenscad(fn,fnOut=None,debug=False):
+def runOpenscad(fn,fnOut=None,debug=False,fnPath=None):
 	
 	"""Runs openscad to convert scad file to stl file.
 	
@@ -68,13 +68,16 @@ def runOpenscad(fn,fnOut=None,debug=False):
 		
 	Keyword Args:
 		fnOut (str): Output filename.
+		debug (bool): Show debugging output.
+		fnPath (str): Filepath of path file/
 	
 	Return:
 		str: Output filename.
 	
 	"""
 	
-	openscadBin=pyfrp_misc_module.getOpenscadBin()
+	openscadBin=pyfrp_misc_module.getOpenscadBin(fnPath=fnPath)
+	addOpenscadToPATHs(fnPath=fnPath)
 	
 	if fnOut==None:
 		fnOut=fn.replace(".scad",".stl")
@@ -88,5 +91,24 @@ def runOpenscad(fn,fnOut=None,debug=False):
 	
 	return fnOut
 	
-
+def addOpenscadToPATHs(fnPath=None):
+	
+	"""Exports openscad binary defined in path file to current session.
+	
+	Uses ``getOpenscadBin`` to get path to openscad binary and then sets environment variable.
+	
+	Keyword Args:
+		fnPath (str): Filepath of path file.
+	
+	"""
+	
+	# Get openscad bin as defined in path file
+	openscadBin=pyfrp_misc_module.getOpenscadBin(fnPath=fnPath)
+	fn=os.path.dirname(openscadBin)
+	
+	return pyfrp_misc_module.addToPATHs(fn)
+	
+	
+	
+	
 	

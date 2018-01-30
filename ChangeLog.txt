@@ -1,26 +1,12 @@
+Temporary openscad path export/setup.py fix
 
+Added temporarily path management also for openscad.
+Now users do not need to set the openscad PATH environment
+variable anymore, but PyFRAP rather sets the variable when 
+it needs it during the session.
 
-
-Added examples/scripting/simpleAnalysis.py to illustrate 
-how PyFRAP can be easily scripted. 
-
-Changed command line arguments of PyFRAP. Now, by default,
-PyFRAP automatically downloads Gmsh. The --noGmsh flag 
-will prevent that. This is necessary such that we can run
-``pip install pyfrp`` without passing the --gmsh flag to 
-all required packages and getting pip to crash.
-
-In newer numpy versions, comparing ``numpy.ndarrays`` with None
-will result in ``ValueError``. We thus now need to substitute
-these checks with ``isinstance(x,np.ndarray)``. Modified 
-``pyfrp_simulation.simulation.run`` such that this is conform.
-
-FiPy needs the gmsh executable to be in the PATH environment variable
-of the current session. This is a pain for users when they are installing
-gmsh/pyfrap. A workaround is to add gmsh to the environment's PATH variable
-before execution. This also allows PyFRAP to be executed in virtualenv.
-Therefore we added ``addToPATHs`` and ``addGmshToPATHs``. Both are executed
-whenever we call ``runGmsh``. 
+Fixed bugs in setup.py: Now path to Gmsh executable is set 
+properly for Windows install.
 
 TODO:
 	
@@ -44,7 +30,6 @@ TODO:
 		- In showObjPropsInBar, if array is longer than maxLength, write sth like "array/list of shape"
 		- Get embryo/molecule compression saving running again.
 		- Include 2D geometries, e.g. allow dim setting for custom geometries.
-	- Path management. Check at installation if there is a installation of gmsh and fiji in executables folder. If so, set path to those.
 	- Might be faster in analysis if we load all files at first, put them in common numpy array, apply all image manupulation steps
 	  and finally grab ROIs via c=imgs[idxs,:]
 	- pyfrp_gmsh_geometry.ruledSurface should store more than a single lineLoop but rather have a lineLoops list.
@@ -54,12 +39,11 @@ TODO:
 	- In GUI, when selecting fnFlatten, we need to make sure that we add slash
 		
 Additions:
-	- Added scripting example.
-	- Added pyfrp.modules.pyfrp_misc_module.addToPATHs .
+	- Added pyfrp_openscad_module.addOpenscadToPATHs.
 	
 Changes:
-	
+	- Updated setup.py API with new command line arguments.
 	
 Bugfixes:
-	
+	- Fixed bugs in setup.py
 	

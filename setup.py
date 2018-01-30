@@ -283,7 +283,7 @@ class OverrideInstall(install):
 			if platform.system() not in ["Windows"]:
 				self.changePermissions(self.gmshPath,uid,gid,mode)
 			
-			self.addPathToWinPATHs(self.gmshPath)
+			#self.addPathToWinPATHs(self.gmshPath)
 			
 			log.info("Installed gmsh to "+ self.gmshPath)
 			
@@ -350,7 +350,7 @@ class OverrideInstall(install):
 			
 		folderFn='gmsh-'+gmshVersion+'-Windows'	
 		
-		self.gmshPath='executables/gmsh/bin/gmsh.exe'
+		self.gmshPath='executables/gmsh/gmsh.exe'
 		
 		return fnDL,folderFn
 		
@@ -376,7 +376,7 @@ class OverrideInstall(install):
 		folderFn, fnDL=self.downloadFileIfNotExist(url)
 		
 		#Mount dmg file (Here the user need to read through LICENSE, don't know how to fix this)
-		log.info("executing: ", 'hdiutil attach '+folderFn)
+		log.info("executing: "+ 'hdiutil attach '+folderFn)
 		os.system('hdiutil attach '+folderFn)
 		folderFn=folderFn.replace('.dmg','')
 		
@@ -516,7 +516,7 @@ class OverrideInstall(install):
 			if platform.system() not in ["Windows"]:
 				self.changePermissions(self.fijiPath,uid,gid,mode)
 			
-			self.addPathToWinPATHs(self.fijiPath)
+			#self.addPathToWinPATHs(self.fijiPath)
 			
 			log.info("Installed Fiji to "+ self.fijiPath)
 			
@@ -636,6 +636,10 @@ class OverrideInstall(install):
 		
 		return fnDL,folderFn	
 	
+	def winToLinPath(self,path):
+		
+		return path.replace('\\','/')
+		
 	def setExePath(self,fn,identifier,exePath):
 		
 		"""Enters executable path into path spec file.
@@ -652,6 +656,9 @@ class OverrideInstall(install):
 		
 		#Get filepath to PyFRAP
 		fnPyfrp=fn.split('configurations')[0]
+		
+		# Remove possible backslashes from path
+		fn=self.winToLinPath(fn)
 		
 		#Open file and enter new gmsh bin
 		with open(fn,'rb') as fPath:
