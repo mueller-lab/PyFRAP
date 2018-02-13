@@ -21,6 +21,14 @@ pyfrp.PyFRAP module
     :undoc-members:
     :show-inheritance:
 
+pyfrp.PyFRAP_cmdline module
+---------------------------
+
+.. automodule:: pyfrp.PyFRAP_cmdline
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

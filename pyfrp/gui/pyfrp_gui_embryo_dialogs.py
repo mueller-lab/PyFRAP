@@ -464,7 +464,7 @@ class lsmWizard(pyfrp_gui_basics.basicSettingsDialog):
 		self.colorPrefix=str(self.qleColorPrefix.text())
 		
 	def buildEmbryo(self):	
-		ret=pyfrp_misc_module.buildEmbryoWizard(self.fnDatafolder, self.dataFT, self.name, nChannel=self.nChannel, fnDest=self.fnDestfolder, createEmbryo=self.createEmbryo, recoverIdent=self.recoverIdent,
+		ret=pyfrp_misc_module.buildEmbryoWizard(self.fnDatafolder, self.dataFT, self.name, nChannel=self.nChannel-1, fnDest=self.fnDestfolder, createEmbryo=self.createEmbryo, recoverIdent=self.recoverIdent,
 					  bleachIdent=self.bleachIdent,preIdent=self.preIdent,colorPrefix=self.colorPrefix,cleanUp=self.cleanUp)
 		
 		if ret==-1:

@@ -1,3 +1,9 @@
+
+
+
+Replace backslashes in gmshBin path to slashes so os.system call and 
+PATH export works properly in pyfrp_gmsh_module.getGmshBin().
+
 TODO:
 	
 	- Data structure:
@@ -20,8 +26,6 @@ TODO:
 		- In showObjPropsInBar, if array is longer than maxLength, write sth like "array/list of shape"
 		- Get embryo/molecule compression saving running again.
 		- Include 2D geometries, e.g. allow dim setting for custom geometries.
-	- Path management. Check at installation if there is a installation of gmsh and fiji in executables folder. If so, set path to those.
-	- Might want to move away from Fiji and use python OME instead. Might just grab code from quantDorsal project
 	- Might be faster in analysis if we load all files at first, put them in common numpy array, apply all image manupulation steps
 	  and finally grab ROIs via c=imgs[idxs,:]
 	- pyfrp_gmsh_geometry.ruledSurface should store more than a single lineLoop but rather have a lineLoops list.
@@ -32,8 +36,7 @@ TODO:
 		
 Additions:
 
+	
 Changes:
 
 Bugfixes:
-	
-	

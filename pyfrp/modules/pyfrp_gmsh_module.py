@@ -55,8 +55,7 @@ import platform
 import pyfrp_gmsh_IO_module
 import pyfrp_misc_module
 from pyfrp_term_module import *
-
-                   
+           
 #===========================================================================================================================================================================
 #Module Functions
 #===========================================================================================================================================================================
@@ -191,9 +190,6 @@ def updateBallGeo(fn,radius,center,run=True,debug=False):
 	fn_msh=fn.replace(".geo",".msh")
 	
 	return fn_msh
-
-
-
 
 def updateDomeGeo(fn,radius,slice_height,center,run=False,debug=False):
 	
@@ -353,8 +349,11 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 		if fnOut!=None:
 			fnOut=pyfrp_misc_module.win2linPath(fnOut)
 	
-	#Define which command to execute
+	# Add Gmsh to PATH and grab gmshBin location
 	gmshBin=getGmshBin()
+	addGmshToPATHs()
+	
+	#Define which command to execute
 	cmd = gmshBin + " -v " + str(v) +" -"+str(dim)+ " -optimize -algo del3d"
 	if volSizeMax!=None:
 		cmd = cmd + " -clmax " + str(volSizeMax)
@@ -370,8 +369,6 @@ def runGmsh(fn,fnOut=None,debug=False,redirect=False,fnStout=None,fnSterr=None,v
 		print cmd
 	
 	#Split command in list for subprocess
-		
-		
 	args = shlex.split(cmd)
 	
 	#redirect stdout and stderr if selected
@@ -399,6 +396,34 @@ def getGmshBin(fnPath=None):
 	"""Returns path to Gmsh binary defined in *path* file.	
 	""" 
 	
-	return pyfrp_misc_module.getPath("gmshBin",fnPath=fnPath)
+	gmshBin=pyfrp_misc_module.getPath("gmshBin",fnPath=fnPath)
+	
+	# Just in case, replace backslashes with slashes
+	gmshBin=gmshBin.replace('\\','/')
+	
+	return gmshBin
+
+def addGmshToPATHs(fnPath=None):
+	
+	"""Exports gmsh binary defined in path file to current session.
+	
+	Uses ``getGmshBin`` to get path to gmsh binary and then sets environment variable.
+	
+	"""
+	
+	# Get gmsh bin as defined in path file
+	fn=os.path.dirname(getGmshBin(fnPath=fnPath))
+	
+	return pyfrp_misc_module.addToPATHs(fn)
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	

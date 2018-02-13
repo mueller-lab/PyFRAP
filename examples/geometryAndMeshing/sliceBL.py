@@ -1,6 +1,8 @@
-"""Example for PyFRAP on how generate BL meshes.
+"""Example for PyFRAP on how generate BL meshes around a ROI.
 
 Draws mesh and saves it if filename is given.
+
+USAGE: python sliceBL.py outputFilePath
 
 """
 

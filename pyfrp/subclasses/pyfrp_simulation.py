@@ -293,13 +293,13 @@ class simulation(object):
 		if not self.embryo.checkROIIdxs()[1]:
 			self.embryo.computeROIIdxs()
 			
-		if self.ICimg==None and self.ICmode in [2,3]:
-			printWarning("run: No ICimg was specified, but it is required for selected ICmode="+str(self.ICmode)+". Will grab first image in "+self.embryo.fnDatafolder)
-			#try:
-			self.setICimgByFn(self.embryo.getDataFolder()+'/'+self.embryo.getFileList()[0])
-			#except:
-				#printWarning("run: Was not able to set new ICimg. Will abort.")
-				#return False
+		if not isinstance(self.ICimg,np.ndarray) and self.ICmode in [2,3]:
+			printWarning("No ICimg was specified, but it is required for selected ICmode="+str(self.ICmode)+". Will grab first image in "+self.embryo.fnDatafolder)
+			try:
+				self.setICimgByFn(self.embryo.getDataFolder()+'/'+self.embryo.getFileList()[0])
+			except:
+				printError("Was not able to set new ICimg. Will abort.")
+				return False
 			
 		pyfrp_sim_module.simulateReactDiff(self,signal=signal,embCount=embCount,showProgress=showProgress,debug=debug)
 		return True

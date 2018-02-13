@@ -6,7 +6,7 @@
 Welcome to PyFRAP's API!
 ==================================
 
-PyFRAP is a extensive Python based FRAP (Fluorescence Recovery After Photobleaching) analysis software, featuring various tools that help
+PyFRAP is an extensive Python based FRAP (Fluorescence Recovery After Photobleaching) analysis software, featuring various tools that help
 analyzing FRAP datasets, such as
 
 * Import FRAP datasets from timelapse experiments and analyze image data with various options such as
@@ -20,6 +20,8 @@ analyzing FRAP datasets, such as
 * Comprehensive GUI, making almost all PyFRAP tools available
 
 I have tried to keep the API short but clear. If it is unclear, don't hesitate to mail.
+
+More information about PyFRAP can be found on  `Github <https://github.com/alexblaessle/PyFRAP>`_ .
 
 
 Installation (setup.py)

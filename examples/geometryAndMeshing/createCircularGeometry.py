@@ -2,6 +2,8 @@
 
 Draws geometry and saves it if filename is given.
 
+USAGE: python createCircularGeometry.py outputFilePath
+
 """
 
 

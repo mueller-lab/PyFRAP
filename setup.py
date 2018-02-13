@@ -14,6 +14,8 @@ from setuptools.command.install_scripts import install_scripts
 #Import option parser so we can parse in options
 import sys
 
+# Define version
+version='1.1.13'
 
 def getOptions():
 	
@@ -22,6 +24,7 @@ def getOptions():
 	If --fiji is in sys.argv, will set dFiji=1. \n
 	If --gmsh is in sys.argv, will set dGmsh=1.
 	If --silent is in sys.argv, will set silent=1.
+	
 	
 	
 	Note: Makes dGmsh and dFiji global: Not nice but seems easiest 
@@ -33,21 +36,21 @@ def getOptions():
 	global silent
 	
 	dFiji=getOpt("--fiji")
-	dGmsh=getOpt("--gmsh")
+	dGmsh=getOpt("--noGmsh",default=0)
 	silent=getOpt("--silent")
 	
-def getOpt(optStr):	
+def getOpt(optStr,default=0):	
 	
 	"""Checks if optStr is in sys.argv. If this is the case,
 	returns 1 and removes it form sys.argv so setup.py will not crash,
-	otherwise returns 0.
+	otherwise returns default.
 	"""
 	
 	if optStr in sys.argv:
 		opt=1
 		sys.argv.remove(optStr)
 	else:
-		opt=0
+		opt=default
 	return opt	
 
 #Get Options
@@ -73,8 +76,13 @@ class OverrideInstall(install):
 		"""Parses options into override class.
 		"""
 		self.dFiji=bool(dFiji)
-		self.dGmsh=bool(dGmsh)
+		self.dGmsh=not bool(dGmsh)
 		self.silent=bool(silent)
+		
+		log.info("Install options are:")
+		log.info("Install Fiji: " + str(self.dFiji))
+		log.info("Install gmsh: " + str(self.dGmsh))
+		log.info("Silent Mode: " + str(self.silent))
 		
 		#Define pathFile
 		self.pathFile='paths'
@@ -103,7 +111,8 @@ class OverrideInstall(install):
 		install.run(self) 
 		
 		#Print log info
-		log.info("Overriding setuptools mode of scripts ...")
+		if not self.silent:
+			log.info("Overriding setuptools mode of scripts ...")
 		
 		#Add Data and edit file permissions
 		self.addData()
@@ -117,10 +126,15 @@ class OverrideInstall(install):
 		Also makes sure that gmsh/Fiji bin ins properly linked.
 		"""
 		
+		if not self.silent:
+			log.info("in add data")
+		
 		uid,gid,mode=self.getPermDetails()
 		
 		#Overwrite file permissions
 		for filepath in self.get_outputs():
+			
+			#log.info("Copying files.")
 			
 			if platform.system() not in ["Windows"]:
 			
@@ -140,6 +154,8 @@ class OverrideInstall(install):
 						
 					if folderpath.endswith("configurations"):
 						self.makeAdditionalDataFolders(folderpath,"macros",uid,gid,mode)
+			
+			#log.info("Adding executables to path file")
 			
 			#Add gmsh into paths.default if download was successful
 			if self.pathFile == os.path.basename(filepath):
@@ -162,10 +178,17 @@ class OverrideInstall(install):
 		if platform.system() not in ["Windows"]:
 			import pwd
 			
-			#Grab user ID and group ID of actual user
-			uid=pwd.getpwnam(os.getlogin())[2]
-			gid=pwd.getpwnam(os.getlogin())[3]
+			#Grab user ID and group ID of actual use
+			try:
+				uid=pwd.getpwnam(os.getlogin())[2]
+				gid=pwd.getpwnam(os.getlogin())[3]
 			
+			except: 
+				if not self.silent:
+					log.info("Was not able to retrieve UID via os.getlogin, using os.getuid instead.")
+				uid=os.getuid()
+				gid=os.getgid()
+				
 			#Mode for files (everyone can read/write/execute. This is somewhat an overkill, but 0666 seems somehow not to work.)
 			mode=0777
 			
@@ -193,7 +216,7 @@ class OverrideInstall(install):
 			try:
 				os.mkdir(os.path.dirname(exePath))
 			except:
-				print "Was not able to create folder " + os.path.dirname(exePath)
+				log.info("Was not able to create folder " + os.path.dirname(exePath))
 			shutil.copy(folderFn,exePath)
 				
 		#Remove downloaded files
@@ -217,7 +240,7 @@ class OverrideInstall(install):
 				else:
 					os.remove(fn)
 			except:
-				print "cleanDiff report: Was not able to delete file:" + fn
+				log.info("cleanDiff report: Was not able to delete file:" + fn)
 				
 	def downloadGmsh(self):
 		
@@ -260,7 +283,7 @@ class OverrideInstall(install):
 			if platform.system() not in ["Windows"]:
 				self.changePermissions(self.gmshPath,uid,gid,mode)
 			
-			self.addPathToWinPATHs(self.gmshPath)
+			#self.addPathToWinPATHs(self.gmshPath)
 			
 			log.info("Installed gmsh to "+ self.gmshPath)
 			
@@ -269,90 +292,6 @@ class OverrideInstall(install):
 			
 		except ImportError:
 			log.info("Cannot find wget, will not be downloading gmsh. You will need to install it later manually")	
-	
-	#def downloadOpenscad(self):
-		
-		#"""Downloads openscad, moves it to executables directory and cleans up afterwards. 
-		
-		#Note that this will only work if *wget* is installed. 
-		#"""
-			
-		#http://files.openscad.org/OpenSCAD-2015.03-2-x86-64.zip	
-		#http://files.openscad.org/OpenSCAD-2015.03-3.dmg
-		#http://files.openscad.org/openscad-2014.03.x86-64.tar.gz
-		
-		##Flag to see if gmsh DL went through
-		#self.openscadDownloaded=False
-		
-		#self.makeExeFolder()
-		
-		##Get fileList before
-		#filesBefore=os.listdir('.')
-		
-		##Try to import wget
-		#try: 
-			#import wget
-			
-			##Get Architecture
-			#arch=platform.architecture()[0].replace('bit','')
-			
-			#if platform.system() in ["Windows"]:
-				#fnDL,folderFn=self.downloadOpenscadWin(arch,openscadVersion)
-				
-			#elif platform.system() in ["Linux"]:
-				#fnDL,folderFn=self.downloadOpenscadLinux(arch,openscadVersion)
-				
-			#elif platform.system() in ["Darwin"]:
-				#fnDL,folderFn=self.downloadOpenscadOSX(arch,openscadVersion)
-			
-			##Remove files
-			#self.cleanUpExe(fnDL,folderFn,filesBefore,'pyfrp/executables/openscad/')
-			
-			#uid,gid,mode=self.getPermDetails()
-			#if platform.system() not in ["Windows"]:
-				#self.changePermissions(self.openscadPath,uid,gid,mode)
-			
-			#self.addPathToWinPATHs(self.openscadPath)
-			
-			#log.info("Installed openscad to "+ self.openscadPath)
-			
-			##Set Flag=True
-			#self.openscadDownloaded=True
-			
-		#except ImportError:
-			#log.info("Cannot find wget, will not be downloading gmsh. You will need to install it later manually")	
-				
-	
-	#def downloadOpenscadWin(self,arch,gmshVersion):
-		
-		#"""Downloads Gmsh from Gmsh website for Windows
-		
-		#Args:
-			#arch (str): System architecture, e.g. 64/32.
-			#gmshVersion (str): gmshVersion String, e.g. 2.12.0 .
-			
-		#Returns:
-			#tuple: Tuple containing:
-			
-				#* fnDL (str): Donwload filename
-				#* folderFn (str): Filename of extracted download files
-			
-		#"""
-		
-		##Download Gmsh
-		#url='http://gmsh.info/bin/Windows/gmsh-'+gmshVersion+'-Windows'+arch+'.zip'
-		#folderFn, fnDL=self.downloadFileIfNotExist(url)
-		
-		##Decompress
-		#import zipfile 
-		#with zipfile.ZipFile(folderFn) as zf:
-			#zf.extractall()
-			
-		#folderFn='gmsh-'+gmshVersion+'-Windows'	
-		
-		#self.gmshPath='executables/gmsh/bin/gmsh.exe'
-		
-		#return fnDL,folderFn
 	
 	def downloadFileIfNotExist(self,url):
 		
@@ -374,10 +313,10 @@ class OverrideInstall(install):
 		cwd=os.getcwd()+"/"
 		
 		if not os.path.exists(cwd+os.path.basename(url)):
-			print cwd+os.path.basename(url) +" does not exist, will download it."
+			log.info(cwd+os.path.basename(url) +" does not exist, will download it.")
 			folderFn=wget.download(url)
 		else:
-			print cwd+os.path.basename(url) +" alreay exists, will not download."
+			log.info(cwd+os.path.basename(url) +" alreay exists, will not download.")
 			folderFn=os.path.basename(url)
 		fnDL=str(folderFn)
 		print
@@ -411,7 +350,7 @@ class OverrideInstall(install):
 			
 		folderFn='gmsh-'+gmshVersion+'-Windows'	
 		
-		self.gmshPath='executables/gmsh/bin/gmsh.exe'
+		self.gmshPath='executables/gmsh/gmsh.exe'
 		
 		return fnDL,folderFn
 		
@@ -437,7 +376,7 @@ class OverrideInstall(install):
 		folderFn, fnDL=self.downloadFileIfNotExist(url)
 		
 		#Mount dmg file (Here the user need to read through LICENSE, don't know how to fix this)
-		print "executing: ", 'hdiutil attach '+folderFn 
+		log.info("executing: "+ 'hdiutil attach '+folderFn)
 		os.system('hdiutil attach '+folderFn)
 		folderFn=folderFn.replace('.dmg','')
 		
@@ -525,18 +464,18 @@ class OverrideInstall(install):
 		"""
 		
 		if platform.system() not in ["Windows"]:
-			print "OS is not Windows, won't set path"
+			log.info("OS is not Windows, won't set path")
 			return False
 		
 		if path in os.environ['PATH']:
-			print "Path is already in PATH, won't set path"
+			log.info("Path is already in PATH, won't set path")
 			return False
 		
 		if os.path.exists(path):
 			os.system("set PATH=%PATH%;"+path)
 			return True
 		else:
-			print path + " does not exist, won't set path"
+			log.info(path + " does not exist, won't set path")
 			return False
 	
 	def downloadFiji(self):
@@ -577,7 +516,7 @@ class OverrideInstall(install):
 			if platform.system() not in ["Windows"]:
 				self.changePermissions(self.fijiPath,uid,gid,mode)
 			
-			self.addPathToWinPATHs(self.fijiPath)
+			#self.addPathToWinPATHs(self.fijiPath)
 			
 			log.info("Installed Fiji to "+ self.fijiPath)
 			
@@ -697,6 +636,10 @@ class OverrideInstall(install):
 		
 		return fnDL,folderFn	
 	
+	def winToLinPath(self,path):
+		
+		return path.replace('\\','/')
+		
 	def setExePath(self,fn,identifier,exePath):
 		
 		"""Enters executable path into path spec file.
@@ -713,6 +656,9 @@ class OverrideInstall(install):
 		
 		#Get filepath to PyFRAP
 		fnPyfrp=fn.split('configurations')[0]
+		
+		# Remove possible backslashes from path
+		fn=self.winToLinPath(fn)
 		
 		#Open file and enter new gmsh bin
 		with open(fn,'rb') as fPath:
@@ -824,7 +770,7 @@ if os.environ.get('READTHEDOCS', None) == 'True':
 	print "Installing on RTD, will not overwrite install command."
 	
 	setup(name='pyfrp',
-		version='1.0',
+		version=version,
 		description='PyFRAP: A Python based FRAP analysis tool box',
 		url='https://github.com/alexblaessle/PyFRAP',
 		author='Alexander Blaessle',
@@ -838,21 +784,26 @@ if os.environ.get('READTHEDOCS', None) == 'True':
 		#package_data = {'pyfrp':['meshfiles','configurations']},
 		include_package_data=True,
 		classifiers= [
+			'Development Status :: 4 - Beta',
 			'Operating System :: OS Independent',
 			'Programming Language :: Python :: 2.7',
-			'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
-			'Intended Audience :: Science/Research'
+			'Topic :: Scientific/Engineering :: Bio-Informatics',
+			'Intended Audience :: Science/Research',
+			'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',\
+			'Programming Language :: Python :: 2.7',
 			],
+		install_requires=['pyopenssl','ndg-httpsclient','pyasn1','ez_setup','numpy','scipy','matplotlib','scikit-image','FiPy','colorama','numpy-stl','solidpython','wget','python-bioformats'],	
 		platforms=['ALL'],
 		keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
 			],
 		zip_safe=False
 		)
 
+
 else:
 
 	setup(name='pyfrp',
-		version='1.0',
+		version=version,
 		description='PyFRAP: A Python based FRAP analysis tool box',
 		url='https://github.com/alexblaessle/PyFRAP',
 		author='Alexander Blaessle',
@@ -866,11 +817,15 @@ else:
 		#package_data = {'pyfrp':['meshfiles','configurations']},
 		include_package_data=True,
 		classifiers= [
+			'Development Status :: 4 - Beta',
 			'Operating System :: OS Independent',
 			'Programming Language :: Python :: 2.7',
-			'Topic :: Scientific/Biophysics/FRAP :: Analysis/Visualization',
-			'Intended Audience :: Science/Research'
+			'Topic :: Scientific/Engineering :: Bio-Informatics',
+			'Intended Audience :: Science/Research',
+			'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',\
+			'Programming Language :: Python :: 2.7',
 			],
+		install_requires=['pyopenssl','ndg-httpsclient','pyasn1','ez_setup','numpy','scipy','matplotlib','scikit-image','FiPy','colorama','numpy-stl','solidpython','wget','python-bioformats'],	
 		platforms=['ALL'],
 		keywords=["FRAP", "fluorescence",'recovery','after','photobleaching','reaction-diffusion','fitting'
 			],

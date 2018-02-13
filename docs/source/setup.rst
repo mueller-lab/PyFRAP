@@ -13,6 +13,8 @@ Since PyFRAP requires on I/O of data files that come with it we recommend using:
 
 	python setup.py install --help
 	
+Note that PyFRAP will automatically install *Gmsh*. 	
+	
 PyFRAP has some additional installation options:
 
 +------------------------+------------------------------------------------------+
@@ -21,16 +23,15 @@ PyFRAP has some additional installation options:
 | ``--fiji``             | Download and install Fiji during PyFRAP installation.| 
 |                        | Link Fiji with PyFRAP                                | 
 +------------------------+------------------------------------------------------+
-| ``--gmsh``             | Download and install Gmsh during PyFRAP installation.| 
-|                        | Link Gmsh with PyFRAP                                | 
+| ``--noGmsh``           | Deactivate the download and installation of Gmsh     | 
+|                        | during PyFRAP installation.                          | 
 +------------------------+------------------------------------------------------+
 | ``--silent``           | Print out less log messages.                         | 
 |                        |                                                      | 
 +------------------------+------------------------------------------------------+
 
 
-
-For ``--fiji`` and ``--gmsh`` to work, you need to install `wget <https://pypi.python.org/pypi/wget>`_. To install *wget*, type::
+For ``--fiji`` and the Gmsh installation to work, you need to install `wget <https://pypi.python.org/pypi/wget>`_. To install *wget*, type::
 
 	pip install wget
 	
@@ -46,7 +47,7 @@ PyFRAP setup.py API
 	Checks options given to script:
 	
 		* If ``--fiji`` is in sys.argv, will set dFiji=1. \n
-		* If ``--gmsh`` is in sys.argv, will set dGmsh=1.
+		* If ``--noGmsh`` is in sys.argv, will set dGmsh=0.
 		* If ``--silent`` is in sys.argv, will set silent=1.
 		
 	

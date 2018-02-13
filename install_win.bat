@@ -21,9 +21,7 @@ pip install solidpython
 pip install wget
 pip install pysparse
 pip install fipy
+pip install python-bioformats
 
 REM Install PyFRAP
-python setup.py install --gmsh --fiji
-
-REM Set environment variables (NOTE, setx seems to be dangerous. Use with caution!)
-REM SETX PATH=%PATH%;"%cd%\executables\gmsh"
+python setup.py install 

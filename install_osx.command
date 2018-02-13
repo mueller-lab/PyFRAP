@@ -26,6 +26,7 @@ conda install -y -c guyer fipy
 pip install numpy-stl==2.2.0
 pip install solidpython
 pip install wget
+pip install python-bioformats
 
 # CD into directory where PyFRAP lives
 DIR=$(dirname "${0}")
@@ -33,4 +34,4 @@ cd $DIR
 pwd
 
 # Install
-python setup.py install --gmsh --fiji
+python setup.py install

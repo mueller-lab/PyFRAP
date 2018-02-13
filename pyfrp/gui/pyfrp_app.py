@@ -99,6 +99,10 @@ from mpl_toolkits.mplot3d import Axes3D
 #VTK 
 from vtk.qt4.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
+# bioformats
+import javabridge
+import bioformats
+
 #=====================================================================================================================================
 #Main Simulation window
 #=====================================================================================================================================
@@ -696,6 +700,9 @@ class pyfrp(QtGui.QMainWindow):
 			self.config.consoleHistory=self.console.history
 			self.config.backupPathFile()
 			self.config.save(fn=fn)
+			
+			javabridge.kill_vm()	
+			
 			event.accept()
 		else:
 			event.ignore()
@@ -3014,11 +3021,14 @@ def main():
 	except:
 		redirect=True
 	
+	# Start javabridge
+	javabridge.start_vm(class_path=bioformats.JARS)
+	
 	mainWin = pyfrp(redirect=redirect)
 	mainWin.show()
 	
 	sys.exit(app.exec_())
-		
+	
 if __name__ == '__main__':
 	main()
 

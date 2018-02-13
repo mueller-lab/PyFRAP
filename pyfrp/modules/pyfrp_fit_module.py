@@ -605,8 +605,6 @@ def FRAPObjFunc(x,fit,debug,ax,returnFit):
 		scaledSimVecs,equFacts=equalize(dataVecs,scaledSimVecs,equFacts)
 		fit.equFacts=equFacts
 		
-	
-	
 	#Compute final SSD
 	ssds=[]
 	for i in range(len(dataVecs)):
